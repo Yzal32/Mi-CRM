@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+
+<helmet>
+  <link rel="stylesheet" href="_ds/loop-design-system-97c4eaef-c8ab-4752-97e0-13256f16f337/tokens/colors.css">
+  <link rel="stylesheet" href="_ds/loop-design-system-97c4eaef-c8ab-4752-97e0-13256f16f337/tokens/typography.css">
+  <link rel="stylesheet" href="_ds/loop-design-system-97c4eaef-c8ab-4752-97e0-13256f16f337/tokens/spacing.css">
+  <link rel="stylesheet" href="_ds/loop-design-system-97c4eaef-c8ab-4752-97e0-13256f16f337/tokens/radii-shadows.css">
+  <link rel="stylesheet" href="_ds/loop-design-system-97c4eaef-c8ab-4752-97e0-13256f16f337/styles.css">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <script>
+    (function () {
+      if (!window.lucide || window.__lucidePatched) return;
+      window.__lucidePatched = true;
+      var orig = window.lucide.createIcons.bind(window.lucide);
+      var scheduled = false;
+      window.lucide.createIcons = function (opts) {
+        if (scheduled) return;
+        scheduled = true;
+        requestAnimationFrame(function () { scheduled = false; orig(opts); });
+      };
+      window.addEventListener('load', function () {
+        setTimeout(function () { window.lucide.createIcons(); }, 300);
+      });
+    })();
+  </script>
+  <script src="_ds/loop-design-system-97c4eaef-c8ab-4752-97e0-13256f16f337/_ds_bundle.js"></script>
+  <style>
+    body { margin: 0; background: var(--color-bg); font-family: var(--font-sans); color: var(--color-text); }
+    a { color: var(--color-primary); text-decoration: none; }
+    a:hover { color: var(--color-primary-hover); }
+    [style*="overflow-x: auto"] { scrollbar-width: none; }
+    [style*="overflow-x: auto"]::-webkit-scrollbar { display: none; }
+  </style>
+</helmet>
+
+<div style="max-width:1300px;margin:0 auto;padding:40px 20px 8px;display:flex;flex-direction:column;gap:6px">
+  <span style="font:800 24px/1.2 var(--font-sans);color:var(--color-text)">Loop</span>
+  <h1 style="font:var(--text-screen-title);color:var(--color-text);margin:0">Pantalla — Estadísticas</h1>
+  <p style="font:var(--text-body);color:var(--color-text-secondary);margin:0;max-width:680px">Registro global de ventas, con el total facturado y su número, filtrable por cliente y por fecha (atajos o rango libre). Tocar una venta lleva a la ficha de ese cliente.</p>
+</div>
+
+<div style="max-width:1300px;margin:0 auto;padding:24px 20px 8px;display:flex;flex-direction:column;gap:32px">
+
+  <div style="display:flex;flex-direction:column;gap:10px">
+    <span style="font:var(--text-caption);color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.04em">Móvil</span>
+    <div style="width:390px;height:760px;background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);overflow:hidden;display:flex;flex-direction:column">
+      <x-import component-from-global-scope="LoopDesignSystem_97c4ea.TopBar" title="Estadísticas" hint-size="100%,56px"></x-import>
+      <div style="flex:1;overflow-y:auto;padding:var(--space-4);display:flex;flex-direction:column;gap:16px;padding-bottom:96px">
+
+        <div style="flex-shrink:0;min-height:40px;position:relative">
+          <div style="overflow:hidden;-webkit-mask-image:linear-gradient(to right, black calc(100% - 28px), transparent 100%);mask-image:linear-gradient(to right, black calc(100% - 28px), transparent 100%)">
+            <x-import component-from-global-scope="LoopDesignSystem_97c4ea.FilterChips" options="{{ periodOptions }}" value="{{ period }}" onChange="{{ onPeriodChange }}" hint-size="100%,40px"></x-import>
+          </div>
+        </div>
+
+        <x-import component-from-global-scope="LoopDesignSystem_97c4ea.SearchBar" value="{{ query }}" onChange="{{ onQueryChange }}" placeholder="Buscar por cliente" hint-size="100%,44px"></x-import>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <x-import component-from-global-scope="LoopDesignSystem_97c4ea.StatCard" icon="wallet" label="{{ periodStats.totalLabelHeading }}" value="{{ periodStats.totalLabel }}" hint-size="auto,90px"></x-import>
+          <x-import component-from-global-scope="LoopDesignSystem_97c4ea.StatCard" icon="bar-chart-2" label="Ventas" value="{{ periodStats.count }}" hint-size="auto,90px"></x-import>
+        </div>
+
+        <div style="height:1px;background:var(--color-border)"></div>
+
+        <sc-if value="{{ hasSales }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <sc-for list="{{ filteredSales }}" as="s" hint-placeholder-count="4">
+              <a href="Pantalla Ficha de Cliente.dc.html" style="display:flex;align-items:center;gap:12px;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--space-3) var(--space-4);color:inherit">
+                <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Avatar" name="{{ s.clientName }}" size="{{ 36 }}" hint-size="36px,36px"></x-import>
+                <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
+                  <span style="font:var(--text-body-medium);color:var(--color-text)">{{ s.clientName }}</span>
+                  <span style="font:var(--text-caption);color:var(--color-text-tertiary)">{{ s.desc }} · {{ s.dateLabel }}</span>
+                </div>
+                <span style="font:var(--text-body-medium);color:var(--color-primary)">{{ s.amountLabel }}</span>
+              </a>
+            </sc-for>
+          </div>
+        </sc-if>
+        <sc-if value="{{ hasNoSales }}" hint-placeholder-val="{{ false }}">
+          <x-import component-from-global-scope="LoopDesignSystem_97c4ea.EmptyState" icon="wallet" title="Sin ventas" message="No hay ninguna venta que coincida con este filtro." hint-size="100%,220px"></x-import>
+        </sc-if>
+      </div>
+      <x-import component-from-global-scope="LoopDesignSystem_97c4ea.TabBar" active="stats" hint-size="100%,64px"></x-import>
+    </div>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:10px">
+    <span style="font:var(--text-caption);color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.04em">Escritorio — mismo estado</span>
+    <div style="display:flex;border:1px solid var(--color-border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);overflow:hidden;background:var(--color-bg)">
+      <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Sidebar" active="stats" hint-size="220px,600px"></x-import>
+      <div style="flex:1;padding:40px 48px;display:flex;flex-direction:column;gap:20px;max-width:920px">
+        <h2 style="font:var(--text-screen-title);color:var(--color-text);margin:0">Estadísticas</h2>
+
+        <div style="display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap">
+          <div style="flex-shrink:0;min-height:40px">
+            <x-import component-from-global-scope="LoopDesignSystem_97c4ea.FilterChips" options="{{ periodOptions }}" value="{{ period }}" onChange="{{ onPeriodChange }}" hint-size="auto,40px"></x-import>
+          </div>
+          <div style="max-width:340px;min-width:260px;flex:1">
+            <x-import component-from-global-scope="LoopDesignSystem_97c4ea.SearchBar" value="{{ query }}" onChange="{{ onQueryChange }}" placeholder="Buscar por cliente" hint-size="100%,44px"></x-import>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:420px">
+          <x-import component-from-global-scope="LoopDesignSystem_97c4ea.StatCard" icon="wallet" label="{{ periodStats.totalLabelHeading }}" value="{{ periodStats.totalLabel }}" hint-size="auto,90px"></x-import>
+          <x-import component-from-global-scope="LoopDesignSystem_97c4ea.StatCard" icon="bar-chart-2" label="Ventas" value="{{ periodStats.count }}" hint-size="auto,90px"></x-import>
+        </div>
+
+        <sc-if value="{{ hasSales }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;flex-direction:column;border:1px solid var(--color-border);border-radius:var(--radius-lg);overflow:hidden">
+            <sc-for list="{{ filteredSales }}" as="s" hint-placeholder-count="5">
+              <a href="Pantalla Ficha de Cliente.dc.html" style="display:flex;align-items:center;gap:16px;padding:14px 20px;border-bottom:1px solid var(--color-border);background:var(--color-surface);color:inherit">
+                <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Avatar" name="{{ s.clientName }}" size="{{ 40 }}" hint-size="40px,40px"></x-import>
+                <div style="flex:0 0 140px;min-width:0;font:var(--text-body-medium);color:var(--color-text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ s.clientName }}</div>
+                <div style="flex:1;min-width:150px;font:var(--text-secondary);color:var(--color-text-secondary)">{{ s.desc }}</div>
+                <div style="flex:0 0 90px;font:var(--text-caption);color:var(--color-text-tertiary)">{{ s.dateLabel }}</div>
+                <div style="flex:0 0 70px;text-align:right;font:var(--text-body-medium);color:var(--color-primary)">{{ s.amountLabel }}</div>
+              </a>
+            </sc-for>
+          </div>
+        </sc-if>
+        <sc-if value="{{ hasNoSales }}" hint-placeholder-val="{{ false }}">
+          <x-import component-from-global-scope="LoopDesignSystem_97c4ea.EmptyState" icon="wallet" title="Sin ventas" message="No hay ninguna venta que coincida con este filtro." hint-size="100%,220px"></x-import>
+        </sc-if>
+      </div>
+    </div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { query: '', period: 'today' };
+
+  daysAgoISO(n) {
+    const d = new Date();
+    d.setDate(d.getDate() - n);
+    return d.toISOString().slice(0, 10);
+  }
+  formatDate(iso) {
+    const [y, m, d] = iso.split('-');
+    return `${d}/${m}/${y}`;
+  }
+
+  sales = [
+    { clientName: 'Ana Torres', desc: 'Corte + tinte', amount: 45, dateISO: this.daysAgoISO(0) },
+    { clientName: 'Diego Molina', desc: 'Reparación grifo', amount: 60, dateISO: this.daysAgoISO(1) },
+    { clientName: 'Carlos Ruiz', desc: 'Cambio de aceite', amount: 35, dateISO: this.daysAgoISO(3) },
+    { clientName: 'María López', desc: 'Pan y bollería', amount: 12, dateISO: this.daysAgoISO(4) },
+    { clientName: 'Marta Gómez', desc: 'Vestido de fiesta', amount: 80, dateISO: this.daysAgoISO(9) },
+    { clientName: 'Javier Soto', desc: 'Tornillería', amount: 22, dateISO: this.daysAgoISO(15) },
+    { clientName: 'Lucía Fernández', desc: 'Consulta + análisis', amount: 50, dateISO: this.daysAgoISO(28) },
+    { clientName: 'Ana Torres', desc: 'Producto keratina', amount: 18, dateISO: this.daysAgoISO(32) },
+    { clientName: 'Sara Ibáñez', desc: 'Clase práctica', amount: 40, dateISO: this.daysAgoISO(50) },
+    { clientName: 'Pedro Navarro', desc: 'Curso completo', amount: 300, dateISO: this.daysAgoISO(70) }
+  ];
+
+  onQueryChange = e => this.setState({ query: e.target.value });
+  onPeriodChange = value => this.setState({ period: value });
+
+  moneyLabel(n) {
+    return `${n.toFixed(2).replace('.', ',')} €`;
+  }
+
+  renderVals() {
+    const s = this.state;
+    const q = s.query.trim().toLowerCase();
+    const today = this.daysAgoISO(0);
+    const weekStart = this.daysAgoISO(6);
+    const monthStart = this.daysAgoISO(29);
+
+    let periodSales = this.sales;
+    let heading = 'Facturado histórico';
+    if (s.period === 'today') { periodSales = this.sales.filter(sale => sale.dateISO === today); heading = 'Facturado hoy'; }
+    else if (s.period === 'week') { periodSales = this.sales.filter(sale => sale.dateISO >= weekStart); heading = 'Facturado esta semana'; }
+    else if (s.period === 'month') { periodSales = this.sales.filter(sale => sale.dateISO >= monthStart); heading = 'Facturado este mes'; }
+
+    let list = periodSales.filter(sale => !q || sale.clientName.toLowerCase().includes(q));
+
+    const total = periodSales.reduce((sum, sale) => sum + sale.amount, 0);
+
+    return {
+      query: s.query, onQueryChange: this.onQueryChange,
+      period: s.period, onPeriodChange: this.onPeriodChange,
+      periodOptions: [
+        { value: 'today', label: 'Hoy' },
+        { value: 'week', label: 'Esta semana' },
+        { value: 'month', label: 'Este mes' },
+        { value: 'historic', label: 'Histórico' }
+      ],
+      periodStats: { totalLabel: this.moneyLabel(total), count: periodSales.length, totalLabelHeading: heading },
+      filteredSales: list.map(sale => ({ ...sale, dateLabel: this.formatDate(sale.dateISO), amountLabel: this.moneyLabel(sale.amount) })),
+      hasSales: list.length > 0,
+      hasNoSales: list.length === 0
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+
+<helmet>
+  <link rel="stylesheet" href="_ds/loop-design-system-97c4eaef-c8ab-4752-97e0-13256f16f337/tokens/colors.css">
+  <link rel="stylesheet" href="_ds/loop-design-system-97c4eaef-c8ab-4752-97e0-13256f16f337/tokens/typography.css">
+  <link rel="stylesheet" href="_ds/loop-design-system-97c4eaef-c8ab-4752-97e0-13256f16f337/tokens/spacing.css">
+  <link rel="stylesheet" href="_ds/loop-design-system-97c4eaef-c8ab-4752-97e0-13256f16f337/tokens/radii-shadows.css">
+  <link rel="stylesheet" href="_ds/loop-design-system-97c4eaef-c8ab-4752-97e0-13256f16f337/styles.css">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <script>
+    (function () {
+      if (!window.lucide || window.__lucidePatched) return;
+      window.__lucidePatched = true;
+      var orig = window.lucide.createIcons.bind(window.lucide);
+      var scheduled = false;
+      window.lucide.createIcons = function (opts) {
+        if (scheduled) return;
+        scheduled = true;
+        requestAnimationFrame(function () { scheduled = false; orig(opts); });
+      };
+      window.addEventListener('load', function () {
+        setTimeout(function () { window.lucide.createIcons(); }, 300);
+      });
+    })();
+  </script>
+  <script src="_ds/loop-design-system-97c4eaef-c8ab-4752-97e0-13256f16f337/_ds_bundle.js"></script>
+  <style>
+    body { margin: 0; background: var(--color-bg); font-family: var(--font-sans); color: var(--color-text); }
+    a { color: var(--color-primary); text-decoration: none; }
+    a:hover { color: var(--color-primary-hover); }
+  </style>
+</helmet>
+
+<div style="max-width:1300px;margin:0 auto;padding:40px 20px 8px;display:flex;flex-direction:column;gap:6px">
+  <span style="font:800 24px/1.2 var(--font-sans);color:var(--color-text)">Loop</span>
+  <h1 style="font:var(--text-screen-title);color:var(--color-text);margin:0">Pantalla — Registrar venta</h1>
+  <p style="font:var(--text-body);color:var(--color-text-secondary);margin:0;max-width:640px">Se abre desde la ficha de un cliente concreto. El cliente viene fijo (no editable); solo hay que apuntar qué se vendió, el importe y la fecha. Al guardar, vuelve a esa misma ficha con la venta ya en su historial.</p>
+</div>
+
+<div style="max-width:1300px;margin:0 auto;padding:24px 20px 8px;display:flex;flex-wrap:wrap;gap:32px;align-items:flex-start">
+
+  <div style="display:flex;flex-direction:column;gap:10px">
+    <span style="font:var(--text-caption);color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.04em">Móvil</span>
+    <div style="width:390px;background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);overflow:hidden;position:relative">
+      <x-import component-from-global-scope="LoopDesignSystem_97c4ea.TopBar" title="Registrar venta" onBack="{{ onBack }}" hint-size="100%,56px"></x-import>
+      <div style="padding:var(--space-4);display:flex;flex-direction:column;gap:20px;padding-bottom:24px">
+
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <span style="font:var(--text-caption);color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.04em">Venta para</span>
+          <div style="display:flex;align-items:center;gap:12px;background:var(--color-surface-sunken);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:10px 14px">
+            <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Avatar" name="{{ clientName }}" size="{{ 40 }}" hint-size="40px,40px"></x-import>
+            <span style="font:var(--text-body-medium);color:var(--color-text)">{{ clientName }}</span>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Input" label="¿Qué has vendido?" value="{{ description }}" onChange="{{ onDescriptionChange }}" error="{{ descriptionError }}" placeholder="Corte + tinte" hint-size="100%,44px"></x-import>
+          <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Input" label="Importe (€)" value="{{ amount }}" onChange="{{ onAmountChange }}" error="{{ amountError }}" type="number" placeholder="0,00" hint-size="100%,44px"></x-import>
+          <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Input" label="Fecha" value="{{ date }}" onChange="{{ onDateChange }}" type="date" hint-size="100%,44px"></x-import>
+        </div>
+
+        <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Button" variant="primary" onClick="{{ onSave }}" style="{{ fullWidthStyle }}" hint-size="100%,48px">Guardar venta</x-import>
+
+        <sc-if value="{{ confirmMessage }}" hint-placeholder-val="{{ '' }}">
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;align-items:center;gap:8px;background:var(--color-primary-soft);color:var(--color-primary-soft-text);font:var(--text-body-medium);padding:12px 16px;border-radius:var(--radius-pill)">
+              <i data-lucide="check" style="display:inline-flex;width:18px;height:18px;flex-shrink:0"></i>
+              <span>{{ confirmMessage }}</span>
+            </div>
+            <span style="font:var(--text-caption);color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.04em">Ya en su historial</span>
+            <div style="display:flex;flex-direction:column;gap:6px;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);padding:14px 16px">
+              <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px">
+                <span style="font:var(--text-body-medium);color:var(--color-text)">{{ savedDescription }}</span>
+                <span style="font:var(--text-body-medium);color:var(--color-primary)">{{ savedAmountLabel }}</span>
+              </div>
+              <span style="font:var(--text-caption);color:var(--color-text-tertiary)">{{ savedDateLabel }}</span>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:10px">
+    <span style="font:var(--text-caption);color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.04em">Escritorio — mismo formulario y estado</span>
+    <div style="display:flex;border:1px solid var(--color-border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);overflow:hidden;background:var(--color-bg)">
+      <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Sidebar" active="clients" hint-size="220px,600px"></x-import>
+      <div style="flex:1;padding:40px 48px;display:flex;flex-direction:column;gap:20px;max-width:480px">
+        <div style="display:flex;align-items:center;gap:12px">
+          <x-import component-from-global-scope="LoopDesignSystem_97c4ea.IconButton" icon="arrow-left" label="Volver a la ficha" variant="secondary" onClick="{{ onBack }}" hint-size="40px,40px"></x-import>
+          <h2 style="font:var(--text-screen-title);color:var(--color-text);margin:0">Registrar venta</h2>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <span style="font:var(--text-caption);color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.04em">Venta para</span>
+          <div style="display:flex;align-items:center;gap:12px;background:var(--color-surface-sunken);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:10px 14px">
+            <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Avatar" name="{{ clientName }}" size="{{ 40 }}" hint-size="40px,40px"></x-import>
+            <span style="font:var(--text-body-medium);color:var(--color-text)">{{ clientName }}</span>
+          </div>
+        </div>
+
+        <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Input" label="¿Qué has vendido?" value="{{ description }}" onChange="{{ onDescriptionChange }}" error="{{ descriptionError }}" placeholder="Corte + tinte" hint-size="100%,44px"></x-import>
+        <div style="display:flex;gap:14px">
+          <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Input" label="Importe (€)" value="{{ amount }}" onChange="{{ onAmountChange }}" error="{{ amountError }}" type="number" placeholder="0,00" hint-size="100%,44px"></x-import>
+          <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Input" label="Fecha" value="{{ date }}" onChange="{{ onDateChange }}" type="date" hint-size="100%,44px"></x-import>
+        </div>
+
+        <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:4px">
+          <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Button" variant="secondary" onClick="{{ noop }}" hint-size="auto,44px">Cancelar</x-import>
+          <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Button" variant="primary" onClick="{{ onSave }}" hint-size="auto,44px">Guardar venta</x-import>
+        </div>
+
+        <sc-if value="{{ confirmMessage }}" hint-placeholder-val="{{ '' }}">
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;align-items:center;gap:8px;background:var(--color-primary-soft);color:var(--color-primary-soft-text);font:var(--text-body-medium);padding:12px 16px;border-radius:var(--radius-pill);width:fit-content">
+              <i data-lucide="check" style="display:inline-flex;width:18px;height:18px;flex-shrink:0"></i>
+              <span>{{ confirmMessage }}</span>
+            </div>
+            <span style="font:var(--text-caption);color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.04em">Ya en su historial</span>
+            <div style="display:flex;flex-direction:column;gap:6px;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);padding:14px 16px">
+              <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px">
+                <span style="font:var(--text-body-medium);color:var(--color-text)">{{ savedDescription }}</span>
+                <span style="font:var(--text-body-medium);color:var(--color-primary)">{{ savedAmountLabel }}</span>
+              </div>
+              <span style="font:var(--text-caption);color:var(--color-text-tertiary)">{{ savedDateLabel }}</span>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  clientName = 'Ana Torres';
+
+  state = {
+    description: '', amount: '', date: new Date().toISOString().slice(0, 10),
+    descriptionError: '', amountError: '', confirmMessage: '',
+    savedDescription: '', savedAmountLabel: '', savedDateLabel: ''
+  };
+
+  formatDate(iso) {
+    const [y, m, d] = iso.split('-');
+    return `${d}/${m}/${y}`;
+  }
+
+  handleSave = () => {
+    const description = this.state.description.trim();
+    const amount = this.state.amount.trim();
+    let descriptionError = '', amountError = '';
+
+    if (!description) descriptionError = 'Indica qué le has vendido.';
+    if (!amount || Number(amount) <= 0) amountError = 'Introduce el importe de la venta.';
+
+    if (descriptionError || amountError) {
+      this.setState({ descriptionError, amountError, confirmMessage: '' });
+      return;
+    }
+
+    this.setState({
+      descriptionError: '', amountError: '',
+      confirmMessage: `Venta guardada. Volviendo a la ficha de ${this.clientName}…`,
+      savedDescription: description,
+      savedAmountLabel: `${Number(amount).toFixed(2).replace('.', ',')} €`,
+      savedDateLabel: this.formatDate(this.state.date)
+    });
+  };
+
+  renderVals() {
+    return {
+      clientName: this.clientName,
+      description: this.state.description,
+      amount: this.state.amount,
+      date: this.state.date,
+      descriptionError: this.state.descriptionError,
+      amountError: this.state.amountError,
+      confirmMessage: this.state.confirmMessage,
+      savedDescription: this.state.savedDescription,
+      savedAmountLabel: this.state.savedAmountLabel,
+      savedDateLabel: this.state.savedDateLabel,
+      onDescriptionChange: e => this.setState({ description: e.target.value }),
+      onAmountChange: e => this.setState({ amount: e.target.value }),
+      onDateChange: e => this.setState({ date: e.target.value }),
+      onSave: this.handleSave,
+      fullWidthStyle: { width: '100%' },
+      noop: () => {},
+      onBack: () => window.history.back()
+    };
+  }
+}
+</script>
+</body>
+</html>

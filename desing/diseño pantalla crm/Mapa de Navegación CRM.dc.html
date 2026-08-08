@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/loop-design-system-97c4eaef-c8ab-4752-97e0-13256f16f337/tokens/colors.css">
+  <link rel="stylesheet" href="_ds/loop-design-system-97c4eaef-c8ab-4752-97e0-13256f16f337/tokens/typography.css">
+  <link rel="stylesheet" href="_ds/loop-design-system-97c4eaef-c8ab-4752-97e0-13256f16f337/tokens/spacing.css">
+  <link rel="stylesheet" href="_ds/loop-design-system-97c4eaef-c8ab-4752-97e0-13256f16f337/tokens/radii-shadows.css">
+  <link rel="stylesheet" href="_ds/loop-design-system-97c4eaef-c8ab-4752-97e0-13256f16f337/styles.css">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <script>
+    (function () {
+      if (!window.lucide || window.__lucidePatched) return;
+      window.__lucidePatched = true;
+      var orig = window.lucide.createIcons.bind(window.lucide);
+      var scheduled = false;
+      window.lucide.createIcons = function (opts) {
+        if (scheduled) return;
+        scheduled = true;
+        requestAnimationFrame(function () { scheduled = false; orig(opts); });
+      };
+    })();
+  </script>
+  <script src="_ds/loop-design-system-97c4eaef-c8ab-4752-97e0-13256f16f337/_ds_bundle.js"></script>
+  <style>
+    body { margin: 0; background: var(--color-bg); font-family: var(--font-sans); color: var(--color-text); }
+  </style>
+</helmet>
+
+<div style="max-width:1500px;margin:0 auto;padding:40px 20px 8px;display:flex;flex-direction:column;gap:6px">
+  <span style="font:800 24px/1.2 var(--font-sans);color:var(--color-text)">Loop</span>
+  <h1 style="font:var(--text-screen-title);color:var(--color-text);margin:0">Mapa de navegación — CRM</h1>
+  <p style="font:var(--text-body);color:var(--color-text-secondary);margin:0;max-width:680px">7 pantallas y las transiciones entre ellas. Referencia para el diseño de cada pantalla y para enlazar el prototipo interactivo.</p>
+</div>
+
+<div style="max-width:1500px;margin:0 auto;padding:24px 20px 40px;overflow-x:auto">
+  <div style="position:relative;width:1420px;height:900px">
+    <svg viewBox="0 0 1420 900" width="1420" height="900" style="position:absolute;left:0;top:0;pointer-events:none">
+      <defs>
+        <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="context-stroke"></path>
+        </marker>
+      </defs>
+
+      <path d="M220,430 L300,430" stroke="var(--color-primary)" stroke-width="2.5" fill="none" marker-end="url(#arrow)"></path>
+      <path d="M400,380 L400,190 L600,190" stroke="var(--color-primary)" stroke-width="2.5" fill="none" marker-end="url(#arrow)"></path>
+      <path d="M500,430 L900,430" stroke="var(--color-primary)" stroke-width="2.5" fill="none" marker-end="url(#arrow)"></path>
+      <path d="M800,190 L1000,190 L1000,380" stroke="var(--color-primary)" stroke-width="2.5" fill="none" marker-end="url(#arrow)"></path>
+      <path d="M700,240 L700,560" stroke="var(--color-primary)" stroke-width="2.5" fill="none" marker-end="url(#arrow)"></path>
+      <path d="M800,610 L1000,610 L1000,480" stroke="var(--color-primary)" stroke-width="2.5" fill="none" marker-end="url(#arrow)"></path>
+      <path d="M1100,420 L1180,420" stroke="var(--color-primary)" stroke-width="2.5" fill="none" marker-end="url(#arrow)"></path>
+      <path d="M1180,445 L1100,445" stroke="var(--color-primary)" stroke-width="2.5" fill="none" marker-end="url(#arrow)"></path>
+
+      <path d="M600,225 Q500,260 450,380" stroke="var(--color-text-tertiary)" stroke-width="2" stroke-dasharray="6 5" fill="none" marker-end="url(#arrow)"></path>
+      <path d="M950,380 Q880,260 800,225" stroke="var(--color-text-tertiary)" stroke-width="2" stroke-dasharray="6 5" fill="none" marker-end="url(#arrow)"></path>
+      <path d="M900,455 L500,455" stroke="var(--color-text-tertiary)" stroke-width="2" stroke-dasharray="6 5" fill="none" marker-end="url(#arrow)"></path>
+      <path d="M650,585 L650,240" stroke="var(--color-text-tertiary)" stroke-width="2" stroke-dasharray="6 5" fill="none" marker-end="url(#arrow)"></path>
+
+      <path d="M350,480 Q400,650 650,760" stroke="var(--color-primary)" stroke-width="2" stroke-dasharray="7 5" fill="none" marker-end="url(#arrow)"></path>
+
+      <rect x="220" y="404" width="150" height="20" fill="var(--color-bg)"></rect>
+      <text x="225" y="419" style="font:var(--text-caption);fill:var(--color-primary)">Iniciar sesión correcta</text>
+
+      <rect x="405" y="172" width="105" height="20" fill="var(--color-bg)"></rect>
+      <text x="410" y="187" style="font:var(--text-caption);fill:var(--color-primary)">Ver clientes</text>
+
+      <rect x="640" y="404" width="105" height="20" fill="var(--color-bg)"></rect>
+      <text x="645" y="419" style="font:var(--text-caption);fill:var(--color-primary)">Tocar cliente</text>
+
+      <rect x="850" y="172" width="105" height="20" fill="var(--color-bg)"></rect>
+      <text x="855" y="187" style="font:var(--text-caption);fill:var(--color-primary)">Tocar cliente</text>
+
+      <rect x="705" y="390" width="100" height="20" fill="var(--color-bg)"></rect>
+      <text x="710" y="405" style="font:var(--text-caption);fill:var(--color-primary)">Nuevo cliente</text>
+
+      <rect x="850" y="597" width="80" height="20" fill="var(--color-bg)"></rect>
+      <text x="855" y="612" style="font:var(--text-caption);fill:var(--color-primary)">Guardar</text>
+
+      <rect x="1095" y="398" width="115" height="20" fill="var(--color-bg)"></rect>
+      <text x="1100" y="413" style="font:var(--text-caption);fill:var(--color-primary)">Registrar venta</text>
+
+      <rect x="1095" y="450" width="105" height="20" fill="var(--color-bg)"></rect>
+      <text x="1100" y="465" style="font:var(--text-caption);fill:var(--color-primary)">Guardar venta</text>
+
+      <rect x="495" y="248" width="60" height="18" fill="var(--color-bg)"></rect>
+      <text x="500" y="262" style="font:var(--text-caption);fill:var(--color-text-tertiary)">Atrás</text>
+
+      <rect x="855" y="248" width="60" height="18" fill="var(--color-bg)"></rect>
+      <text x="860" y="262" style="font:var(--text-caption);fill:var(--color-text-tertiary)">Atrás</text>
+
+      <rect x="660" y="446" width="60" height="18" fill="var(--color-bg)"></rect>
+      <text x="665" y="460" style="font:var(--text-caption);fill:var(--color-text-tertiary)">Atrás</text>
+
+      <rect x="655" y="395" width="60" height="18" fill="var(--color-bg)"></rect>
+      <text x="660" y="409" style="font:var(--text-caption);fill:var(--color-text-tertiary)">Atrás</text>
+
+      <rect x="420" y="610" width="180" height="20" fill="var(--color-bg)"></rect>
+      <text x="425" y="625" style="font:var(--text-caption);fill:var(--color-primary)">Menú (solo Dueña)</text>
+    </svg>
+
+    <div style="position:absolute;left:20px;top:380px;width:200px;height:100px;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);padding:14px;box-sizing:border-box;display:flex;flex-direction:column;gap:4px">
+      <span style="font:var(--text-caption);color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.04em">Sin sesión</span>
+      <span style="font:var(--text-body-medium);color:var(--color-text)">Iniciar sesión</span>
+      <span style="font:var(--text-caption);color:var(--color-text-secondary)">Email y contraseña</span>
+    </div>
+
+    <div style="position:absolute;left:300px;top:380px;width:200px;height:100px;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);padding:14px;box-sizing:border-box;display:flex;flex-direction:column;gap:4px">
+      <div style="position:absolute;top:-10px;right:-10px;width:24px;height:24px;border-radius:var(--radius-circle);background:var(--color-primary-soft);color:var(--color-primary-soft-text);display:flex;align-items:center;justify-content:center">
+        <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Icon" name="crown" size="{{ 14 }}" hint-size="14px,14px"></x-import>
+      </div>
+      <span style="font:var(--text-caption);color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.04em">Inicio (autenticado)</span>
+      <span style="font:var(--text-body-medium);color:var(--color-text)">Seguimiento</span>
+      <span style="font:var(--text-caption);color:var(--color-text-secondary)">Seguimientos de hoy y atrasados</span>
+    </div>
+
+    <div style="position:absolute;left:600px;top:140px;width:200px;height:100px;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);padding:14px;box-sizing:border-box;display:flex;flex-direction:column;gap:4px">
+      <div style="position:absolute;top:-10px;right:-10px;width:24px;height:24px;border-radius:var(--radius-circle);background:var(--color-primary-soft);color:var(--color-primary-soft-text);display:flex;align-items:center;justify-content:center">
+        <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Icon" name="crown" size="{{ 14 }}" hint-size="14px,14px"></x-import>
+      </div>
+      <span style="font:var(--text-caption);color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.04em">Lista</span>
+      <span style="font:var(--text-body-medium);color:var(--color-text)">Lista de clientes</span>
+      <span style="font:var(--text-caption);color:var(--color-text-secondary)">Buscar y filtrar clientes</span>
+    </div>
+
+    <div style="position:absolute;left:900px;top:380px;width:200px;height:100px;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);padding:14px;box-sizing:border-box;display:flex;flex-direction:column;gap:4px">
+      <div style="position:absolute;top:-10px;right:-10px;width:24px;height:24px;border-radius:var(--radius-circle);background:var(--color-primary-soft);color:var(--color-primary-soft-text);display:flex;align-items:center;justify-content:center">
+        <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Icon" name="crown" size="{{ 14 }}" hint-size="14px,14px"></x-import>
+      </div>
+      <span style="font:var(--text-caption);color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.04em">Detalle</span>
+      <span style="font:var(--text-body-medium);color:var(--color-text)">Ficha de cliente</span>
+      <span style="font:var(--text-caption);color:var(--color-text-secondary)">Datos, notas e historial de ventas</span>
+    </div>
+
+    <div style="position:absolute;left:600px;top:560px;width:200px;height:100px;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);padding:14px;box-sizing:border-box;display:flex;flex-direction:column;gap:4px">
+      <div style="position:absolute;top:-10px;right:-10px;width:24px;height:24px;border-radius:var(--radius-circle);background:var(--color-primary-soft);color:var(--color-primary-soft-text);display:flex;align-items:center;justify-content:center">
+        <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Icon" name="crown" size="{{ 14 }}" hint-size="14px,14px"></x-import>
+      </div>
+      <span style="font:var(--text-caption);color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.04em">Formulario</span>
+      <span style="font:var(--text-body-medium);color:var(--color-text)">Nuevo cliente</span>
+      <span style="font:var(--text-caption);color:var(--color-text-secondary)">Alta de un cliente nuevo</span>
+    </div>
+
+    <div style="position:absolute;left:1180px;top:380px;width:200px;height:100px;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);padding:14px;box-sizing:border-box;display:flex;flex-direction:column;gap:4px">
+      <div style="position:absolute;top:-10px;right:-10px;width:24px;height:24px;border-radius:var(--radius-circle);background:var(--color-primary-soft);color:var(--color-primary-soft-text);display:flex;align-items:center;justify-content:center">
+        <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Icon" name="crown" size="{{ 14 }}" hint-size="14px,14px"></x-import>
+      </div>
+      <span style="font:var(--text-caption);color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.04em">Formulario</span>
+      <span style="font:var(--text-body-medium);color:var(--color-text)">Registrar venta</span>
+      <span style="font:var(--text-caption);color:var(--color-text-secondary)">Descripción, importe y fecha</span>
+    </div>
+
+    <div style="position:absolute;left:585px;top:760px;width:250px;height:100px;background:var(--color-primary-soft);border:1px solid var(--color-primary);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);padding:14px;box-sizing:border-box;display:flex;flex-direction:column;gap:4px">
+      <span style="font:var(--text-caption);color:var(--color-primary-soft-text);text-transform:uppercase;letter-spacing:.04em">Solo Dueña</span>
+      <span style="font:var(--text-body-medium);color:var(--color-text)">Gestión de empleados</span>
+      <span style="font:var(--text-caption);color:var(--color-primary-soft-text)">Listado, alta y baja de empleados</span>
+    </div>
+  </div>
+
+  <div style="display:flex;flex-wrap:wrap;gap:24px;align-items:center;padding:16px 20px;background:var(--color-surface-sunken);border:1px solid var(--color-border);border-radius:var(--radius-lg);margin-top:8px;width:1380px;box-sizing:border-box">
+    <div style="display:flex;align-items:center;gap:8px">
+      <svg width="36" height="12"><line x1="2" y1="6" x2="34" y2="6" stroke="var(--color-primary)" stroke-width="2.5"></line></svg>
+      <span style="font:var(--text-secondary);color:var(--color-text-secondary)">Avanzar (botón o toque)</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <svg width="36" height="12"><line x1="2" y1="6" x2="34" y2="6" stroke="var(--color-text-tertiary)" stroke-width="2" stroke-dasharray="6 5"></line></svg>
+      <span style="font:var(--text-secondary);color:var(--color-text-secondary)">Volver atrás</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <svg width="36" height="12"><line x1="2" y1="6" x2="34" y2="6" stroke="var(--color-primary)" stroke-width="2" stroke-dasharray="7 5"></line></svg>
+      <span style="font:var(--text-secondary);color:var(--color-text-secondary)">Acceso global solo Dueña</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <div style="width:20px;height:20px;border-radius:var(--radius-circle);background:var(--color-primary-soft);color:var(--color-primary-soft-text);display:flex;align-items:center;justify-content:center">
+        <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Icon" name="crown" size="{{ 12 }}" hint-size="12px,12px"></x-import>
+      </div>
+      <span style="font:var(--text-secondary);color:var(--color-text-secondary)">Pantalla con acceso a Gestión de empleados si es Dueña</span>
+    </div>
+  </div>
+
+  <p style="font:var(--text-secondary);color:var(--color-text-tertiary);margin:12px 0 0;max-width:1000px">"Volver atrás" nunca deja encerrado en una ficha: cada pantalla regresa a la que la abrió (Lista de clientes o Seguimiento). El menú de Gestión de empleados está disponible desde cualquier pantalla autenticada, solo para la Dueña; los empleados no ven ese acceso.</p>
+</div>
+
+</x-dc>
+</body>
+</html>

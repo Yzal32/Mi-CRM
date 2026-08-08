@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+
+<helmet>
+  <link rel="stylesheet" href="_ds/loop-design-system-97c4eaef-c8ab-4752-97e0-13256f16f337/tokens/colors.css">
+  <link rel="stylesheet" href="_ds/loop-design-system-97c4eaef-c8ab-4752-97e0-13256f16f337/tokens/typography.css">
+  <link rel="stylesheet" href="_ds/loop-design-system-97c4eaef-c8ab-4752-97e0-13256f16f337/tokens/spacing.css">
+  <link rel="stylesheet" href="_ds/loop-design-system-97c4eaef-c8ab-4752-97e0-13256f16f337/tokens/radii-shadows.css">
+  <link rel="stylesheet" href="_ds/loop-design-system-97c4eaef-c8ab-4752-97e0-13256f16f337/styles.css">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <script>
+    (function () {
+      if (!window.lucide || window.__lucidePatched) return;
+      window.__lucidePatched = true;
+      var orig = window.lucide.createIcons.bind(window.lucide);
+      var scheduled = false;
+      window.lucide.createIcons = function (opts) {
+        if (scheduled) return;
+        scheduled = true;
+        requestAnimationFrame(function () { scheduled = false; orig(opts); });
+      };
+      window.addEventListener('load', function () {
+        setTimeout(function () { window.lucide.createIcons(); }, 300);
+      });
+    })();
+  </script>
+  <script src="_ds/loop-design-system-97c4eaef-c8ab-4752-97e0-13256f16f337/_ds_bundle.js"></script>
+  <style>
+    body { margin: 0; background: var(--color-bg); font-family: var(--font-sans); color: var(--color-text); }
+    a { color: var(--color-primary); text-decoration: none; }
+    a:hover { color: var(--color-primary-hover); }
+  </style>
+</helmet>
+
+<div style="max-width:1300px;margin:0 auto;padding:40px 20px 8px;display:flex;flex-direction:column;gap:6px">
+  <span style="font:800 24px/1.2 var(--font-sans);color:var(--color-text)">Loop</span>
+  <h1 style="font:var(--text-screen-title);color:var(--color-text);margin:0">Pantalla — Iniciar sesión</h1>
+  <p style="font:var(--text-body);color:var(--color-text-secondary);margin:0;max-width:640px">Pantalla de entrada. Prueba con cualquier email y contraseña para entrar; usa "desactivada@negocio.com" para ver el aviso de cuenta desactivada, o deja algún campo vacío para ver el error genérico. El icono de la esquina cambia entre modo claro y oscuro.</p>
+</div>
+
+<div style="max-width:1300px;margin:0 auto;padding:24px 20px 8px;display:flex;flex-wrap:wrap;gap:32px;align-items:flex-start">
+
+  <div style="display:flex;flex-direction:column;gap:10px">
+    <span style="font:var(--text-caption);color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.04em">Móvil</span>
+    <div data-theme="{{ themeAttr }}" style="width:390px;height:760px;background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:var(--space-6);position:relative">
+      <button onClick="{{ onToggleTheme }}" aria-label="{{ themeToggleLabel }}" style="position:absolute;top:16px;right:16px;border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-text-secondary);border-radius:var(--radius-pill);width:40px;height:40px;display:flex;align-items:center;justify-content:center;cursor:pointer">
+        <i data-lucide="{{ themeIcon }}" style="width:18px;height:18px"></i>
+      </button>
+      <div style="width:100%;max-width:320px;display:flex;flex-direction:column;gap:28px">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+          <span style="font:800 28px/1.2 var(--font-sans);color:var(--color-text)">Loop</span>
+          <span style="font:var(--text-caption);color:var(--color-text-tertiary)">Peluquería Ana</span>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <sc-if value="{{ errorMessage }}" hint-placeholder-val="{{ '' }}">
+            <div style="display:flex;align-items:flex-start;gap:10px;background:var(--color-error-bg);border:1px solid var(--color-error-border);border-radius:var(--radius-md);padding:12px 14px">
+              <i data-lucide="alert-circle" style="display:inline-flex;width:18px;height:18px;color:var(--color-error-text);flex-shrink:0;margin-top:1px"></i>
+              <span style="font:var(--text-secondary);color:var(--color-error-text)">{{ errorMessage }}</span>
+            </div>
+          </sc-if>
+
+          <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Input" label="Email" value="{{ email }}" onChange="{{ onEmailChange }}" type="email" placeholder="tu@negocio.com" hint-size="100%,44px"></x-import>
+          <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Input" label="Contraseña" value="{{ password }}" onChange="{{ onPasswordChange }}" type="password" placeholder="Tu contraseña" hint-size="100%,44px"></x-import>
+
+          <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Button" variant="primary" onClick="{{ onSubmit }}" style="{{ fullWidthStyle }}" hint-size="100%,48px">Entrar</x-import>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:10px">
+    <span style="font:var(--text-caption);color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.04em">Escritorio</span>
+    <div data-theme="{{ themeAttr }}" style="width:960px;height:600px;background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);overflow:hidden;display:flex;align-items:center;justify-content:center;position:relative">
+      <button onClick="{{ onToggleTheme }}" aria-label="{{ themeToggleLabel }}" style="position:absolute;top:20px;right:20px;border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-text-secondary);border-radius:var(--radius-pill);width:40px;height:40px;display:flex;align-items:center;justify-content:center;cursor:pointer">
+        <i data-lucide="{{ themeIcon }}" style="width:18px;height:18px"></i>
+      </button>
+      <div style="width:100%;max-width:360px;display:flex;flex-direction:column;gap:28px">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+          <span style="font:800 28px/1.2 var(--font-sans);color:var(--color-text)">Loop</span>
+          <span style="font:var(--text-caption);color:var(--color-text-tertiary)">Peluquería Ana</span>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <sc-if value="{{ errorMessage }}" hint-placeholder-val="{{ '' }}">
+            <div style="display:flex;align-items:flex-start;gap:10px;background:var(--color-error-bg);border:1px solid var(--color-error-border);border-radius:var(--radius-md);padding:12px 14px">
+              <i data-lucide="alert-circle" style="display:inline-flex;width:18px;height:18px;color:var(--color-error-text);flex-shrink:0;margin-top:1px"></i>
+              <span style="font:var(--text-secondary);color:var(--color-error-text)">{{ errorMessage }}</span>
+            </div>
+          </sc-if>
+
+          <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Input" label="Email" value="{{ email }}" onChange="{{ onEmailChange }}" type="email" placeholder="tu@negocio.com" hint-size="100%,44px"></x-import>
+          <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Input" label="Contraseña" value="{{ password }}" onChange="{{ onPasswordChange }}" type="password" placeholder="Tu contraseña" hint-size="100%,44px"></x-import>
+
+          <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Button" variant="primary" onClick="{{ onSubmit }}" style="{{ fullWidthStyle }}" hint-size="100%,48px">Entrar</x-import>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { email: '', password: '', errorMessage: '', isDark: false };
+
+  onToggleTheme = () => this.setState({ isDark: !this.state.isDark });
+
+  onSubmit = () => {
+    const email = this.state.email.trim().toLowerCase();
+    const password = this.state.password.trim();
+
+    if (!email || !password) {
+      this.setState({ errorMessage: 'Revisa tu email y contraseña.' });
+      return;
+    }
+    if (email === 'desactivada@negocio.com') {
+      this.setState({ errorMessage: 'Esta cuenta ya no tiene acceso. Habla con la dueña del negocio.' });
+      return;
+    }
+    window.location.href = 'Pantalla Seguimiento.dc.html';
+  };
+
+  renderVals() {
+    return {
+      email: this.state.email,
+      password: this.state.password,
+      errorMessage: this.state.errorMessage,
+      onEmailChange: e => this.setState({ email: e.target.value }),
+      onPasswordChange: e => this.setState({ password: e.target.value }),
+      onSubmit: this.onSubmit,
+      fullWidthStyle: { width: '100%' },
+      themeAttr: this.state.isDark ? 'dark' : 'light',
+      themeIcon: this.state.isDark ? 'sun' : 'moon',
+      themeToggleLabel: this.state.isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro',
+      onToggleTheme: this.onToggleTheme
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/loop-design-system-97c4eaef-c8ab-4752-97e0-13256f16f337/tokens/colors.css">
+  <link rel="stylesheet" href="_ds/loop-design-system-97c4eaef-c8ab-4752-97e0-13256f16f337/tokens/typography.css">
+  <link rel="stylesheet" href="_ds/loop-design-system-97c4eaef-c8ab-4752-97e0-13256f16f337/tokens/spacing.css">
+  <link rel="stylesheet" href="_ds/loop-design-system-97c4eaef-c8ab-4752-97e0-13256f16f337/tokens/radii-shadows.css">
+  <link rel="stylesheet" href="_ds/loop-design-system-97c4eaef-c8ab-4752-97e0-13256f16f337/styles.css">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <script>
+    (function () {
+      if (!window.lucide || window.__lucidePatched) return;
+      window.__lucidePatched = true;
+      var orig = window.lucide.createIcons.bind(window.lucide);
+      var scheduled = false;
+      window.lucide.createIcons = function (opts) {
+        if (scheduled) return;
+        scheduled = true;
+        requestAnimationFrame(function () { scheduled = false; orig(opts); });
+      };
+    })();
+  </script>
+  <script src="_ds/loop-design-system-97c4eaef-c8ab-4752-97e0-13256f16f337/_ds_bundle.js"></script>
+  <style>
+    body { margin: 0; background: var(--color-bg); font-family: var(--font-sans); color: var(--color-text); }
+    a { color: var(--color-primary); text-decoration: none; }
+    a:hover { color: var(--color-primary-hover); }
+  </style>
+</helmet>
+
+<div style="max-width:1160px;margin:0 auto;padding:40px 20px 24px;display:flex;flex-direction:column;gap:6px">
+  <span style="font:800 28px/1.2 var(--font-sans);color:var(--color-text)">Loop</span>
+  <h1 style="font:var(--text-screen-title);color:var(--color-text);margin:0">Librería de componentes — CRM</h1>
+  <p style="font:var(--text-body);color:var(--color-text-secondary);margin:0;max-width:640px">Componentes reutilizables del CRM, mostrados de forma aislada en sus estados relevantes. Mobile-first, construidos sobre el Design System Loop.</p>
+</div>
+
+<section style="display:flex;flex-direction:column;gap:16px;padding:32px 20px;max-width:1160px;margin:0 auto;border-bottom:1px solid var(--color-border)">
+  <h2 style="font:var(--text-section-title);color:var(--color-text);margin:0">1. Barra de búsqueda con resultados en vivo</h2>
+  <p style="font:var(--text-secondary);color:var(--color-text-secondary);margin:0">Busca por nombre, teléfono o negocio.</p>
+  <div style="display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start">
+    <div style="display:flex;flex-direction:column;gap:10px;background:var(--color-surface-sunken);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:20px;min-width:300px;width:340px">
+      <span style="font:var(--text-caption);color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:0.04em">Vacío</span>
+      <x-import component-from-global-scope="LoopDesignSystem_97c4ea.SearchBar" value="{{ search1 }}" onChange="{{ onSearch1 }}" hint-size="100%,44px"></x-import>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;background:var(--color-surface-sunken);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:20px;min-width:300px;width:340px">
+      <span style="font:var(--text-caption);color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:0.04em">Con resultados</span>
+      <x-import component-from-global-scope="LoopDesignSystem_97c4ea.SearchBar" value="{{ search2 }}" onChange="{{ onSearch2 }}" hint-size="100%,44px"></x-import>
+      <div style="display:flex;flex-direction:column;gap:8px;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:8px">
+        <sc-for list="{{ results2 }}" as="c" hint-placeholder-count="2">
+          <x-import component-from-global-scope="LoopDesignSystem_97c4ea.ListItem" name="{{ c.name }}" meta="{{ c.metaText }}" hint-size="100%,76px"></x-import>
+        </sc-for>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;background:var(--color-surface-sunken);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:20px;min-width:300px;width:340px">
+      <span style="font:var(--text-caption);color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:0.04em">Sin resultados</span>
+      <x-import component-from-global-scope="LoopDesignSystem_97c4ea.SearchBar" value="{{ search3 }}" onChange="{{ onSearch3 }}" hint-size="100%,44px"></x-import>
+      <div style="display:flex;align-items:center;justify-content:center;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:24px 16px">
+        <span style="font:var(--text-secondary);color:var(--color-text-tertiary)">No se encontraron clientes</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section style="display:flex;flex-direction:column;gap:16px;padding:32px 20px;max-width:1160px;margin:0 auto;border-bottom:1px solid var(--color-border)">
+  <h2 style="font:var(--text-section-title);color:var(--color-text);margin:0">2. Elemento de lista de cliente</h2>
+  <p style="font:var(--text-secondary);color:var(--color-text-secondary);margin:0">Nombre, estado y seguimiento pendiente o atrasado.</p>
+  <div style="display:flex;flex-direction:column;gap:12px;max-width:400px">
+    <span style="font:var(--text-caption);color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:0.04em">Al día</span>
+    <x-import component-from-global-scope="LoopDesignSystem_97c4ea.ListItem" name="María López" meta="612 345 678 · Peluquería Ana" status="interested" hint-size="100%,76px"></x-import>
+    <span style="font:var(--text-caption);color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:0.04em;margin-top:8px">Con seguimiento atrasado</span>
+    <x-import component-from-global-scope="LoopDesignSystem_97c4ea.ListItem" name="Carlos Ruiz" meta="699 123 456 · Taller Ruiz" status="contacted" overdue="{{ true }}" hint-size="100%,76px"></x-import>
+    <span style="font:var(--text-caption);color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:0.04em;margin-top:8px">Sin estado asignado</span>
+    <x-import component-from-global-scope="LoopDesignSystem_97c4ea.ListItem" name="Marta Gómez" meta="655 987 321 · Panadería Gómez" hint-size="100%,76px"></x-import>
+  </div>
+</section>
+
+<section style="display:flex;flex-direction:column;gap:16px;padding:32px 20px;max-width:1160px;margin:0 auto;border-bottom:1px solid var(--color-border)">
+  <h2 style="font:var(--text-section-title);color:var(--color-text);margin:0">3. Badge de estado de cliente</h2>
+  <div style="display:flex;flex-wrap:wrap;gap:10px">
+    <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Badge" status="new" hint-size="auto,26px"></x-import>
+    <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Badge" status="contacted" hint-size="auto,26px"></x-import>
+    <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Badge" status="interested" hint-size="auto,26px"></x-import>
+    <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Badge" status="won" hint-size="auto,26px"></x-import>
+    <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Badge" status="lost" hint-size="auto,26px"></x-import>
+  </div>
+</section>
+
+<section style="display:flex;flex-direction:column;gap:16px;padding:32px 20px;max-width:1160px;margin:0 auto;border-bottom:1px solid var(--color-border)">
+  <h2 style="font:var(--text-section-title);color:var(--color-text);margin:0">4. Selector de estado de cliente</h2>
+  <p style="font:var(--text-secondary);color:var(--color-text-secondary);margin:0">Chips de un solo toque para cambiar el estado.</p>
+  <div style="display:flex;flex-direction:column;gap:8px">
+    <span style="font:var(--text-caption);color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:0.04em">Con estado seleccionado</span>
+    <div style="display:flex;flex-wrap:wrap;gap:8px">
+      <sc-for list="{{ statusChipsA }}" as="chip" hint-placeholder-count="5">
+        <button onClick="{{ chip.onClick }}" style="{{ chip.style }}">{{ chip.label }}</button>
+      </sc-for>
+    </div>
+    <span style="font:var(--text-caption);color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:0.04em;margin-top:8px">Sin estado seleccionado</span>
+    <div style="display:flex;flex-wrap:wrap;gap:8px">
+      <sc-for list="{{ statusChipsB }}" as="chip" hint-placeholder-count="5">
+        <button onClick="{{ chip.onClick }}" style="{{ chip.style }}">{{ chip.label }}</button>
+      </sc-for>
+    </div>
+  </div>
+</section>
+
+<section style="display:flex;flex-direction:column;gap:16px;padding:32px 20px;max-width:1160px;margin:0 auto;border-bottom:1px solid var(--color-border)">
+  <h2 style="font:var(--text-section-title);color:var(--color-text);margin:0">5. Selector de canal de origen</h2>
+  <div style="display:flex;flex-wrap:wrap;gap:20px">
+    <div style="display:flex;flex-direction:column;gap:8px;width:280px">
+      <span style="font:var(--text-caption);color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:0.04em">Vacío</span>
+      <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Select" label="¿Cómo llegó?" options="{{ channelOptions }}" value="{{ channelSel }}" onChange="{{ onChannel }}" hint-size="100%,68px"></x-import>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px;width:280px">
+      <span style="font:var(--text-caption);color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:0.04em">Seleccionado</span>
+      <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Select" label="¿Cómo llegó?" options="{{ channelOptions }}" value="{{ channelSel2 }}" onChange="{{ onChannel2 }}" hint-size="100%,68px"></x-import>
+    </div>
+  </div>
+</section>
+
+<section style="display:flex;flex-direction:column;gap:16px;padding:32px 20px;max-width:1160px;margin:0 auto;border-bottom:1px solid var(--color-border)">
+  <h2 style="font:var(--text-section-title);color:var(--color-text);margin:0">6. Campos de formulario</h2>
+  <p style="font:var(--text-secondary);color:var(--color-text-secondary);margin:0">Texto, teléfono, email, importe, fecha y menú desplegable — normal y con error de validación.</p>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px">
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <span style="font:var(--text-caption);color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:0.04em">Texto</span>
+      <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Input" label="Nombre del cliente" value="Ana Torres" hint-size="100%,68px"></x-import>
+      <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Input" label="Nombre del cliente" value="" error="Introduce el nombre del cliente" hint-size="100%,88px"></x-import>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <span style="font:var(--text-caption);color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:0.04em">Teléfono</span>
+      <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Input" label="Teléfono" type="tel" value="612 345 678" hint-size="100%,68px"></x-import>
+      <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Input" label="Teléfono" type="tel" value="612" error="Introduce un teléfono válido" hint-size="100%,88px"></x-import>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <span style="font:var(--text-caption);color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:0.04em">Email</span>
+      <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Input" label="Email" type="email" value="ana@correo.com" hint-size="100%,68px"></x-import>
+      <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Input" label="Email" type="email" value="ana@correo" error="Introduce un email válido" hint-size="100%,88px"></x-import>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <span style="font:var(--text-caption);color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:0.04em">Importe</span>
+      <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Input" label="Importe de la venta" type="number" value="45" hint-size="100%,68px"></x-import>
+      <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Input" label="Importe de la venta" type="number" value="" error="Introduce un importe" hint-size="100%,88px"></x-import>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <span style="font:var(--text-caption);color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:0.04em">Fecha</span>
+      <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Input" label="Próximo seguimiento" type="date" value="2026-08-10" hint-size="100%,68px"></x-import>
+      <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Input" label="Próximo seguimiento" type="date" value="" error="Elige una fecha" hint-size="100%,88px"></x-import>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <span style="font:var(--text-caption);color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:0.04em">Menú desplegable</span>
+      <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Select" label="Estado" options="{{ statusFieldOptions }}" value="contacted" hint-size="100%,68px"></x-import>
+      <label style="display:flex;flex-direction:column;gap:6px;width:100%">
+        <span style="font:var(--text-secondary);color:var(--color-text-secondary)">Estado</span>
+        <select style="font:var(--text-body);color:var(--color-text);background:var(--color-surface);border:1px solid var(--color-error-border);border-radius:var(--radius-md);padding:12px 16px;height:44px;box-sizing:border-box">
+          <option>Selecciona un estado</option>
+        </select>
+        <span style="font:var(--text-caption);color:var(--color-error-text)">Elige un estado para el cliente</span>
+      </label>
+    </div>
+  </div>
+</section>
+
+<section style="display:flex;flex-direction:column;gap:16px;padding:32px 20px;max-width:1160px;margin:0 auto;border-bottom:1px solid var(--color-border)">
+  <h2 style="font:var(--text-section-title);color:var(--color-text);margin:0">7. Botones primario y secundario</h2>
+  <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:center">
+    <div style="display:flex;flex-direction:column;gap:8px;align-items:center">
+      <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Button" variant="primary" size="md" hint-size="auto,44px">Añadir cliente</x-import>
+      <span style="font:var(--text-caption);color:var(--color-text-tertiary)">Primario</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px;align-items:center">
+      <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Button" variant="primary" size="sm" hint-size="auto,36px">Añadir</x-import>
+      <span style="font:var(--text-caption);color:var(--color-text-tertiary)">Primario compacto</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px;align-items:center">
+      <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Button" variant="secondary" size="md" hint-size="auto,44px">Cancelar</x-import>
+      <span style="font:var(--text-caption);color:var(--color-text-tertiary)">Secundario</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px;align-items:center">
+      <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Button" variant="secondary" size="sm" hint-size="auto,36px">Cancelar</x-import>
+      <span style="font:var(--text-caption);color:var(--color-text-tertiary)">Secundario compacto</span>
+    </div>
+  </div>
+</section>
+
+<section style="display:flex;flex-direction:column;gap:16px;padding:32px 20px;max-width:1160px;margin:0 auto;border-bottom:1px solid var(--color-border)">
+  <h2 style="font:var(--text-section-title);color:var(--color-text);margin:0">8. Tarjeta de nota</h2>
+  <div style="display:flex;flex-wrap:wrap;gap:20px">
+    <div style="width:320px;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);padding:16px;display:flex;flex-direction:column;gap:10px">
+      <span style="font:var(--text-caption);color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:0.04em">Normal</span>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+        <p style="font:var(--text-body);color:var(--color-text);margin:0">Preguntó por el precio del tinte y el corte. Quiere que la llamemos la semana que viene.</p>
+        <button aria-label="Marcar como destacada" style="border:none;background:transparent;color:var(--color-text-tertiary);cursor:pointer;padding:4px;flex-shrink:0">
+          <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Icon" name="star" size="{{ 20 }}" hint-size="20px,20px"></x-import>
+        </button>
+      </div>
+      <span style="font:var(--text-caption);color:var(--color-text-tertiary)">3 ago 2026</span>
+    </div>
+    <div style="width:320px;background:var(--color-primary-soft);border:1px solid var(--color-primary);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);padding:16px;display:flex;flex-direction:column;gap:10px">
+      <span style="font:var(--text-caption);color:var(--color-primary-soft-text);text-transform:uppercase;letter-spacing:0.04em">Destacada (interactivo)</span>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+        <p style="font:var(--text-body);color:var(--color-text);margin:0">Cerró la cita para el sábado a las 11:00. Muy interesada en el pack completo.</p>
+        <button onClick="{{ toggleNota }}" aria-label="Quitar de destacadas" style="border:none;background:transparent;color:var(--color-primary);cursor:pointer;padding:4px;flex-shrink:0">
+          <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Icon" name="{{ notaIconName }}" size="{{ 20 }}" hint-size="20px,20px"></x-import>
+        </button>
+      </div>
+      <span style="font:var(--text-caption);color:var(--color-primary-soft-text)">1 ago 2026 · {{ notaEstado }}</span>
+    </div>
+  </div>
+</section>
+
+<section style="display:flex;flex-direction:column;gap:16px;padding:32px 20px;max-width:1160px;margin:0 auto;border-bottom:1px solid var(--color-border)">
+  <h2 style="font:var(--text-section-title);color:var(--color-text);margin:0">9. Próximo seguimiento</h2>
+  <p style="font:var(--text-secondary);color:var(--color-text-secondary);margin:0">Fecha, tipo de acción y controles para gestionarlo.</p>
+  <div style="display:flex;gap:10px;flex-wrap:wrap">
+    <div style="display:flex;align-items:center;gap:6px;background:var(--color-surface-sunken);border:1px solid var(--color-border);border-radius:var(--radius-pill);padding:6px 12px;color:var(--color-text-secondary);font:var(--text-secondary)">
+      <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Icon" name="phone" size="{{ 16 }}" hint-size="16px,16px"></x-import>Llamar
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;background:var(--color-surface-sunken);border:1px solid var(--color-border);border-radius:var(--radius-pill);padding:6px 12px;color:var(--color-text-secondary);font:var(--text-secondary)">
+      <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Icon" name="message-circle" size="{{ 16 }}" hint-size="16px,16px"></x-import>WhatsApp
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;background:var(--color-surface-sunken);border:1px solid var(--color-border);border-radius:var(--radius-pill);padding:6px 12px;color:var(--color-text-secondary);font:var(--text-secondary)">
+      <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Icon" name="mail" size="{{ 16 }}" hint-size="16px,16px"></x-import>Email
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;background:var(--color-surface-sunken);border:1px solid var(--color-border);border-radius:var(--radius-pill);padding:6px 12px;color:var(--color-text-secondary);font:var(--text-secondary)">
+      <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Icon" name="map-pin" size="{{ 16 }}" hint-size="16px,16px"></x-import>Visita
+    </div>
+  </div>
+  <div style="width:100%;max-width:400px;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);padding:16px;display:flex;flex-direction:column;gap:14px">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div style="width:40px;height:40px;border-radius:var(--radius-md);background:var(--color-primary-soft);color:var(--color-primary);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Icon" name="phone" size="{{ 20 }}" hint-size="20px,20px"></x-import>
+      </div>
+      <div style="display:flex;flex-direction:column">
+        <span style="font:var(--text-body-medium);color:var(--color-text)">Llamar a María López</span>
+        <span style="font:var(--text-secondary);color:var(--color-text-tertiary)">Hoy · 16:00</span>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Button" variant="primary" size="sm" hint-size="auto,36px">Completar</x-import>
+      <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Button" variant="secondary" size="sm" hint-size="auto,36px">Reprogramar</x-import>
+      <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Button" variant="ghost" size="sm" hint-size="auto,36px">Descartar</x-import>
+    </div>
+  </div>
+</section>
+
+<section style="display:flex;flex-direction:column;gap:16px;padding:32px 20px;max-width:1160px;margin:0 auto;border-bottom:1px solid var(--color-border)">
+  <h2 style="font:var(--text-section-title);color:var(--color-text);margin:0">10. Indicador de seguimiento atrasado</h2>
+  <p style="font:var(--text-secondary);color:var(--color-text-secondary);margin:0">Color de alerta, distinto de los badges de estado del cliente.</p>
+  <div style="display:flex;flex-wrap:wrap;gap:20px;align-items:center">
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <span style="font:var(--text-caption);color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:0.04em">Badge</span>
+      <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Badge" status="overdue" hint-size="auto,26px"></x-import>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px;flex:1;min-width:280px">
+      <span style="font:var(--text-caption);color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:0.04em">Banner</span>
+      <div style="display:flex;align-items:center;gap:10px;background:var(--color-alert-bg);border:1px solid var(--color-alert-border);border-radius:var(--radius-lg);padding:12px 16px;color:var(--color-alert-text)">
+        <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Icon" name="alert-circle" size="{{ 18 }}" hint-size="18px,18px"></x-import>
+        <span style="font:var(--text-secondary)">Este seguimiento lleva 3 días de retraso</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section style="display:flex;flex-direction:column;gap:16px;padding:32px 20px;max-width:1160px;margin:0 auto;border-bottom:1px solid var(--color-border)">
+  <h2 style="font:var(--text-section-title);color:var(--color-text);margin:0">11. Tarjeta de venta</h2>
+  <div style="width:320px;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);padding:16px;display:flex;flex-direction:column;gap:10px">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div style="width:36px;height:36px;border-radius:var(--radius-md);background:var(--color-surface-sunken);color:var(--color-primary);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Icon" name="wallet" size="{{ 18 }}" hint-size="18px,18px"></x-import>
+      </div>
+      <span style="font:var(--text-body-medium);color:var(--color-text)">Corte y tinte</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline">
+      <span style="font:700 22px/1.2 var(--font-sans);color:var(--color-primary)">45,00 €</span>
+      <span style="font:var(--text-caption);color:var(--color-text-tertiary)">3 ago 2026</span>
+    </div>
+  </div>
+</section>
+
+<section style="display:flex;flex-direction:column;gap:20px;padding:32px 20px;max-width:1160px;margin:0 auto;border-bottom:1px solid var(--color-border)">
+  <h2 style="font:var(--text-section-title);color:var(--color-text);margin:0">12. Barra de navegación</h2>
+  <p style="font:var(--text-secondary);color:var(--color-text-secondary);margin:0">Móvil: barra inferior fija. Escritorio: barra superior.</p>
+  <div style="display:flex;flex-direction:column;gap:8px">
+    <span style="font:var(--text-caption);color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:0.04em">Móvil — barra inferior</span>
+    <div style="width:100%;max-width:360px;display:flex;justify-content:space-around;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:10px 0">
+      <button onClick="{{ setNavActiveMobile }}" style="{{ navMobileStyle1 }}">
+        <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Icon" name="calendar-check" size="{{ 22 }}" hint-size="22px,22px"></x-import>
+        <span style="font:var(--text-caption)">Seguimiento</span>
+      </button>
+      <button onClick="{{ setNavActiveMobile2 }}" style="{{ navMobileStyle2 }}">
+        <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Icon" name="users" size="{{ 22 }}" hint-size="22px,22px"></x-import>
+        <span style="font:var(--text-caption)">Clientes</span>
+      </button>
+    </div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:8px">
+    <span style="font:var(--text-caption);color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:0.04em">Escritorio — barra superior</span>
+    <div style="width:100%;display:flex;align-items:center;gap:28px;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:12px 20px;box-sizing:border-box">
+      <span style="font:800 18px/1 var(--font-sans);color:var(--color-text)">Loop</span>
+      <div style="display:flex;gap:6px">
+        <button onClick="{{ setNavActiveDesktop1 }}" style="{{ navDesktopStyle1 }}">Seguimiento</button>
+        <button onClick="{{ setNavActiveDesktop2 }}" style="{{ navDesktopStyle2 }}">Clientes</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section style="display:flex;flex-direction:column;gap:16px;padding:32px 20px;max-width:1160px;margin:0 auto;border-bottom:1px solid var(--color-border)">
+  <h2 style="font:var(--text-section-title);color:var(--color-text);margin:0">13. Botón de volver atrás</h2>
+  <div style="display:flex;flex-wrap:wrap;gap:20px;align-items:center">
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <span style="font:var(--text-caption);color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:0.04em">Independiente</span>
+      <button style="display:inline-flex;align-items:center;gap:6px;border:none;background:transparent;color:var(--color-primary);cursor:pointer;padding:8px 4px;font:var(--text-button)">
+        <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Icon" name="arrow-left" size="{{ 20 }}" hint-size="20px,20px"></x-import>Atrás
+      </button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px;width:320px">
+      <span style="font:var(--text-caption);color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:0.04em">Dentro de la barra superior</span>
+      <x-import component-from-global-scope="LoopDesignSystem_97c4ea.TopBar" title="María López" onBack="{{ noop }}" hint-size="100%,56px"></x-import>
+    </div>
+  </div>
+</section>
+
+<section style="display:flex;flex-direction:column;gap:16px;padding:32px 20px;max-width:1160px;margin:0 auto">
+  <h2 style="font:var(--text-section-title);color:var(--color-text);margin:0">14. Estado vacío genérico</h2>
+  <div style="display:flex;flex-wrap:wrap;gap:16px">
+    <div style="width:320px;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg)">
+      <x-import component-from-global-scope="LoopDesignSystem_97c4ea.EmptyState" icon="users" title="Aún no tienes clientes" message="Añade tu primer cliente para empezar a hacer seguimiento." actionLabel="Añadir cliente" hint-size="100%,280px"></x-import>
+    </div>
+    <div style="width:320px;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg)">
+      <x-import component-from-global-scope="LoopDesignSystem_97c4ea.EmptyState" icon="calendar-check" title="No tienes seguimientos pendientes" message="Cuando programes uno, aparecerá aquí." hint-size="100%,240px"></x-import>
+    </div>
+    <div style="width:320px;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg)">
+      <x-import component-from-global-scope="LoopDesignSystem_97c4ea.EmptyState" icon="wallet" title="Este cliente todavía no tiene notas ni ventas" message="Las notas y ventas que registres aparecerán aquí." hint-size="100%,240px"></x-import>
+    </div>
+  </div>
+</section>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const CLIENTS = [
+  { name: 'María López', phone: '612 345 678', business: 'Peluquería Ana' },
+  { name: 'Marta Gómez', phone: '655 987 321', business: 'Panadería Gómez' },
+  { name: 'Carlos Ruiz', phone: '699 123 456', business: 'Taller Ruiz' },
+];
+
+function filterClients(q) {
+  if (!q) return [];
+  const s = q.toLowerCase();
+  return CLIENTS.filter(c => c.name.toLowerCase().includes(s) || c.phone.includes(s) || c.business.toLowerCase().includes(s));
+}
+
+const STATUS_OPTIONS = [
+  { value: 'new', label: 'Nuevo', bg: 'var(--status-new-bg)', text: 'var(--status-new-text)' },
+  { value: 'contacted', label: 'Contactado', bg: 'var(--status-contacted-bg)', text: 'var(--status-contacted-text)' },
+  { value: 'interested', label: 'Interesado', bg: 'var(--status-interested-bg)', text: 'var(--status-interested-text)' },
+  { value: 'won', label: 'Venta cerrada', bg: 'var(--status-won-bg)', text: 'var(--status-won-text)' },
+  { value: 'lost', label: 'Perdido', bg: 'var(--status-lost-bg)', text: 'var(--status-lost-text)' },
+];
+
+const CHANNEL_OPTIONS = [
+  { value: '', label: 'Selecciona un canal' },
+  { value: 'web', label: 'Web' },
+  { value: 'social', label: 'Redes sociales' },
+  { value: 'email', label: 'Email' },
+  { value: 'whatsapp', label: 'WhatsApp' },
+  { value: 'referral', label: 'Recomendación' },
+  { value: 'visit', label: 'Visita en tienda' },
+];
+
+const STATUS_FIELD_OPTIONS = [
+  { value: 'new', label: 'Nuevo' },
+  { value: 'contacted', label: 'Contactado' },
+  { value: 'interested', label: 'Interesado' },
+  { value: 'won', label: 'Venta cerrada' },
+  { value: 'lost', label: 'Perdido' },
+];
+
+const chipBase = { font: 'var(--text-secondary)', padding: '8px 16px', borderRadius: 'var(--radius-pill)', cursor: 'pointer', whiteSpace: 'nowrap' };
+
+class Component extends DCLogic {
+  state = {
+    search1: '', search2: 'Mar', search3: 'qwzx',
+    statusSel: 'contacted', statusSel2: '',
+    channelSel: '', channelSel2: 'whatsapp',
+    notaDestacada: true,
+    navMobile: 'seguimiento', navDesktop: 'clientes',
+  };
+
+  buildChips(current) {
+    return STATUS_OPTIONS.map(o => {
+      const isSel = o.value === current;
+      const style = isSel
+        ? { ...chipBase, border: '1px solid transparent', background: o.bg, color: o.text, fontWeight: 700 }
+        : { ...chipBase, border: '1px solid var(--color-border)', background: 'var(--color-surface)', color: 'var(--color-text-secondary)' };
+      return { value: o.value, label: o.label, style };
+    });
+  }
+
+  navStyle(active, current) {
+    return {
+      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, border: 'none', background: 'transparent',
+      color: current === active ? 'var(--color-primary)' : 'var(--color-text-tertiary)', cursor: 'pointer', minWidth: 64, padding: '4px 0',
+    };
+  }
+
+  navDesktopStyle(active, current) {
+    return {
+      font: 'var(--text-button)', padding: '8px 16px', borderRadius: 'var(--radius-pill)', border: 'none', cursor: 'pointer',
+      background: current === active ? 'var(--color-primary-soft)' : 'transparent',
+      color: current === active ? 'var(--color-primary-soft-text)' : 'var(--color-text-secondary)',
+    };
+  }
+
+  renderVals() {
+    // Static catalog: no setState anywhere, so the tree never re-renders after mount —
+    // this avoids a DOM-ownership conflict between lucide's imperative icon swap and React reconciliation.
+    const s = this.state;
+    const noop = () => {};
+    const results2 = filterClients(s.search2).map(c => ({ ...c, metaText: c.phone + ' · ' + c.business }));
+    return {
+      search1: s.search1, onSearch1: noop,
+      search2: s.search2, onSearch2: noop, results2,
+      search3: s.search3, onSearch3: noop,
+
+      statusChipsA: this.buildChips(s.statusSel).map(c => ({ ...c, onClick: noop })),
+      statusChipsB: this.buildChips(s.statusSel2).map(c => ({ ...c, onClick: noop })),
+
+      channelOptions: CHANNEL_OPTIONS, statusFieldOptions: STATUS_FIELD_OPTIONS,
+      channelSel: s.channelSel, onChannel: noop,
+      channelSel2: s.channelSel2, onChannel2: noop,
+
+      notaDestacada: s.notaDestacada,
+      notaIconName: 'star',
+      notaEstado: s.notaDestacada ? 'Destacada' : 'Normal',
+      toggleNota: noop,
+
+      setNavActiveMobile: noop,
+      setNavActiveMobile2: noop,
+      navMobileStyle1: this.navStyle('seguimiento', s.navMobile),
+      navMobileStyle2: this.navStyle('clientes', s.navMobile),
+
+      setNavActiveDesktop1: noop,
+      setNavActiveDesktop2: noop,
+      navDesktopStyle1: this.navDesktopStyle('seguimiento', s.navDesktop),
+      navDesktopStyle2: this.navDesktopStyle('clientes', s.navDesktop),
+
+      noop,
+    };
+  }
+}
+
+</script>
+</body>
+</html>

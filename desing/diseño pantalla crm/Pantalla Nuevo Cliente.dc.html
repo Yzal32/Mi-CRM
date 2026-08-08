@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+
+<helmet>
+  <link rel="stylesheet" href="_ds/loop-design-system-97c4eaef-c8ab-4752-97e0-13256f16f337/tokens/colors.css">
+  <link rel="stylesheet" href="_ds/loop-design-system-97c4eaef-c8ab-4752-97e0-13256f16f337/tokens/typography.css">
+  <link rel="stylesheet" href="_ds/loop-design-system-97c4eaef-c8ab-4752-97e0-13256f16f337/tokens/spacing.css">
+  <link rel="stylesheet" href="_ds/loop-design-system-97c4eaef-c8ab-4752-97e0-13256f16f337/tokens/radii-shadows.css">
+  <link rel="stylesheet" href="_ds/loop-design-system-97c4eaef-c8ab-4752-97e0-13256f16f337/styles.css">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <script>
+    (function () {
+      if (!window.lucide || window.__lucidePatched) return;
+      window.__lucidePatched = true;
+      var orig = window.lucide.createIcons.bind(window.lucide);
+      var scheduled = false;
+      window.lucide.createIcons = function (opts) {
+        if (scheduled) return;
+        scheduled = true;
+        requestAnimationFrame(function () { scheduled = false; orig(opts); });
+      };
+      window.addEventListener('load', function () {
+        setTimeout(function () { window.lucide.createIcons(); }, 300);
+      });
+    })();
+  </script>
+  <script src="_ds/loop-design-system-97c4eaef-c8ab-4752-97e0-13256f16f337/_ds_bundle.js"></script>
+  <style>
+    body { margin: 0; background: var(--color-bg); font-family: var(--font-sans); color: var(--color-text); }
+    a { color: var(--color-primary); text-decoration: none; }
+    a:hover { color: var(--color-primary-hover); }
+  </style>
+</helmet>
+
+<div style="max-width:1300px;margin:0 auto;padding:40px 20px 8px;display:flex;flex-direction:column;gap:6px">
+  <span style="font:800 24px/1.2 var(--font-sans);color:var(--color-text)">Loop</span>
+  <h1 style="font:var(--text-screen-title);color:var(--color-text);margin:0">Pantalla — Nuevo cliente</h1>
+  <p style="font:var(--text-body);color:var(--color-text-secondary);margin:0;max-width:640px">Se llega desde Lista de clientes. Nombre y teléfono destacan como lo esencial; el resto queda claramente marcado como opcional. Prueba a pulsar "Guardar" vacío, o con el teléfono 622 334 556 (ya existe).</p>
+</div>
+
+<div style="max-width:1300px;margin:0 auto;padding:24px 20px 8px;display:flex;flex-wrap:wrap;gap:32px;align-items:flex-start">
+
+  <div style="display:flex;flex-direction:column;gap:10px">
+    <span style="font:var(--text-caption);color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.04em">Móvil</span>
+    <div style="width:390px;background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);overflow:hidden;position:relative">
+      <x-import component-from-global-scope="LoopDesignSystem_97c4ea.TopBar" title="Nuevo cliente" onBack="{{ onBack }}" hint-size="100%,56px"></x-import>
+      <div style="padding:var(--space-4);display:flex;flex-direction:column;gap:20px;padding-bottom:24px">
+
+        <sc-if value="{{ formError }}" hint-placeholder-val="{{ '' }}">
+          <div style="display:flex;align-items:flex-start;gap:10px;background:var(--color-error-bg);border:1px solid var(--color-error-border);border-radius:var(--radius-md);padding:12px 14px">
+            <i data-lucide="alert-circle" style="display:inline-flex;width:18px;height:18px;color:var(--color-error-text);flex-shrink:0;margin-top:1px"></i>
+            <span style="font:var(--text-secondary);color:var(--color-error-text)">{{ formError }}</span>
+          </div>
+        </sc-if>
+
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Input" label="Nombre" value="{{ name }}" onChange="{{ onNameChange }}" error="{{ nameError }}" placeholder="Nombre del cliente" hint-size="100%,44px"></x-import>
+          <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Input" label="Teléfono" value="{{ phone }}" onChange="{{ onPhoneChange }}" error="{{ phoneError }}" type="tel" placeholder="622 334 556" hint-size="100%,44px"></x-import>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="flex:1;height:1px;background:var(--color-border)"></div>
+          <span style="font:var(--text-caption);color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.04em;white-space:nowrap">Opcional</span>
+          <div style="flex:1;height:1px;background:var(--color-border)"></div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Input" label="Email" value="{{ email }}" onChange="{{ onEmailChange }}" type="email" placeholder="correo@ejemplo.com" hint-size="100%,44px"></x-import>
+          <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Select" label="Canal de origen" value="{{ channel }}" onChange="{{ onChannelChange }}" options="{{ channelOptions }}" hint-size="100%,44px"></x-import>
+          <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Select" label="Estado" value="{{ status }}" onChange="{{ onStatusChange }}" options="{{ statusOptions }}" hint-size="100%,44px"></x-import>
+        </div>
+
+        <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Button" variant="primary" onClick="{{ onSave }}" style="{{ fullWidthStyle }}" hint-size="100%,48px">Guardar</x-import>
+      </div>
+
+      <sc-if value="{{ toastMessage }}" hint-placeholder-val="{{ '' }}">
+        <div style="position:absolute;left:16px;right:16px;bottom:16px;display:flex;align-items:center;gap:8px;background:var(--color-primary-soft);color:var(--color-primary-soft-text);font:var(--text-body-medium);padding:12px 16px;border-radius:var(--radius-pill);box-shadow:var(--shadow-md)">
+          <i data-lucide="check" style="display:inline-flex;width:18px;height:18px;flex-shrink:0"></i>
+          <span>{{ toastMessage }}</span>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:10px">
+    <span style="font:var(--text-caption);color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.04em">Escritorio — mismo formulario y estado</span>
+    <div style="display:flex;border:1px solid var(--color-border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);overflow:hidden;background:var(--color-bg);position:relative">
+      <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Sidebar" active="clients" hint-size="220px,600px"></x-import>
+      <div style="flex:1;padding:40px 48px;display:flex;flex-direction:column;gap:20px;max-width:560px">
+        <div style="display:flex;align-items:center;gap:12px">
+          <x-import component-from-global-scope="LoopDesignSystem_97c4ea.IconButton" icon="arrow-left" label="Volver a clientes" variant="secondary" onClick="{{ onBack }}" hint-size="40px,40px"></x-import>
+          <h2 style="font:var(--text-screen-title);color:var(--color-text);margin:0">Nuevo cliente</h2>
+        </div>
+
+        <sc-if value="{{ formError }}" hint-placeholder-val="{{ '' }}">
+          <div style="display:flex;align-items:flex-start;gap:10px;background:var(--color-error-bg);border:1px solid var(--color-error-border);border-radius:var(--radius-md);padding:12px 14px">
+            <i data-lucide="alert-circle" style="display:inline-flex;width:18px;height:18px;color:var(--color-error-text);flex-shrink:0;margin-top:1px"></i>
+            <span style="font:var(--text-secondary);color:var(--color-error-text)">{{ formError }}</span>
+          </div>
+        </sc-if>
+
+        <div style="display:flex;gap:14px">
+          <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Input" label="Nombre" value="{{ name }}" onChange="{{ onNameChange }}" error="{{ nameError }}" placeholder="Nombre del cliente" hint-size="100%,44px"></x-import>
+          <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Input" label="Teléfono" value="{{ phone }}" onChange="{{ onPhoneChange }}" error="{{ phoneError }}" type="tel" placeholder="622 334 556" hint-size="100%,44px"></x-import>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="flex:1;height:1px;background:var(--color-border)"></div>
+          <span style="font:var(--text-caption);color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.04em;white-space:nowrap">Datos opcionales</span>
+          <div style="flex:1;height:1px;background:var(--color-border)"></div>
+        </div>
+
+        <div style="display:flex;gap:14px">
+          <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Input" label="Email" value="{{ email }}" onChange="{{ onEmailChange }}" type="email" placeholder="correo@ejemplo.com" hint-size="100%,44px"></x-import>
+        </div>
+        <div style="display:flex;gap:14px">
+          <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Select" label="Canal de origen" value="{{ channel }}" onChange="{{ onChannelChange }}" options="{{ channelOptions }}" hint-size="100%,44px"></x-import>
+          <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Select" label="Estado" value="{{ status }}" onChange="{{ onStatusChange }}" options="{{ statusOptions }}" hint-size="100%,44px"></x-import>
+        </div>
+
+        <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:8px">
+          <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Button" variant="secondary" onClick="{{ noop }}" hint-size="auto,44px">Cancelar</x-import>
+          <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Button" variant="primary" onClick="{{ onSave }}" hint-size="auto,44px">Guardar</x-import>
+        </div>
+      </div>
+
+      <sc-if value="{{ toastMessage }}" hint-placeholder-val="{{ '' }}">
+        <div style="position:absolute;right:24px;bottom:24px;display:flex;align-items:center;gap:8px;background:var(--color-primary-soft);color:var(--color-primary-soft-text);font:var(--text-body-medium);padding:12px 20px;border-radius:var(--radius-pill);box-shadow:var(--shadow-md)">
+          <i data-lucide="check" style="display:inline-flex;width:18px;height:18px;flex-shrink:0"></i>
+          <span>{{ toastMessage }}</span>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    name: '', phone: '', email: '',
+    channel: 'web', status: 'new',
+    nameError: '', phoneError: '', formError: '', toastMessage: ''
+  };
+
+  existingPhone = '622 334 556';
+
+  channelOptions = [
+    { value: 'web', label: 'Web' },
+    { value: 'social', label: 'Redes sociales' },
+    { value: 'email', label: 'Email' },
+    { value: 'whatsapp', label: 'WhatsApp' },
+    { value: 'referral', label: 'Recomendación' },
+    { value: 'visit', label: 'Visita en tienda' }
+  ];
+
+  statusOptions = [
+    { value: 'new', label: 'Nuevo' },
+    { value: 'contacted', label: 'Contactado' },
+    { value: 'interested', label: 'Interesado' },
+    { value: 'won', label: 'Venta cerrada' },
+    { value: 'lost', label: 'Perdido' }
+  ];
+
+  handleSave = () => {
+    const name = this.state.name.trim();
+    const phone = this.state.phone.trim();
+    const email = this.state.email.trim();
+    let nameError = '', phoneError = '', formError = '';
+
+    if (!name) nameError = 'Introduce el nombre del cliente.';
+    if (!phone && !email) {
+      formError = 'Necesitas al menos un teléfono o un email para guardar el cliente.';
+    } else if (phone && phone === this.existingPhone) {
+      phoneError = 'Ya existe un cliente con este teléfono.';
+    }
+
+    if (nameError || phoneError || formError) {
+      this.setState({ nameError, phoneError, formError, toastMessage: '' });
+      return;
+    }
+
+    this.setState({ nameError: '', phoneError: '', formError: '', toastMessage: `Cliente guardado. Abriendo la ficha de ${name}…` });
+    clearTimeout(this._t);
+    this._t = setTimeout(() => this.setState({ toastMessage: '' }), 2600);
+  };
+
+  renderVals() {
+    return {
+      name: this.state.name,
+      phone: this.state.phone,
+      email: this.state.email,
+      channel: this.state.channel,
+      status: this.state.status,
+      nameError: this.state.nameError,
+      phoneError: this.state.phoneError,
+      formError: this.state.formError,
+      toastMessage: this.state.toastMessage,
+      channelOptions: this.channelOptions,
+      statusOptions: this.statusOptions,
+      onNameChange: e => this.setState({ name: e.target.value }),
+      onPhoneChange: e => this.setState({ phone: e.target.value }),
+      onEmailChange: e => this.setState({ email: e.target.value }),
+      onChannelChange: e => this.setState({ channel: e.target.value }),
+      onStatusChange: e => this.setState({ status: e.target.value }),
+      onSave: this.handleSave,
+      fullWidthStyle: { width: '100%' },
+      noop: () => {},
+      onBack: () => window.history.back()
+    };
+  }
+}
+</script>
+</body>
+</html>

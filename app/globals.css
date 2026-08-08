@@ -1,0 +1,73 @@
+@import "tailwindcss";
+@import "./styles/tokens.css";
+
+/*
+ * Alias-ea los tokens de Loop (prefijo --loop-, ver ./styles/tokens.css)
+ * hacia el namespace real de Tailwind v4. "inline" es necesario porque el
+ * valor de cada token --loop-* cambia con [data-theme="dark"] vía cascada
+ * CSS normal — sin "inline" Tailwind resolvería el valor una sola vez en
+ * build time. Los nombres de la derecha (--loop-*) NUNCA coinciden con los
+ * de la izquierda (namespace de Tailwind), para no auto-referenciarse.
+ */
+@theme inline {
+  --color-bg: var(--loop-color-bg);
+  --color-surface: var(--loop-color-surface);
+  --color-surface-sunken: var(--loop-color-surface-sunken);
+  --color-border: var(--loop-color-border);
+  --color-border-strong: var(--loop-color-border-strong);
+
+  --color-text: var(--loop-color-text);
+  --color-text-secondary: var(--loop-color-text-secondary);
+  --color-text-tertiary: var(--loop-color-text-tertiary);
+
+  --color-primary: var(--loop-color-primary);
+  --color-primary-hover: var(--loop-color-primary-hover);
+  --color-primary-active: var(--loop-color-primary-active);
+  --color-primary-contrast: var(--loop-color-primary-contrast);
+  --color-primary-soft: var(--loop-color-primary-soft);
+  --color-primary-soft-text: var(--loop-color-primary-soft-text);
+
+  --color-alert-bg: var(--loop-color-alert-bg);
+  --color-alert-border: var(--loop-color-alert-border);
+  --color-alert-text: var(--loop-color-alert-text);
+
+  --color-error-bg: var(--loop-color-error-bg);
+  --color-error-border: var(--loop-color-error-border);
+  --color-error-text: var(--loop-color-error-text);
+
+  --color-focus-ring: var(--loop-color-focus-ring);
+
+  --color-disabled-bg: var(--loop-color-disabled-bg);
+  --color-disabled-text: var(--loop-color-disabled-text);
+  --color-disabled-border: var(--loop-color-disabled-border);
+
+  --color-status-new-bg: var(--loop-status-new-bg);
+  --color-status-new-text: var(--loop-status-new-text);
+  --color-status-contacted-bg: var(--loop-status-contacted-bg);
+  --color-status-contacted-text: var(--loop-status-contacted-text);
+  --color-status-interested-bg: var(--loop-status-interested-bg);
+  --color-status-interested-text: var(--loop-status-interested-text);
+  --color-status-won-bg: var(--loop-status-won-bg);
+  --color-status-won-text: var(--loop-status-won-text);
+  --color-status-lost-bg: var(--loop-status-lost-bg);
+  --color-status-lost-text: var(--loop-status-lost-text);
+
+  --radius-sm: var(--loop-radius-sm);
+  --radius-md: var(--loop-radius-md);
+  --radius-lg: var(--loop-radius-lg);
+  --radius-xl: var(--loop-radius-xl);
+  --radius-pill: var(--loop-radius-pill);
+  --radius-circle: var(--loop-radius-circle);
+
+  --shadow-sm: var(--loop-shadow-sm);
+  --shadow-md: var(--loop-shadow-md);
+  --shadow-lg: var(--loop-shadow-lg);
+
+  --font-sans: var(--font-plus-jakarta-sans);
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+}

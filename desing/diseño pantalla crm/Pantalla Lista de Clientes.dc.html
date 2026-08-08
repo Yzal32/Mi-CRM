@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+
+<helmet>
+  <link rel="stylesheet" href="_ds/loop-design-system-97c4eaef-c8ab-4752-97e0-13256f16f337/tokens/colors.css">
+  <link rel="stylesheet" href="_ds/loop-design-system-97c4eaef-c8ab-4752-97e0-13256f16f337/tokens/typography.css">
+  <link rel="stylesheet" href="_ds/loop-design-system-97c4eaef-c8ab-4752-97e0-13256f16f337/tokens/spacing.css">
+  <link rel="stylesheet" href="_ds/loop-design-system-97c4eaef-c8ab-4752-97e0-13256f16f337/tokens/radii-shadows.css">
+  <link rel="stylesheet" href="_ds/loop-design-system-97c4eaef-c8ab-4752-97e0-13256f16f337/styles.css">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <script>
+    (function () {
+      if (!window.lucide || window.__lucidePatched) return;
+      window.__lucidePatched = true;
+      var orig = window.lucide.createIcons.bind(window.lucide);
+      var scheduled = false;
+      window.lucide.createIcons = function (opts) {
+        if (scheduled) return;
+        scheduled = true;
+        requestAnimationFrame(function () { scheduled = false; orig(opts); });
+      };
+      window.addEventListener('load', function () {
+        setTimeout(function () { window.lucide.createIcons(); }, 300);
+      });
+    })();
+  </script>
+  <script src="_ds/loop-design-system-97c4eaef-c8ab-4752-97e0-13256f16f337/_ds_bundle.js"></script>
+  <style>
+    body { margin: 0; background: var(--color-bg); font-family: var(--font-sans); color: var(--color-text); }
+    a { color: var(--color-primary); text-decoration: none; }
+    a:hover { color: var(--color-primary-hover); }
+  </style>
+</helmet>
+
+<div style="max-width:1300px;margin:0 auto;padding:40px 20px 8px;display:flex;flex-direction:column;gap:6px">
+  <span style="font:800 24px/1.2 var(--font-sans);color:var(--color-text)">Loop</span>
+  <h1 style="font:var(--text-screen-title);color:var(--color-text);margin:0">Pantalla — Lista de clientes</h1>
+  <p style="font:var(--text-body);color:var(--color-text-secondary);margin:0;max-width:640px">Se llega desde Seguimiento. Buscador con filtro en vivo (por nombre o teléfono), acceso a la ficha de cada cliente y a "Nuevo cliente".</p>
+</div>
+
+<div style="max-width:1300px;margin:0 auto;padding:24px 20px 8px;display:flex;flex-wrap:wrap;gap:32px;align-items:flex-start">
+
+  <div style="display:flex;flex-direction:column;gap:10px">
+    <span style="font:var(--text-caption);color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.04em">Móvil — con clientes (prueba a escribir en el buscador)</span>
+    <div style="width:390px;height:760px;background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);overflow:hidden;position:relative;display:flex;flex-direction:column">
+      <div style="position:relative;flex-shrink:0">
+        <x-import component-from-global-scope="LoopDesignSystem_97c4ea.TopBar" title="Clientes" onBack="{{ onBack }}" hint-size="100%,56px"></x-import>
+      </div>
+      <div style="flex:1;overflow-y:auto;padding:var(--space-4);display:flex;flex-direction:column;gap:14px;padding-bottom:24px">
+
+        <x-import component-from-global-scope="LoopDesignSystem_97c4ea.SearchBar" value="{{ query }}" onChange="{{ onQueryChange }}" placeholder="Buscar por nombre o teléfono" hint-size="100%,44px"></x-import>
+
+        <span style="font:var(--text-caption);color:var(--color-text-tertiary)">{{ resultCountLabel }}</span>
+
+        <sc-if value="{{ hasResults }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <sc-for list="{{ filteredClients }}" as="c" hint-placeholder-count="6">
+              <x-import component-from-global-scope="LoopDesignSystem_97c4ea.ListItem" name="{{ c.name }}" meta="{{ c.meta }}" status="{{ c.status }}" overdue="{{ c.overdue }}" onClick="{{ noop }}" hint-size="100%,72px"></x-import>
+            </sc-for>
+          </div>
+        </sc-if>
+        <sc-if value="{{ hasNoResults }}" hint-placeholder-val="{{ false }}">
+          <x-import component-from-global-scope="LoopDesignSystem_97c4ea.EmptyState" icon="search" title="Sin resultados" message="No hay ningún cliente que coincida con esa búsqueda." hint-size="100%,220px"></x-import>
+        </sc-if>
+      </div>
+
+      <a href="Pantalla Nuevo Cliente.dc.html" aria-label="Nuevo cliente" style="position:absolute;right:16px;bottom:80px;display:flex;align-items:center;justify-content:center;width:56px;height:56px;background:var(--color-primary);color:var(--color-primary-contrast);border-radius:var(--radius-circle)">
+        <i data-lucide="plus" style="display:inline-flex;width:24px;height:24px"></i>
+      </a>
+      <x-import component-from-global-scope="LoopDesignSystem_97c4ea.TabBar" active="clients" hint-size="100%,64px"></x-import>
+    </div>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:10px">
+    <span style="font:var(--text-caption);color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.04em">Móvil — sin clientes todavía</span>
+    <div style="width:390px;background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);overflow:hidden;position:relative">
+      <x-import component-from-global-scope="LoopDesignSystem_97c4ea.TopBar" title="Clientes" onBack="{{ onBack }}" hint-size="100%,56px"></x-import>
+      <div style="padding:var(--space-4);display:flex;flex-direction:column;gap:16px;padding-bottom:88px">
+        <x-import component-from-global-scope="LoopDesignSystem_97c4ea.SearchBar" value="" onChange="{{ noop }}" placeholder="Buscar por nombre o teléfono" hint-size="100%,44px"></x-import>
+        <x-import component-from-global-scope="LoopDesignSystem_97c4ea.EmptyState" icon="users" title="Aún no tienes clientes" message="Añade tu primer cliente para empezar a hacer seguimiento." actionLabel="Añadir cliente" onAction="{{ noop }}" hint-size="100%,300px"></x-import>
+      </div>
+      <x-import component-from-global-scope="LoopDesignSystem_97c4ea.TabBar" active="clients" hint-size="100%,64px"></x-import>
+    </div>
+  </div>
+</div>
+
+<div style="max-width:1300px;margin:0 auto;padding:32px 20px 48px;display:flex;flex-direction:column;gap:10px">
+  <span style="font:var(--text-caption);color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.04em">Escritorio — mismo filtro en vivo, más información por fila</span>
+  <div style="display:flex;border:1px solid var(--color-border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);overflow:hidden;background:var(--color-bg)">
+    <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Sidebar" active="clients" hint-size="220px,600px"></x-import>
+    <div style="flex:1;padding:40px 48px;display:flex;flex-direction:column;gap:20px;max-width:920px">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:16px">
+        <h2 style="font:var(--text-screen-title);color:var(--color-text);margin:0">Clientes</h2>
+        <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Button" variant="primary" onClick="{{ onGoToNewClient }}" hint-size="auto,44px">Nuevo cliente</x-import>
+      </div>
+
+      <x-import component-from-global-scope="LoopDesignSystem_97c4ea.SearchBar" value="{{ query }}" onChange="{{ onQueryChange }}" placeholder="Buscar por nombre o teléfono" hint-size="360px,44px"></x-import>
+
+      <span style="font:var(--text-caption);color:var(--color-text-tertiary)">{{ resultCountLabel }}</span>
+
+      <sc-if value="{{ hasResults }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;flex-direction:column;border:1px solid var(--color-border);border-radius:var(--radius-lg);overflow:hidden">
+          <sc-for list="{{ filteredClients }}" as="c" hint-placeholder-count="6">
+            <div style="display:flex;align-items:center;gap:16px;padding:14px 20px;border-bottom:1px solid var(--color-border);background:var(--color-surface)" style-hover="background:var(--color-surface-sunken)">
+              <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Avatar" name="{{ c.name }}" size="{{ 40 }}" hint-size="40px,40px"></x-import>
+              <div style="flex:0 0 200px;min-width:0">
+                <a href="#" style="font:var(--text-body-medium);color:var(--color-text)">{{ c.name }}</a>
+              </div>
+              <div style="flex:1;min-width:0;font:var(--text-secondary);color:var(--color-text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.meta }}</div>
+              <div style="flex:0 0 auto">
+                <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Badge" status="{{ c.status }}" hint-size="auto,28px"></x-import>
+              </div>
+              <div style="flex:0 0 170px;display:flex;align-items:center;gap:6px;justify-content:flex-start;color:{{ c.overdueColor }};white-space:nowrap">
+                <sc-if value="{{ c.hasFollowUp }}" hint-placeholder-val="{{ false }}">
+                  <i data-lucide="{{ c.followUpIcon }}" style="display:inline-flex;width:15px;height:15px;flex-shrink:0"></i>
+                  <span style="font:var(--text-secondary);white-space:nowrap">{{ c.followUpLabel }}</span>
+                </sc-if>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+      <sc-if value="{{ hasNoResults }}" hint-placeholder-val="{{ false }}">
+        <x-import component-from-global-scope="LoopDesignSystem_97c4ea.EmptyState" icon="search" title="Sin resultados" message="No hay ningún cliente que coincida con esa búsqueda." hint-size="100%,220px"></x-import>
+      </sc-if>
+    </div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { query: '' };
+
+  clients = [
+    { name: 'Carlos Ruiz', phone: '622 334 556', status: 'new', overdue: true, followUpType: 'call' },
+    { name: 'Ana Torres', phone: '611 220 987', status: 'contacted', overdue: true, followUpType: 'whatsapp' },
+    { name: 'María López', phone: '655 102 340', status: 'interested', overdue: false, followUpType: 'call' },
+    { name: 'Marta Gómez', phone: '699 405 112', status: 'won', overdue: false, followUpType: 'visit' },
+    { name: 'Javier Soto', phone: '633 890 221', status: 'lost', overdue: false, followUpType: null },
+    { name: 'Lucía Fernández', phone: '644 771 903', status: 'interested', overdue: false, followUpType: 'email' },
+    { name: 'Pedro Navarro', phone: '677 502 334', status: 'contacted', overdue: false, followUpType: null },
+    { name: 'Sara Ibáñez', phone: '688 213 447', status: 'new', overdue: false, followUpType: 'call' }
+  ];
+
+  iconByType = { call: 'phone', whatsapp: 'message-circle', email: 'mail', visit: 'map-pin' };
+  labelByType = { call: 'Llamar', whatsapp: 'WhatsApp', email: 'Email', visit: 'Visita' };
+
+  renderVals() {
+    const q = this.state.query.trim().toLowerCase();
+    const matches = this.clients.filter(c =>
+      !q ||
+      c.name.toLowerCase().includes(q) ||
+      c.phone.toLowerCase().includes(q)
+    );
+    const filteredClients = matches.map(c => ({
+      ...c,
+      meta: c.phone,
+      hasFollowUp: !!c.followUpType,
+      followUpIcon: c.followUpType ? this.iconByType[c.followUpType] : '',
+      followUpLabel: c.followUpType ? (c.overdue ? `${this.labelByType[c.followUpType]} · atrasado` : this.labelByType[c.followUpType]) : '',
+      overdueColor: c.overdue ? 'var(--color-alert-text)' : 'var(--color-text-tertiary)'
+    }));
+    return {
+      query: this.state.query,
+      onQueryChange: e => this.setState({ query: e.target.value }),
+      filteredClients,
+      hasResults: filteredClients.length > 0,
+      hasNoResults: filteredClients.length === 0,
+      resultCountLabel: q ? `${filteredClients.length} resultado${filteredClients.length === 1 ? '' : 's'}` : `${filteredClients.length} clientes`,
+      noop: () => {},
+      onBack: () => window.history.back(),
+      onGoToNewClient: () => { window.location.href = 'Pantalla Nuevo Cliente.dc.html'; }
+    };
+  }
+}
+</script>
+</body>
+</html>

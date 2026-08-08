@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+
+<helmet>
+  <link rel="stylesheet" href="_ds/loop-design-system-97c4eaef-c8ab-4752-97e0-13256f16f337/tokens/colors.css">
+  <link rel="stylesheet" href="_ds/loop-design-system-97c4eaef-c8ab-4752-97e0-13256f16f337/tokens/typography.css">
+  <link rel="stylesheet" href="_ds/loop-design-system-97c4eaef-c8ab-4752-97e0-13256f16f337/tokens/spacing.css">
+  <link rel="stylesheet" href="_ds/loop-design-system-97c4eaef-c8ab-4752-97e0-13256f16f337/tokens/radii-shadows.css">
+  <link rel="stylesheet" href="_ds/loop-design-system-97c4eaef-c8ab-4752-97e0-13256f16f337/styles.css">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <script>
+    (function () {
+      if (!window.lucide || window.__lucidePatched) return;
+      window.__lucidePatched = true;
+      var orig = window.lucide.createIcons.bind(window.lucide);
+      var scheduled = false;
+      window.lucide.createIcons = function (opts) {
+        if (scheduled) return;
+        scheduled = true;
+        requestAnimationFrame(function () { scheduled = false; orig(opts); });
+      };
+      window.addEventListener('load', function () {
+        setTimeout(function () { window.lucide.createIcons(); }, 300);
+      });
+    })();
+  </script>
+  <script src="_ds/loop-design-system-97c4eaef-c8ab-4752-97e0-13256f16f337/_ds_bundle.js"></script>
+  <style>
+    body { margin: 0; background: var(--color-bg); font-family: var(--font-sans); color: var(--color-text); }
+    a { color: var(--color-primary); text-decoration: none; }
+    a:hover { color: var(--color-primary-hover); }
+    .loop-row { display:flex; align-items:center; gap:12px; padding:14px 16px; border:none; background:var(--color-surface); cursor:pointer; text-align:left; width:100%; box-sizing:border-box; font:var(--text-body-medium); }
+    .loop-row:hover { background:var(--color-surface-sunken); }
+  </style>
+</helmet>
+
+<div style="max-width:1300px;margin:0 auto;padding:40px 20px 8px;display:flex;flex-direction:column;gap:6px">
+  <span style="font:800 24px/1.2 var(--font-sans);color:var(--color-text)">Loop</span>
+  <h1 style="font:var(--text-screen-title);color:var(--color-text);margin:0">Pantalla — Mi cuenta</h1>
+  <p style="font:var(--text-body);color:var(--color-text-secondary);margin:0;max-width:680px">Se accede desde la pestaña "Ajustes", disponible para cualquier usuario con sesión iniciada. Utilidad mínima y discreta — no es un perfil elaborado. Prueba a pulsar "Cambiar contraseña" e introducir un valor distinto de "contraseña123" en Contraseña actual, o dos contraseñas nuevas que no coincidan.</p>
+</div>
+
+<div style="max-width:1300px;margin:0 auto;padding:24px 20px 48px;display:flex;flex-wrap:wrap;gap:32px;align-items:flex-start">
+
+  <div style="display:flex;flex-direction:column;gap:10px">
+    <span style="font:var(--text-caption);color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.04em">Móvil</span>
+    <div style="width:390px;background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);overflow:hidden;position:relative">
+      <x-import component-from-global-scope="LoopDesignSystem_97c4ea.TopBar" title="Ajustes" hint-size="100%,56px"></x-import>
+      <div style="padding:var(--space-4);display:flex;flex-direction:column;gap:20px;padding-bottom:88px">
+
+        <div style="display:flex;flex-direction:column;align-items:center;gap:8px;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);padding:var(--space-6) var(--space-4);text-align:center">
+          <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Avatar" name="{{ name }}" size="{{ 64 }}" hint-size="64px,64px"></x-import>
+          <span style="font:var(--text-section-title);color:var(--color-text)">{{ name }}</span>
+          <span style="font:var(--text-secondary);color:var(--color-text-secondary)">{{ email }}</span>
+        </div>
+
+        <div style="display:flex;flex-direction:column;border:1px solid var(--color-border);border-radius:var(--radius-lg);overflow:hidden">
+          <button class="loop-row" onClick="{{ onOpenChangeForm }}" style="border-bottom:1px solid var(--color-border);color:var(--color-text)">
+            <i data-lucide="lock" style="width:20px;height:20px;color:var(--color-text-secondary);flex-shrink:0"></i>
+            <span style="flex:1">Cambiar contraseña</span>
+            <i data-lucide="chevron-right" style="width:18px;height:18px;color:var(--color-text-tertiary);flex-shrink:0"></i>
+          </button>
+          <button class="loop-row" onClick="{{ onLogout }}" style="color:var(--color-error-text)">
+            <i data-lucide="log-out" style="width:20px;height:20px;flex-shrink:0"></i>
+            <span style="flex:1">Cerrar sesión</span>
+          </button>
+        </div>
+      </div>
+
+      <div style="position:relative">
+        <x-import component-from-global-scope="LoopDesignSystem_97c4ea.TabBar" active="settings" hint-size="100%,64px"></x-import>
+      </div>
+
+      <sc-if value="{{ showChangeForm }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;inset:0;background:oklch(0.2 0.01 80 / 0.45);display:flex;align-items:flex-end;justify-content:center;z-index:50">
+          <div style="width:100%;background:var(--color-surface);border-radius:var(--radius-xl) var(--radius-xl) 0 0;box-shadow:var(--shadow-lg);max-height:85%;display:flex;flex-direction:column;overflow:hidden">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:var(--space-4) var(--space-5);border-bottom:1px solid var(--color-border)">
+              <span style="font:var(--text-section-title);color:var(--color-text)">Cambiar contraseña</span>
+              <button onClick="{{ onCloseChangeForm }}" aria-label="Cerrar" style="border:none;background:transparent;color:var(--color-text-secondary);cursor:pointer;display:flex"><i data-lucide="x" style="width:22px;height:22px"></i></button>
+            </div>
+            <div style="padding:var(--space-5);display:flex;flex-direction:column;gap:14px">
+              <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Input" label="Contraseña actual" value="{{ currentPassword }}" onChange="{{ onCurrentPasswordChange }}" error="{{ currentPasswordError }}" type="password" hint-size="100%,44px"></x-import>
+              <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Input" label="Contraseña nueva" value="{{ newPassword }}" onChange="{{ onNewPasswordChange }}" error="{{ newPasswordError }}" type="password" hint-size="100%,44px"></x-import>
+              <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Input" label="Confirmar contraseña nueva" value="{{ confirmPassword }}" onChange="{{ onConfirmPasswordChange }}" error="{{ confirmPasswordError }}" type="password" hint-size="100%,44px"></x-import>
+            </div>
+            <div style="padding:var(--space-4) var(--space-5);border-top:1px solid var(--color-border)">
+              <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Button" variant="primary" onClick="{{ onSave }}" style="{{ fullWidthStyle }}" hint-size="100%,48px">Guardar contraseña</x-import>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ toastMessage }}" hint-placeholder-val="{{ '' }}">
+        <div style="position:absolute;left:16px;right:16px;bottom:80px;display:flex;align-items:center;gap:8px;background:var(--color-primary-soft);color:var(--color-primary-soft-text);font:var(--text-body-medium);padding:12px 16px;border-radius:var(--radius-pill);box-shadow:var(--shadow-md);z-index:40">
+          <i data-lucide="check" style="display:inline-flex;width:18px;height:18px;flex-shrink:0"></i>
+          <span>{{ toastMessage }}</span>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:10px">
+    <span style="font:var(--text-caption);color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.04em">Escritorio — como panel de pantalla completa (también podría vivir en un menú desplegable desde un icono de usuario)</span>
+    <div style="display:flex;border:1px solid var(--color-border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);overflow:hidden;background:var(--color-bg);position:relative;height:600px">
+      <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Sidebar" active="settings" hint-size="220px,600px"></x-import>
+      <div style="flex:1;padding:40px 48px;display:flex;flex-direction:column;gap:24px;max-width:480px">
+        <h2 style="font:var(--text-screen-title);color:var(--color-text);margin:0">Ajustes</h2>
+
+        <div style="display:flex;align-items:center;gap:16px;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);padding:var(--space-5)">
+          <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Avatar" name="{{ name }}" size="{{ 56 }}" hint-size="56px,56px"></x-import>
+          <div style="display:flex;flex-direction:column;gap:2px">
+            <span style="font:var(--text-body-medium);color:var(--color-text)">{{ name }}</span>
+            <span style="font:var(--text-secondary);color:var(--color-text-secondary)">{{ email }}</span>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;border:1px solid var(--color-border);border-radius:var(--radius-lg);overflow:hidden">
+          <button class="loop-row" onClick="{{ onOpenChangeForm }}" style="border-bottom:1px solid var(--color-border);color:var(--color-text)">
+            <i data-lucide="lock" style="width:20px;height:20px;color:var(--color-text-secondary);flex-shrink:0"></i>
+            <span style="flex:1">Cambiar contraseña</span>
+            <i data-lucide="chevron-right" style="width:18px;height:18px;color:var(--color-text-tertiary);flex-shrink:0"></i>
+          </button>
+          <button class="loop-row" onClick="{{ onLogout }}" style="color:var(--color-error-text)">
+            <i data-lucide="log-out" style="width:20px;height:20px;flex-shrink:0"></i>
+            <span style="flex:1">Cerrar sesión</span>
+          </button>
+        </div>
+      </div>
+
+      <sc-if value="{{ showChangeForm }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;inset:0;background:oklch(0.2 0.01 80 / 0.45);display:flex;align-items:center;justify-content:center;padding:var(--space-4);z-index:60">
+          <div style="background:var(--color-surface);border-radius:var(--radius-xl);box-shadow:var(--shadow-lg);padding:var(--space-6);width:100%;max-width:400px;display:flex;flex-direction:column;gap:16px">
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <span style="font:var(--text-section-title);color:var(--color-text)">Cambiar contraseña</span>
+              <button onClick="{{ onCloseChangeForm }}" aria-label="Cerrar" style="border:none;background:transparent;color:var(--color-text-secondary);cursor:pointer;display:flex"><i data-lucide="x" style="width:20px;height:20px"></i></button>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:14px">
+              <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Input" label="Contraseña actual" value="{{ currentPassword }}" onChange="{{ onCurrentPasswordChange }}" error="{{ currentPasswordError }}" type="password" hint-size="100%,44px"></x-import>
+              <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Input" label="Contraseña nueva" value="{{ newPassword }}" onChange="{{ onNewPasswordChange }}" error="{{ newPasswordError }}" type="password" hint-size="100%,44px"></x-import>
+              <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Input" label="Confirmar contraseña nueva" value="{{ confirmPassword }}" onChange="{{ onConfirmPasswordChange }}" error="{{ confirmPasswordError }}" type="password" hint-size="100%,44px"></x-import>
+            </div>
+            <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:4px">
+              <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Button" variant="secondary" onClick="{{ onCloseChangeForm }}" hint-size="auto,44px">Cancelar</x-import>
+              <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Button" variant="primary" onClick="{{ onSave }}" hint-size="auto,44px">Guardar contraseña</x-import>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ toastMessage }}" hint-placeholder-val="{{ '' }}">
+        <div style="position:absolute;right:24px;bottom:24px;display:flex;align-items:center;gap:8px;background:var(--color-primary-soft);color:var(--color-primary-soft-text);font:var(--text-body-medium);padding:12px 20px;border-radius:var(--radius-pill);box-shadow:var(--shadow-md);z-index:40">
+          <i data-lucide="check" style="display:inline-flex;width:18px;height:18px;flex-shrink:0"></i>
+          <span>{{ toastMessage }}</span>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    showChangeForm: false,
+    currentPassword: '', newPassword: '', confirmPassword: '',
+    currentPasswordError: '', newPasswordError: '', confirmPasswordError: '',
+    toastMessage: ''
+  };
+
+  name = 'Marta Ruiz';
+  email = 'marta@peluqueriaana.com';
+  realPassword = 'contraseña123';
+
+  handleOpenChangeForm = () => {
+    this.setState({
+      showChangeForm: true,
+      currentPassword: '', newPassword: '', confirmPassword: '',
+      currentPasswordError: '', newPasswordError: '', confirmPasswordError: ''
+    });
+  };
+
+  handleCloseChangeForm = () => {
+    this.setState({
+      showChangeForm: false,
+      currentPassword: '', newPassword: '', confirmPassword: '',
+      currentPasswordError: '', newPasswordError: '', confirmPasswordError: ''
+    });
+  };
+
+  handleSave = () => {
+    const current = this.state.currentPassword;
+    const next = this.state.newPassword;
+    const confirm = this.state.confirmPassword;
+    let currentPasswordError = '', newPasswordError = '', confirmPasswordError = '';
+
+    if (!current) currentPasswordError = 'Introduce tu contraseña actual.';
+    else if (current !== this.realPassword) currentPasswordError = 'La contraseña actual no es correcta.';
+
+    if (!next) newPasswordError = 'Introduce una contraseña nueva.';
+
+    if (!newPasswordError && !confirmPasswordError && confirm !== next) {
+      confirmPasswordError = 'Las contraseñas nuevas no coinciden.';
+    }
+
+    if (currentPasswordError || newPasswordError || confirmPasswordError) {
+      this.setState({ currentPasswordError, newPasswordError, confirmPasswordError });
+      return;
+    }
+
+    this.realPassword = next;
+    this.setState({
+      showChangeForm: false,
+      currentPassword: '', newPassword: '', confirmPassword: '',
+      currentPasswordError: '', newPasswordError: '', confirmPasswordError: '',
+      toastMessage: 'Contraseña actualizada.'
+    });
+    clearTimeout(this._t);
+    this._t = setTimeout(() => this.setState({ toastMessage: '' }), 2600);
+  };
+
+  renderVals() {
+    return {
+      name: this.name,
+      email: this.email,
+      showChangeForm: this.state.showChangeForm,
+      currentPassword: this.state.currentPassword,
+      newPassword: this.state.newPassword,
+      confirmPassword: this.state.confirmPassword,
+      currentPasswordError: this.state.currentPasswordError,
+      newPasswordError: this.state.newPasswordError,
+      confirmPasswordError: this.state.confirmPasswordError,
+      toastMessage: this.state.toastMessage,
+      onOpenChangeForm: this.handleOpenChangeForm,
+      onCloseChangeForm: this.handleCloseChangeForm,
+      onCurrentPasswordChange: e => this.setState({ currentPassword: e.target.value }),
+      onNewPasswordChange: e => this.setState({ newPassword: e.target.value }),
+      onConfirmPasswordChange: e => this.setState({ confirmPassword: e.target.value }),
+      onSave: this.handleSave,
+      onLogout: () => {},
+      fullWidthStyle: { width: '100%' },
+      noop: () => {}
+    };
+  }
+}
+</script>
+</body>
+</html>

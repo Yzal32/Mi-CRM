@@ -1,0 +1,13 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
+
+  --text-screen-title: 700 clamp(26px, 4.5vw, 32px)/1.25 var(--font-sans);
+  --text-section-title: 600 clamp(19px, 3vw, 22px)/1.3 var(--font-sans);
+  --text-body: 400 16px/1.5 var(--font-sans);
+  --text-body-medium: 500 16px/1.5 var(--font-sans);
+  --text-secondary: 500 14px/1.45 var(--font-sans);
+  --text-caption: 600 13px/1.3 var(--font-sans);
+  --text-button: 600 16px/1.25 var(--font-sans);
+}

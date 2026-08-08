@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+
+<helmet>
+  <link rel="stylesheet" href="_ds/loop-design-system-97c4eaef-c8ab-4752-97e0-13256f16f337/tokens/colors.css">
+  <link rel="stylesheet" href="_ds/loop-design-system-97c4eaef-c8ab-4752-97e0-13256f16f337/tokens/typography.css">
+  <link rel="stylesheet" href="_ds/loop-design-system-97c4eaef-c8ab-4752-97e0-13256f16f337/tokens/spacing.css">
+  <link rel="stylesheet" href="_ds/loop-design-system-97c4eaef-c8ab-4752-97e0-13256f16f337/tokens/radii-shadows.css">
+  <link rel="stylesheet" href="_ds/loop-design-system-97c4eaef-c8ab-4752-97e0-13256f16f337/styles.css">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <script>
+    (function () {
+      if (!window.lucide || window.__lucidePatched) return;
+      window.__lucidePatched = true;
+      var orig = window.lucide.createIcons.bind(window.lucide);
+      var scheduled = false;
+      window.lucide.createIcons = function (opts) {
+        if (scheduled) return;
+        scheduled = true;
+        requestAnimationFrame(function () { scheduled = false; orig(opts); });
+      };
+      window.addEventListener('load', function () {
+        setTimeout(function () { window.lucide.createIcons(); }, 300);
+      });
+    })();
+  </script>
+  <script src="_ds/loop-design-system-97c4eaef-c8ab-4752-97e0-13256f16f337/_ds_bundle.js"></script>
+  <style>
+    body { margin: 0; background: var(--color-bg); font-family: var(--font-sans); color: var(--color-text); }
+    a { color: var(--color-primary); text-decoration: none; }
+    a:hover { color: var(--color-primary-hover); }
+    .loop-kebab { display: flex; flex-direction: column; gap: 3px; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: var(--radius-md); border: 1px solid var(--color-border); background: var(--color-surface); cursor: pointer; }
+    .loop-kebab span { width: 4px; height: 4px; border-radius: 50%; background: var(--color-text-secondary); }
+  </style>
+</helmet>
+
+<div style="max-width:1300px;margin:0 auto;padding:40px 20px 8px;display:flex;flex-direction:column;gap:6px">
+  <span style="font:800 24px/1.2 var(--font-sans);color:var(--color-text)">Loop</span>
+  <h1 style="font:var(--text-screen-title);color:var(--color-text);margin:0">Pantalla — Gestión de empleados</h1>
+  <p style="font:var(--text-body);color:var(--color-text-secondary);margin:0;max-width:680px">Panel de administración, aparte de Ajustes — solo lo ve la Dueña (los empleados no tienen acceso a esta pantalla). Cada empleado tiene un rol (Empleado / Administradora); solo la Dueña puede cambiarlo. Escritorio primero (uso principal), luego móvil. Prueba a añadir un empleado con un email ya existente, desactivar/reactivar, o restablecer una contraseña.</p>
+</div>
+
+<div style="max-width:1300px;margin:0 auto;padding:24px 20px 8px;display:flex;flex-direction:column;gap:32px">
+
+  <div style="display:flex;flex-direction:column;gap:10px">
+    <span style="font:var(--text-caption);color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.04em">Escritorio</span>
+    <div style="display:flex;border:1px solid var(--color-border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);overflow:hidden;background:var(--color-bg);height:640px;position:relative">
+
+      <div style="width:220px;flex-shrink:0;background:var(--color-surface);border-right:1px solid var(--color-border);display:flex;flex-direction:column;gap:24px;padding:var(--space-5) var(--space-4)">
+        <div style="display:flex;flex-direction:column;gap:2px">
+          <span style="font:800 20px/1.2 var(--font-sans);color:var(--color-text)">Loop</span>
+          <span style="font:var(--text-caption);color:var(--color-text-tertiary)">Administración</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;background:var(--color-primary-soft);color:var(--color-primary-soft-text);border-radius:var(--radius-md);padding:10px 12px">
+          <i data-lucide="users" style="display:inline-flex;width:18px;height:18px;flex-shrink:0"></i>
+          <span style="font:var(--text-body-medium)">Empleados</span>
+        </div>
+        <a href="Pantalla Seguimiento.dc.html" style="display:flex;align-items:center;gap:8px;font:var(--text-secondary);color:var(--color-text-secondary);margin-top:auto">
+          <i data-lucide="arrow-left" style="display:inline-flex;width:16px;height:16px"></i>
+          Volver a la app
+        </a>
+      </div>
+
+      <sc-if value="{{ isListView }}" hint-placeholder-val="{{ true }}">
+        <div style="flex:1;padding:40px 48px;display:flex;flex-direction:column;gap:20px;overflow-y:auto">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:16px">
+            <h2 style="font:var(--text-screen-title);color:var(--color-text);margin:0">Empleados</h2>
+            <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Button" variant="primary" onClick="{{ onOpenAdd }}" hint-size="auto,44px">Añadir empleado</x-import>
+          </div>
+
+          <sc-if value="{{ tempPasswordInfo }}" hint-placeholder-val="{{ null }}">
+            <div style="display:flex;flex-direction:column;gap:8px;background:var(--color-primary-soft);border:1px solid var(--color-primary);border-radius:var(--radius-lg);padding:var(--space-4)">
+              <div style="display:flex;align-items:center;justify-content:space-between">
+                <span style="font:var(--text-body-medium);color:var(--color-primary-soft-text)">Nueva contraseña temporal para {{ tempPasswordInfo.name }}</span>
+                <button onClick="{{ onDismissTempPassword }}" aria-label="Cerrar" style="border:none;background:transparent;color:var(--color-primary-soft-text);cursor:pointer;display:flex"><i data-lucide="x" style="width:18px;height:18px"></i></button>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px">
+                <span style="font:700 16px/1.2 monospace;color:var(--color-text);background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:6px 12px">{{ tempPasswordInfo.password }}</span>
+                <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Button" variant="secondary" size="sm" onClick="{{ onCopyTempPassword }}" hint-size="auto,32px">Copiar</x-import>
+              </div>
+              <span style="font:var(--text-caption);color:var(--color-primary-soft-text)">Deberá cambiarla en su primer acceso.</span>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ hasEmployees }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;flex-direction:column;border:1px solid var(--color-border);border-radius:var(--radius-lg);overflow:visible">
+              <sc-for list="{{ employees }}" as="emp" hint-placeholder-count="3">
+                <div style="display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--color-border);background:var(--color-surface);position:relative">
+                  <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Avatar" name="{{ emp.name }}" size="{{ 40 }}" hint-size="40px,40px"></x-import>
+                  <div style="flex:0 0 140px;min-width:0">
+                    <span style="font:var(--text-body-medium);color:var(--color-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block">{{ emp.name }}</span>
+                  </div>
+                  <div style="flex:1;min-width:0;max-width:150px;font:var(--text-secondary);color:var(--color-text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ emp.email }}</div>
+                  <select value="{{ emp.role }}" onChange="{{ emp.onRoleChange }}" style="flex:0 0 auto;font:var(--text-caption);border:1px solid var(--color-border);border-radius:var(--radius-md);background:var(--color-surface-sunken);color:var(--color-text-secondary);padding:4px 8px;height:28px">
+                    <sc-for list="{{ roleOptions }}" as="opt" hint-placeholder-count="2">
+                      <option value="{{ opt.value }}">{{ opt.label }}</option>
+                    </sc-for>
+                  </select>
+                  <div style="flex:0 0 auto;display:flex;align-items:center;gap:6px;background:{{ emp.badgeBg }};color:{{ emp.badgeText }};border-radius:var(--radius-pill);padding:4px 12px;font:var(--text-caption)">{{ emp.statusLabel }}</div>
+                  <div style="flex:0 0 auto;position:relative;flex-shrink:0">
+                    <button class="loop-kebab" onClick="{{ emp.onToggleMenu }}" aria-label="Más acciones"><span></span><span></span><span></span></button>
+                    <sc-if value="{{ emp.menuOpen }}" hint-placeholder-val="{{ false }}">
+                      <div style="position:absolute;right:0;top:42px;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md);box-shadow:var(--shadow-md);min-width:200px;display:flex;flex-direction:column;z-index:20;overflow:hidden">
+                        <button onClick="{{ emp.onToggleStatus }}" style="text-align:left;border:none;background:transparent;padding:10px 14px;font:var(--text-body);color:var(--color-text);cursor:pointer">{{ emp.toggleLabel }}</button>
+                        <button onClick="{{ emp.onResetPassword }}" style="text-align:left;border:none;background:transparent;padding:10px 14px;font:var(--text-body);color:var(--color-text);cursor:pointer;border-top:1px solid var(--color-border)">Restablecer contraseña</button>
+                      </div>
+                    </sc-if>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+          <sc-if value="{{ hasNoEmployees }}" hint-placeholder-val="{{ false }}">
+            <x-import component-from-global-scope="LoopDesignSystem_97c4ea.EmptyState" icon="users" title="Sin empleados todavía" message="Añade a tu primer empleado para darle acceso a la aplicación." actionLabel="Añadir empleado" onAction="{{ onOpenAdd }}" hint-size="100%,260px"></x-import>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isAddView }}" hint-placeholder-val="{{ false }}">
+        <div style="flex:1;padding:40px 48px;display:flex;flex-direction:column;gap:20px;max-width:480px;overflow-y:auto">
+          <div style="display:flex;align-items:center;gap:12px">
+            <x-import component-from-global-scope="LoopDesignSystem_97c4ea.IconButton" icon="arrow-left" label="Volver a empleados" variant="secondary" onClick="{{ onCancelAdd }}" hint-size="40px,40px"></x-import>
+            <h2 style="font:var(--text-screen-title);color:var(--color-text);margin:0">Añadir empleado</h2>
+          </div>
+          <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Input" label="Nombre" value="{{ addForm.name }}" onChange="{{ onAddNameChange }}" placeholder="Nombre del empleado" hint-size="100%,44px"></x-import>
+          <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Input" label="Email" value="{{ addForm.email }}" onChange="{{ onAddEmailChange }}" error="{{ addForm.emailError }}" type="email" placeholder="correo@negocio.com" hint-size="100%,44px"></x-import>
+          <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Input" label="Contraseña inicial" value="{{ addForm.password }}" onChange="{{ onAddPasswordChange }}" error="{{ addForm.passwordError }}" type="text" placeholder="Contraseña inicial" hint-size="100%,44px"></x-import>
+          <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Select" label="Rol" value="{{ addForm.role }}" onChange="{{ onAddRoleChange }}" options="{{ roleOptions }}" hint-size="100%,44px"></x-import>
+          <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:4px">
+            <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Button" variant="secondary" onClick="{{ onCancelAdd }}" hint-size="auto,44px">Cancelar</x-import>
+            <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Button" variant="primary" onClick="{{ onSaveAdd }}" hint-size="auto,44px">Guardar</x-import>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ confirmDeactivateName }}" hint-placeholder-val="{{ '' }}">
+        <div style="position:absolute;inset:0;background:oklch(0.2 0.01 80 / 0.45);display:flex;align-items:center;justify-content:center;padding:var(--space-4);z-index:60">
+          <div style="background:var(--color-surface);border-radius:var(--radius-xl);box-shadow:var(--shadow-lg);padding:var(--space-6);width:100%;max-width:340px;display:flex;flex-direction:column;gap:12px;text-align:center">
+            <span style="font:var(--text-section-title);color:var(--color-text)">¿Quitarle el acceso a {{ confirmDeactivateName }}?</span>
+            <p style="font:var(--text-body);color:var(--color-text-secondary);margin:0">Podrás reactivarlo más adelante.</p>
+            <div style="display:flex;gap:10px;margin-top:12px">
+              <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Button" variant="secondary" onClick="{{ onCancelDeactivate }}" style="{{ growStyle }}" hint-size="auto,44px">Cancelar</x-import>
+              <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Button" variant="primary" onClick="{{ onConfirmDeactivate }}" style="{{ growStyle }}" hint-size="auto,44px">Quitar acceso</x-import>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:10px">
+    <span style="font:var(--text-caption);color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.04em">Móvil — mismo estado</span>
+    <div style="width:390px;height:760px;background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);overflow:hidden;position:relative;display:flex;flex-direction:column">
+
+      <sc-if value="{{ isListView }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;flex-direction:column;gap:4px;padding:var(--space-4);border-bottom:1px solid var(--color-border)">
+          <div style="display:flex;align-items:center;gap:10px">
+            <a href="Pantalla Seguimiento.dc.html" style="display:flex;color:var(--color-text-secondary)"><i data-lucide="arrow-left" style="width:20px;height:20px"></i></a>
+            <span style="font:var(--text-caption);color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.04em">Administración</span>
+          </div>
+          <span style="font:var(--text-screen-title);color:var(--color-text)">Empleados</span>
+        </div>
+        <div style="flex:1;overflow-y:auto;padding:var(--space-4);display:flex;flex-direction:column;gap:16px;padding-bottom:96px">
+
+          <sc-if value="{{ tempPasswordInfo }}" hint-placeholder-val="{{ null }}">
+            <div style="display:flex;flex-direction:column;gap:8px;background:var(--color-primary-soft);border:1px solid var(--color-primary);border-radius:var(--radius-lg);padding:var(--space-4)">
+              <div style="display:flex;align-items:center;justify-content:space-between">
+                <span style="font:var(--text-body-medium);color:var(--color-primary-soft-text)">Contraseña para {{ tempPasswordInfo.name }}</span>
+                <button onClick="{{ onDismissTempPassword }}" aria-label="Cerrar" style="border:none;background:transparent;color:var(--color-primary-soft-text);cursor:pointer;display:flex"><i data-lucide="x" style="width:18px;height:18px"></i></button>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+                <span style="font:700 16px/1.2 monospace;color:var(--color-text);background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:6px 12px">{{ tempPasswordInfo.password }}</span>
+                <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Button" variant="secondary" size="sm" onClick="{{ onCopyTempPassword }}" hint-size="auto,32px">Copiar</x-import>
+              </div>
+              <span style="font:var(--text-caption);color:var(--color-primary-soft-text)">Deberá cambiarla en su primer acceso.</span>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ hasEmployees }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <sc-for list="{{ employees }}" as="emp" hint-placeholder-count="3">
+                <div style="display:flex;flex-direction:column;gap:10px;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--space-3) var(--space-4);position:relative">
+                  <div style="display:flex;align-items:center;gap:12px">
+                    <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Avatar" name="{{ emp.name }}" size="{{ 40 }}" hint-size="40px,40px"></x-import>
+                    <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
+                      <span style="font:var(--text-body-medium);color:var(--color-text)">{{ emp.name }}</span>
+                      <span style="font:var(--text-caption);color:var(--color-text-tertiary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ emp.email }}</span>
+                    </div>
+                    <div style="flex:0 0 auto;display:flex;align-items:center;gap:6px;background:{{ emp.badgeBg }};color:{{ emp.badgeText }};border-radius:var(--radius-pill);padding:4px 12px;font:var(--text-caption)">{{ emp.statusLabel }}</div>
+                    <button class="loop-kebab" onClick="{{ emp.onToggleMenu }}" aria-label="Más acciones"><span></span><span></span><span></span></button>
+                  </div>
+                  <sc-if value="{{ emp.menuOpen }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;flex-direction:column;border-top:1px solid var(--color-border);padding-top:8px">
+                      <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0 8px">
+                        <span style="font:var(--text-caption);color:var(--color-text-tertiary)">Rol</span>
+                        <select value="{{ emp.role }}" onChange="{{ emp.onRoleChange }}" style="font:var(--text-caption);border:1px solid var(--color-border);border-radius:var(--radius-md);background:var(--color-surface-sunken);color:var(--color-text-secondary);padding:4px 8px;height:28px">
+                          <sc-for list="{{ roleOptions }}" as="opt" hint-placeholder-count="2">
+                            <option value="{{ opt.value }}">{{ opt.label }}</option>
+                          </sc-for>
+                        </select>
+                      </div>
+                      <button onClick="{{ emp.onToggleStatus }}" style="text-align:left;border:none;background:transparent;padding:8px 0;font:var(--text-body);color:var(--color-text);cursor:pointer">{{ emp.toggleLabel }}</button>
+                      <button onClick="{{ emp.onResetPassword }}" style="text-align:left;border:none;background:transparent;padding:8px 0;font:var(--text-body);color:var(--color-text);cursor:pointer">Restablecer contraseña</button>
+                    </div>
+                  </sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+          <sc-if value="{{ hasNoEmployees }}" hint-placeholder-val="{{ false }}">
+            <x-import component-from-global-scope="LoopDesignSystem_97c4ea.EmptyState" icon="users" title="Sin empleados todavía" message="Añade a tu primer empleado para darle acceso a la aplicación." actionLabel="Añadir empleado" onAction="{{ onOpenAdd }}" hint-size="100%,260px"></x-import>
+          </sc-if>
+        </div>
+        <div style="position:absolute;right:16px;bottom:16px">
+          <x-import component-from-global-scope="LoopDesignSystem_97c4ea.IconButton" icon="plus" label="Añadir empleado" variant="primary" size="{{ 56 }}" onClick="{{ onOpenAdd }}" hint-size="56px,56px"></x-import>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isAddView }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;align-items:center;gap:10px;padding:var(--space-4);border-bottom:1px solid var(--color-border)">
+          <button onClick="{{ onCancelAdd }}" aria-label="Volver" style="border:none;background:transparent;color:var(--color-text-secondary);cursor:pointer;display:flex"><i data-lucide="arrow-left" style="width:22px;height:22px"></i></button>
+          <span style="font:var(--text-screen-title);color:var(--color-text)">Añadir empleado</span>
+        </div>
+        <div style="flex:1;overflow-y:auto;padding:var(--space-4);display:flex;flex-direction:column;gap:14px">
+          <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Input" label="Nombre" value="{{ addForm.name }}" onChange="{{ onAddNameChange }}" placeholder="Nombre del empleado" hint-size="100%,44px"></x-import>
+          <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Input" label="Email" value="{{ addForm.email }}" onChange="{{ onAddEmailChange }}" error="{{ addForm.emailError }}" type="email" placeholder="correo@negocio.com" hint-size="100%,44px"></x-import>
+          <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Input" label="Contraseña inicial" value="{{ addForm.password }}" onChange="{{ onAddPasswordChange }}" error="{{ addForm.passwordError }}" type="text" placeholder="Contraseña inicial" hint-size="100%,44px"></x-import>
+          <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Select" label="Rol" value="{{ addForm.role }}" onChange="{{ onAddRoleChange }}" options="{{ roleOptions }}" hint-size="100%,44px"></x-import>
+          <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Button" variant="primary" onClick="{{ onSaveAdd }}" style="{{ fullWidthStyle }}" hint-size="100%,48px">Guardar</x-import>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ confirmDeactivateName }}" hint-placeholder-val="{{ '' }}">
+        <div style="position:absolute;inset:0;background:oklch(0.2 0.01 80 / 0.45);display:flex;align-items:center;justify-content:center;padding:var(--space-4);z-index:60">
+          <div style="background:var(--color-surface);border-radius:var(--radius-xl);box-shadow:var(--shadow-lg);padding:var(--space-6);width:100%;max-width:320px;display:flex;flex-direction:column;gap:12px;text-align:center">
+            <span style="font:var(--text-section-title);color:var(--color-text)">¿Quitarle el acceso a {{ confirmDeactivateName }}?</span>
+            <p style="font:var(--text-body);color:var(--color-text-secondary);margin:0">Podrás reactivarlo más adelante.</p>
+            <div style="display:flex;gap:10px;margin-top:12px">
+              <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Button" variant="secondary" onClick="{{ onCancelDeactivate }}" style="{{ growStyle }}" hint-size="auto,44px">Cancelar</x-import>
+              <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Button" variant="primary" onClick="{{ onConfirmDeactivate }}" style="{{ growStyle }}" hint-size="auto,44px">Quitar acceso</x-import>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    view: 'list',
+    employees: [
+      { id: 'e1', name: 'Diego Molina', email: 'diego.molina@negocioana.com', status: 'active', role: 'employee' },
+      { id: 'e2', name: 'Elena Vidal', email: 'elena.vidal@negocioana.com', status: 'inactive', role: 'employee' },
+      { id: 'e3', name: 'Rubén Castro', email: 'ruben.castro@negocioana.com', status: 'active', role: 'admin' }
+    ],
+    openMenuId: null,
+    confirmDeactivateId: null,
+    tempPasswordInfo: null,
+    addForm: { name: '', email: '', password: '', role: 'employee', emailError: '', passwordError: '' }
+  };
+
+  roleOptions = [{ value: 'employee', label: 'Empleado' }, { value: 'admin', label: 'Administradora' }];
+
+  genPassword() {
+    const chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+    let out = '';
+    for (let i = 0; i < 8; i++) out += chars[Math.floor(Math.random() * chars.length)];
+    return out;
+  }
+
+  onOpenAdd = () => this.setState({ view: 'add', addForm: { name: '', email: '', password: '', role: 'employee', emailError: '', passwordError: '' } });
+  onCancelAdd = () => this.setState({ view: 'list' });
+  onAddNameChange = e => this.setState({ addForm: { ...this.state.addForm, name: e.target.value } });
+  onAddEmailChange = e => this.setState({ addForm: { ...this.state.addForm, email: e.target.value, emailError: '' } });
+  onAddPasswordChange = e => this.setState({ addForm: { ...this.state.addForm, password: e.target.value, passwordError: '' } });
+  onAddRoleChange = e => this.setState({ addForm: { ...this.state.addForm, role: e.target.value } });
+  onSaveAdd = () => {
+    const { name, email, password } = this.state.addForm;
+    const emailTrim = email.trim().toLowerCase();
+    let emailError = '', passwordError = '';
+    if (!emailTrim) emailError = 'Introduce un email.';
+    else if (this.state.employees.some(e => e.email.toLowerCase() === emailTrim)) emailError = 'Ya hay una cuenta con este email.';
+    if (!password.trim()) passwordError = 'Introduce una contraseña inicial.';
+    if (emailError || passwordError) { this.setState({ addForm: { ...this.state.addForm, emailError, passwordError } }); return; }
+    const newEmp = { id: 'e' + Date.now(), name: name.trim() || 'Sin nombre', email: emailTrim, status: 'active', role: this.state.addForm.role };
+    this.setState({ employees: [...this.state.employees, newEmp], view: 'list' });
+  };
+
+  onToggleMenu = id => () => this.setState({ openMenuId: this.state.openMenuId === id ? null : id });
+  onToggleStatus = emp => () => {
+    this.setState({ openMenuId: null });
+    if (emp.status === 'active') this.setState({ confirmDeactivateId: emp.id });
+    else this.setState({ employees: this.state.employees.map(e => e.id === emp.id ? { ...e, status: 'active' } : e) });
+  };
+  onCancelDeactivate = () => this.setState({ confirmDeactivateId: null });
+  onConfirmDeactivate = () => {
+    this.setState({ employees: this.state.employees.map(e => e.id === this.state.confirmDeactivateId ? { ...e, status: 'inactive' } : e), confirmDeactivateId: null });
+  };
+  onResetPassword = emp => () => {
+    this.setState({ openMenuId: null, tempPasswordInfo: { name: emp.name, password: this.genPassword() } });
+  };
+  onRoleChange = id => e => this.setState({ employees: this.state.employees.map(emp => emp.id === id ? { ...emp, role: e.target.value } : emp) });
+  onDismissTempPassword = () => this.setState({ tempPasswordInfo: null });
+  onCopyTempPassword = () => {
+    if (this.state.tempPasswordInfo && navigator.clipboard) navigator.clipboard.writeText(this.state.tempPasswordInfo.password);
+  };
+
+  renderVals() {
+    const s = this.state;
+    const deactivateEmp = s.employees.find(e => e.id === s.confirmDeactivateId);
+    return {
+      isListView: s.view === 'list',
+      isAddView: s.view === 'add',
+      hasEmployees: s.employees.length > 0,
+      hasNoEmployees: s.employees.length === 0,
+      employees: s.employees.map(emp => ({
+        ...emp,
+        statusLabel: emp.status === 'active' ? 'Activo' : 'Inactivo',
+        badgeBg: emp.status === 'active' ? 'var(--status-won-bg)' : 'var(--color-disabled-bg)',
+        badgeText: emp.status === 'active' ? 'var(--status-won-text)' : 'var(--color-disabled-text)',
+        menuOpen: s.openMenuId === emp.id,
+        toggleLabel: emp.status === 'active' ? 'Desactivar' : 'Reactivar',
+        onToggleMenu: this.onToggleMenu(emp.id),
+        onToggleStatus: this.onToggleStatus(emp),
+        onResetPassword: this.onResetPassword(emp),
+        onRoleChange: this.onRoleChange(emp.id)
+      })),
+      addForm: s.addForm,
+      roleOptions: this.roleOptions,
+      tempPasswordInfo: s.tempPasswordInfo,
+      confirmDeactivateName: deactivateEmp ? deactivateEmp.name : '',
+      onOpenAdd: this.onOpenAdd, onCancelAdd: this.onCancelAdd,
+      onAddNameChange: this.onAddNameChange, onAddEmailChange: this.onAddEmailChange, onAddPasswordChange: this.onAddPasswordChange, onAddRoleChange: this.onAddRoleChange, onSaveAdd: this.onSaveAdd,
+      onCancelDeactivate: this.onCancelDeactivate, onConfirmDeactivate: this.onConfirmDeactivate,
+      onDismissTempPassword: this.onDismissTempPassword, onCopyTempPassword: this.onCopyTempPassword,
+      fullWidthStyle: { width: '100%' }, growStyle: { flex: 1 }
+    };
+  }
+}
+</script>
+</body>
+</html>
