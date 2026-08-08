@@ -23,6 +23,24 @@ describe("seed", () => {
     expect(counts.followUps).toBe(6);
   });
 
+  test("los clientes sembrados pasan por createClient con sus campos completos", async () => {
+    const t = convexTest(schema, modules);
+    await t.mutation(internal.seed.seed, {});
+
+    const carlos = await t.run(async (ctx) =>
+      ctx.db
+        .query("clients")
+        .withIndex("by_seedKey", (q) => q.eq("seedKey", "seed:carlos-ruiz"))
+        .unique(),
+    );
+
+    expect(carlos?.phone).toBe("600000001");
+    expect(carlos?.phoneKey).toBe("600000001");
+    expect(carlos?.status).toBe("new");
+    expect(carlos?.originChannel).toBe("web");
+    expect(carlos?.signupDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+
   test("clearSeed borra solo los datos sembrados, no los creados manualmente", async () => {
     const t = convexTest(schema, modules);
     await t.mutation(internal.seed.seed, {});

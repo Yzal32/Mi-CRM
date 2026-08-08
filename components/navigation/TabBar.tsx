@@ -8,6 +8,9 @@ import { isNavItemActive, navItems } from "./navItems";
 
 export function TabBar() {
   const pathname = usePathname();
+  // Nuevo cliente es una pantalla de formulario/detalle, no un destino de
+  // pestaña — PRO-24 exige que no muestre la barra de pestañas.
+  if (pathname === "/clientes/nuevo") return null;
   return (
     <nav className="fixed inset-x-0 bottom-0 z-10 flex justify-around border-t border-border bg-surface pt-2 pb-[calc(8px+env(safe-area-inset-bottom))] lg:hidden">
       {navItems.map((item) => {

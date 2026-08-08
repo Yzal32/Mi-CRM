@@ -8,7 +8,9 @@
  * @module
  */
 
+import type * as clients from "../clients.js";
 import type * as followUps from "../followUps.js";
+import type * as model_clients from "../model/clients.js";
 import type * as model_followUps from "../model/followUps.js";
 import type * as seed from "../seed.js";
 
@@ -19,7 +21,9 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  clients: typeof clients;
   followUps: typeof followUps;
+  "model/clients": typeof model_clients;
   "model/followUps": typeof model_followUps;
   seed: typeof seed;
 }>;

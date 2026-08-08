@@ -1,5 +1,5 @@
-import { PlaceholderScreen } from "@/components/shared/PlaceholderScreen";
+import { NuevoClienteScreen } from "@/components/clientes/NuevoClienteScreen";
 
 export default function NuevoClientePage() {
-  return <PlaceholderScreen title="Nuevo cliente" message="Próximamente: alta rápida de cliente." />;
+  return <NuevoClienteScreen />;
 }
