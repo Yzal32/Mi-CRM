@@ -1,6 +1,15 @@
+import type { ReactNode } from "react";
 import { Icon } from "./Icon";
 
-export function TopBar({ title, onBack }: { title: string; onBack?: () => void }) {
+export function TopBar({
+  title,
+  onBack,
+  action,
+}: {
+  title: string;
+  onBack?: () => void;
+  action?: ReactNode;
+}) {
   return (
     <header className="sticky top-0 z-10 flex h-14 items-center gap-3 border-b border-border bg-surface px-4">
       {onBack && (
@@ -13,7 +22,8 @@ export function TopBar({ title, onBack }: { title: string; onBack?: () => void }
           <Icon name="arrow-left" size={22} />
         </button>
       )}
-      <h1 className="font-section-title m-0 text-text">{title}</h1>
+      <h1 className="font-section-title m-0 flex-1 text-text">{title}</h1>
+      {action}
     </header>
   );
 }

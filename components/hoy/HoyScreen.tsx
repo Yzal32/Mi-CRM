@@ -7,7 +7,6 @@ import { useBusinessToday } from "@/lib/hoy/useBusinessToday";
 import { useDebouncedValue } from "@/lib/hooks/useDebouncedValue";
 import { deriveHoyViewState } from "@/lib/hoy/deriveHoyViewState";
 import { SearchBar } from "@/components/ui/SearchBar";
-import { IconButton } from "@/components/ui/IconButton";
 import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -34,14 +33,7 @@ export function HoyScreen() {
         </Button>
       </div>
 
-      <div className="flex items-center gap-2.5">
-        <div className="flex-1">
-          <SearchBar value={query} onChange={setQuery} placeholder="Buscar cliente" />
-        </div>
-        <div className="lg:hidden">
-          <IconButton icon="plus" label="Nuevo cliente" variant="primary" href="/clientes/nuevo" />
-        </div>
-      </div>
+      <SearchBar value={query} onChange={setQuery} placeholder="Buscar cliente" />
 
       {state === "loading" && <Skeleton />}
 
