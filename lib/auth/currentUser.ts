@@ -1,13 +1,16 @@
-/**
- * Único punto de acceso al usuario de sesión. Hoy es un usuario de prueba
- * fijo (no hay login real todavía — ver plan, sección "Seguridad y modelo
- * de datos"): esto solo afecta a la presentación en Next.js, NO protege
- * ninguna función de Convex. Cuando exista login real (PRO-44), este es el
- * único archivo que debe cambiar en la UI para leer la sesión real — el
- * resto de componentes solo deben llamar a getCurrentUser(), nunca
- * hardcodear el usuario por su cuenta.
- */
+import { getSessionUser } from "@/lib/auth/session";
 
+/**
+ * Único punto de acceso al usuario de sesión para la UI. Lee la sesión real
+ * (ver lib/auth/session.ts) — a diferencia de la versión anterior a PRO-44,
+ * ya no es un stub fijo.
+ *
+ * Invariante: solo se llama desde páginas ya protegidas por
+ * app/(app)/layout.tsx, que redirige a /login antes de renderizar si no
+ * hay sesión válida. Llegar aquí sin sesión es un error de programación
+ * (llamar a esta función fuera de ese árbol protegido), no un caso de
+ * usuario real — por eso lanza en vez de devolver un valor por defecto.
+ */
 export type CurrentUser = {
   id: string;
   name: string;
@@ -15,13 +18,10 @@ export type CurrentUser = {
   role: "owner" | "employee";
 };
 
-const STUB_USER: CurrentUser = {
-  id: "stub-marta",
-  name: "Marta",
-  email: "marta@example.com",
-  role: "owner",
-};
-
-export function getCurrentUser(): CurrentUser {
-  return STUB_USER;
+export async function getCurrentUser(): Promise<CurrentUser> {
+  const user = await getSessionUser();
+  if (!user) {
+    throw new Error("getCurrentUser() llamado sin sesión activa");
+  }
+  return { id: user.userId, name: user.name, email: user.email, role: user.role };
 }
