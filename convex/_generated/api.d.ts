@@ -16,9 +16,11 @@ import type * as model_errors from "../model/errors.js";
 import type * as model_followUps from "../model/followUps.js";
 import type * as model_notes from "../model/notes.js";
 import type * as model_sales from "../model/sales.js";
+import type * as model_users from "../model/users.js";
 import type * as notes from "../notes.js";
 import type * as sales from "../sales.js";
 import type * as seed from "../seed.js";
+import type * as users from "../users.js";
 
 import type {
   ApiFromModules,
@@ -35,9 +37,11 @@ declare const fullApi: ApiFromModules<{
   "model/followUps": typeof model_followUps;
   "model/notes": typeof model_notes;
   "model/sales": typeof model_sales;
+  "model/users": typeof model_users;
   notes: typeof notes;
   sales: typeof sales;
   seed: typeof seed;
+  users: typeof users;
 }>;
 
 /**

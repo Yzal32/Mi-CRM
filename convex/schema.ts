@@ -106,6 +106,33 @@ export default defineSchema({
     .index("by_seedKey", ["seedKey"])
     .index("by_seedData", ["seedData"]),
 
+  users: defineTable({
+    name: v.string(),
+    // Canónico en minúsculas (igual que clients.email) — identificador de
+    // login. Unicidad garantizada en createUser vía by_email, no aquí.
+    email: v.string(),
+    // Nunca texto plano — ver convex/model/users.ts (bcryptjs).
+    passwordHash: v.string(),
+    // Reusa los literales ya establecidos en lib/auth/currentUser.ts
+    // (CurrentUser.role) para no introducir un segundo vocabulario para el
+    // mismo concepto ("Dueña"/"Empleado" en el ticket PRO-43).
+    role: v.union(v.literal("owner"), v.literal("employee")),
+    status: v.union(v.literal("active"), v.literal("inactive")),
+    // Fecha civil "YYYY-MM-DD" vía businessDayKey(), igual criterio que
+    // clients.signupDate/notes.date — nunca argumento de mutation pública.
+    createdDate: v.string(),
+    // true tras un reseteo de contraseña (PRO-45) o un aprovisionamiento
+    // inicial (convex/users.ts provisionUser); se pone a false cuando el
+    // usuario la cambia desde "Mi cuenta" (PRO-57). Consumido por el login
+    // (PRO-44), que redirige al cambio de contraseña antes de dejar entrar.
+    mustChangePassword: v.boolean(),
+    seedData: v.optional(v.boolean()),
+    seedKey: v.optional(v.string()),
+  })
+    .index("by_email", ["email"])
+    .index("by_seedKey", ["seedKey"])
+    .index("by_seedData", ["seedData"]),
+
   sales: defineTable({
     clientId: v.id("clients"),
     description: v.string(),

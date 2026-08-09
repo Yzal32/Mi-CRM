@@ -44,3 +44,15 @@ npm test && npm run lint && npm run build   # todo en verde antes de tocar el de
 npx convex dev --once                        # sincroniza el backend UNA vez, no en continuo
 git push origin master                       # Railway construye el frontend a partir de aquí
 ```
+
+## Aprovisionar una cuenta de usuario (Dueña/Empleado)
+
+Todavía no hay pantalla de alta de empleado (PRO-45) ni login (PRO-44). Mientras tanto, la única forma de crear una cuenta (`convex/model/users.ts`) es la `internalMutation` `users.provisionUser`, invocable solo por CLI — nunca desde el navegador:
+
+```
+npx convex run users:provisionUser '{"name":"Marta Gómez","email":"marta@ejemplo.com","password":"...","role":"owner"}'
+```
+
+`role` es `"owner"` (Dueña) o `"employee"` (Empleado). La cuenta se crea con `mustChangePassword: true` siempre, así que la contraseña indicada aquí es solo temporal.
+
+**Cuidado con el historial de shell:** ese comando deja la contraseña en texto plano en el historial local de PowerShell/bash (`argv`, no hay entrada por stdin en `npx convex run`). Esto es un riesgo distinto del ya aceptado arriba para las mutations públicas sobre datos ficticios — aquí es una contraseña real, aunque temporal. Úsalo solo en tu propia máquina y considera borrar esa línea del historial si te preocupa.
