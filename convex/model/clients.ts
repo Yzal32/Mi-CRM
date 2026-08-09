@@ -1,9 +1,9 @@
-import { ConvexError } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 import { businessDayKey } from "../../lib/shared/businessDay";
 import { isValidEmail } from "../../lib/shared/isValidEmail";
 import { normalizePhoneKey } from "../../lib/shared/normalizePhoneKey";
+import { fail } from "./errors";
 
 export type OriginChannel = "web" | "social" | "email" | "whatsapp" | "referral" | "visit";
 export type ClientStatus = "new" | "contacted" | "interested" | "won" | "lost";
@@ -29,10 +29,6 @@ export type CreateClientArgs = {
 const NAME_MAX_LENGTH = 200;
 const EMAIL_MAX_LENGTH = 200;
 const PHONE_MAX_LENGTH = 30;
-
-function fail(code: CreateClientErrorCode, message: string): never {
-  throw new ConvexError({ code, message });
-}
 
 /**
  * Único punto de escritura de creación de `clients`. Cualquier función
@@ -100,4 +96,17 @@ export async function createClient(ctx: MutationCtx, args: CreateClientArgs): Pr
     seedData: args.seedData,
     seedKey: args.seedKey,
   });
+}
+
+export type UpdateClientStatusErrorCode = "CLIENT_NOT_FOUND";
+
+export type UpdateClientStatusArgs = {
+  clientId: Id<"clients">;
+  status: ClientStatus;
+};
+
+export async function updateClientStatus(ctx: MutationCtx, args: UpdateClientStatusArgs): Promise<void> {
+  const client = await ctx.db.get(args.clientId);
+  if (!client) fail<UpdateClientStatusErrorCode>("CLIENT_NOT_FOUND", "El cliente no existe.");
+  await ctx.db.patch(args.clientId, { status: args.status });
 }

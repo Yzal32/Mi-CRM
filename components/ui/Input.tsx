@@ -28,6 +28,7 @@ export const Input = forwardRef<HTMLInputElement, Props>(function Input(
         id={id}
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        required={required}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? errorId : undefined}
         className={clsx(

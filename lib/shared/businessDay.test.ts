@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { businessDayKey, calendarDayDiff, isValidBusinessDayKey } from "./businessDay";
+import { addDays, businessDayKey, calendarDayDiff, formatBusinessDate, isValidBusinessDayKey } from "./businessDay";
 
 describe("businessDayKey", () => {
   it("formatea en YYYY-MM-DD para la zona de Madrid", () => {
@@ -88,5 +88,41 @@ describe("calendarDayDiff", () => {
   it("cruza límites de mes y año correctamente", () => {
     expect(calendarDayDiff("2026-01-31", "2026-02-01")).toBe(1);
     expect(calendarDayDiff("2025-12-31", "2026-01-01")).toBe(1);
+  });
+});
+
+describe("addDays", () => {
+  it("suma días dentro del mismo mes", () => {
+    expect(addDays("2026-08-08", 1)).toBe("2026-08-09");
+    expect(addDays("2026-08-08", 7)).toBe("2026-08-15");
+  });
+
+  it("resta días con delta negativo", () => {
+    expect(addDays("2026-08-08", -1)).toBe("2026-08-07");
+  });
+
+  it("cruza el límite de mes", () => {
+    expect(addDays("2026-01-31", 1)).toBe("2026-02-01");
+  });
+
+  it("cruza el límite de año", () => {
+    expect(addDays("2025-12-31", 1)).toBe("2026-01-01");
+  });
+
+  it("respeta el 29 de febrero en un año bisiesto (2024)", () => {
+    expect(addDays("2024-02-28", 1)).toBe("2024-02-29");
+    expect(addDays("2024-02-29", 1)).toBe("2024-03-01");
+  });
+
+  it("salta directamente de 28 a marzo en un año no bisiesto (2026)", () => {
+    expect(addDays("2026-02-28", 1)).toBe("2026-03-01");
+    expect(addDays("2026-03-01", -1)).toBe("2026-02-28");
+  });
+});
+
+describe("formatBusinessDate", () => {
+  it("formatea YYYY-MM-DD como dd/mm/yyyy", () => {
+    expect(formatBusinessDate("2026-08-08")).toBe("08/08/2026");
+    expect(formatBusinessDate("2026-01-05")).toBe("05/01/2026");
   });
 });

@@ -58,3 +58,23 @@ export function calendarDayDiff(fromKey: string, toKey: string): number {
   const toUTC = Date.UTC(ty, tm - 1, td);
   return Math.round((toUTC - fromUTC) / (24 * 60 * 60 * 1000));
 }
+
+/**
+ * Suma (o resta, con delta negativo) días de calendario a una clave
+ * "YYYY-MM-DD", anclada a medianoche UTC nominal — igual que calendarDayDiff,
+ * es seguro porque son fechas civiles, no instantes de tiempo real. Cruza
+ * límites de mes/año/bisiesto correctamente porque delega en Date.UTC.
+ */
+export function addDays(dayKey: string, deltaDays: number): string {
+  const [y, m, d] = dayKey.split("-").map(Number);
+  const ms = Date.UTC(y, m - 1, d) + deltaDays * 24 * 60 * 60 * 1000;
+  return businessDayKey(new Date(ms), "UTC");
+}
+
+/**
+ * Formatea una clave "YYYY-MM-DD" como "dd/mm/yyyy" para mostrarla en la UI.
+ */
+export function formatBusinessDate(dayKey: string): string {
+  const [y, m, d] = dayKey.split("-");
+  return `${d}/${m}/${y}`;
+}

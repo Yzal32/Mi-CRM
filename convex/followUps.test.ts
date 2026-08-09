@@ -1,10 +1,23 @@
 import { convexTest } from "convex-test";
+import { ConvexError } from "convex/values";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import schema from "./schema";
 import { LIMIT } from "./followUps";
 
 const modules = import.meta.glob("./**/*.ts");
+
+type CodeErrorData = { code: string; message: string };
+
+async function captureError(promise: Promise<unknown>): Promise<ConvexError<CodeErrorData>> {
+  try {
+    await promise;
+  } catch (error) {
+    if (error instanceof ConvexError) return error as ConvexError<CodeErrorData>;
+    throw error;
+  }
+  throw new Error("se esperaba que la promesa fallara");
+}
 
 describe("listToday", () => {
   test("separa atrasados y de hoy, excluye futuros, ignora clientes sin seguimiento", async () => {
@@ -115,4 +128,76 @@ describe("listToday", () => {
     // deriveHoyViewState debe distinguir de un "Sin resultados" real.
     expect(result.today).toHaveLength(0);
   }, 30000);
+});
+
+describe("followUps.upsert / complete / discard / getByClient (capa pública)", () => {
+  test("upsert delega en el modelo y asigna el responsable de servidor, no uno del cliente", async () => {
+    const t = convexTest(schema, modules);
+    const clientId = await t.run((ctx) => ctx.db.insert("clients", { name: "Cliente Test" }));
+
+    const followUpId = await t.mutation(api.followUps.upsert, { clientId, dueDate: "2026-08-08", actionType: "call" });
+    const doc = await t.run((ctx) => ctx.db.get(followUpId));
+
+    expect(doc?.assigneeId).toBe("stub-marta");
+    expect(doc?.assigneeName).toBe("Marta");
+  });
+
+  test("upsert expone CLIENT_NOT_FOUND en error.data.code", async () => {
+    const t = convexTest(schema, modules);
+    const clientId = await t.run((ctx) => ctx.db.insert("clients", { name: "Cliente Test" }));
+    await t.run((ctx) => ctx.db.delete(clientId));
+
+    const error = await captureError(t.mutation(api.followUps.upsert, { clientId, dueDate: "2026-08-08", actionType: "call" }));
+    expect(error.data.code).toBe("CLIENT_NOT_FOUND");
+  });
+
+  test("complete delega en el modelo (crea nota, borra el seguimiento)", async () => {
+    const t = convexTest(schema, modules);
+    const clientId = await t.run((ctx) => ctx.db.insert("clients", { name: "Cliente Test" }));
+    const followUpId = await t.mutation(api.followUps.upsert, { clientId, dueDate: "2026-08-08", actionType: "call" });
+
+    const noteId = await t.mutation(api.followUps.complete, { followUpId });
+
+    expect(await t.run((ctx) => ctx.db.get(noteId))).not.toBeNull();
+    expect(await t.run((ctx) => ctx.db.get(followUpId))).toBeNull();
+  });
+
+  test("discard delega en el modelo (borra sin crear nota)", async () => {
+    const t = convexTest(schema, modules);
+    const clientId = await t.run((ctx) => ctx.db.insert("clients", { name: "Cliente Test" }));
+    const followUpId = await t.mutation(api.followUps.upsert, { clientId, dueDate: "2026-08-08", actionType: "call" });
+
+    await t.mutation(api.followUps.discard, { followUpId });
+
+    expect(await t.run((ctx) => ctx.db.get(followUpId))).toBeNull();
+  });
+
+  test("getByClient devuelve null si no hay ningún seguimiento", async () => {
+    const t = convexTest(schema, modules);
+    const clientId = await t.run((ctx) => ctx.db.insert("clients", { name: "Cliente Test" }));
+
+    expect(await t.query(api.followUps.getByClient, { clientId })).toBeNull();
+  });
+
+  test("getByClient devuelve el seguimiento del cliente, DTO sin seedData", async () => {
+    const t = convexTest(schema, modules);
+    const clientId = await t.run((ctx) => ctx.db.insert("clients", { name: "Cliente Test" }));
+    await t.run((ctx) => ctx.db.insert("followUps", { clientId, dueDate: "2026-08-08", actionType: "call", seedData: true }));
+
+    const result = await t.query(api.followUps.getByClient, { clientId });
+    expect(result?.dueDate).toBe("2026-08-08");
+    expect(result).not.toHaveProperty("seedData");
+  });
+
+  test("getByClient no usa .unique(): con duplicados transitorios, devuelve el más reciente sin lanzar", async () => {
+    const t = convexTest(schema, modules);
+    const clientId = await t.run((ctx) => ctx.db.insert("clients", { name: "Cliente Test" }));
+    await t.run(async (ctx) => {
+      await ctx.db.insert("followUps", { clientId, dueDate: "2026-08-01", actionType: "call" });
+      await ctx.db.insert("followUps", { clientId, dueDate: "2026-08-09", actionType: "visit" });
+    });
+
+    const result = await t.query(api.followUps.getByClient, { clientId });
+    expect(result?.dueDate).toBe("2026-08-09");
+  });
 });

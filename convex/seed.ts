@@ -1,9 +1,11 @@
 import { v } from "convex/values";
 import { internalMutation } from "./_generated/server";
-import { businessDayKey } from "../lib/shared/businessDay";
+import { addDays, businessDayKey } from "../lib/shared/businessDay";
+import type { ActionType } from "../lib/shared/actionType";
 import { upsertFollowUp } from "./model/followUps";
-import type { ActionType } from "./model/followUps";
 import { createClient } from "./model/clients";
+import { createNote } from "./model/notes";
+import { createSale } from "./model/sales";
 
 /**
  * `seed` y `clearSeed` son `internalMutation`: solo se pueden invocar desde
@@ -13,17 +15,18 @@ import { createClient } from "./model/clients";
  * datos ficticios.
  */
 
-function shiftDayKey(dayKey: string, deltaDays: number): string {
-  const [y, m, d] = dayKey.split("-").map(Number);
-  const ms = Date.UTC(y, m - 1, d) + deltaDays * 24 * 60 * 60 * 1000;
-  return businessDayKey(new Date(ms), "UTC");
-}
+// Identidad distinta de la que usan las mutations públicas (getActor,
+// "Marta") — para que los datos de fixture se distingan a simple vista de
+// lo que crearía alguien usando la app de verdad.
+const SEED_AUTHOR = { id: "seed-author", name: "Datos de ejemplo" };
 
 type Fixture = {
   seedKey: string;
   name: string;
   phone: string;
   followUp?: { actionType: ActionType; dueDateOffset: number };
+  notes?: Array<{ seedKey: string; text: string; featured?: boolean }>;
+  sale?: { seedKey: string; description: string; amountCents: number };
 };
 
 // dueDateOffset se resuelve contra el "hoy" del momento en que se ejecuta el
@@ -35,13 +38,52 @@ type Fixture = {
 // deben usar otros prefijos (6111111xx / 6222222xx) para no chocar por
 // DUPLICATE_PHONE con estos datos y bloquear un re-seed.
 const FIXTURES: Fixture[] = [
-  { seedKey: "seed:carlos-ruiz", name: "Carlos Ruiz", phone: "600000001", followUp: { actionType: "call", dueDateOffset: -1 } },
-  { seedKey: "seed:ana-torres", name: "Ana Torres", phone: "600000002", followUp: { actionType: "whatsapp", dueDateOffset: -3 } },
-  { seedKey: "seed:maria-lopez", name: "María López", phone: "600000003", followUp: { actionType: "call", dueDateOffset: 0 } },
-  { seedKey: "seed:marta-gomez", name: "Marta Gómez", phone: "600000004", followUp: { actionType: "visit", dueDateOffset: 0 } },
-  { seedKey: "seed:javier-soto", name: "Javier Soto", phone: "600000005", followUp: { actionType: "email", dueDateOffset: 0 } },
+  {
+    seedKey: "seed:carlos-ruiz",
+    name: "Carlos Ruiz",
+    phone: "600000001",
+    followUp: { actionType: "call", dueDateOffset: -1 },
+    notes: [
+      {
+        seedKey: "seed:carlos-ruiz:nota-1",
+        text: "Interesado en el paquete premium, pidió que le llamáramos esta semana.",
+        featured: true,
+      },
+      { seedKey: "seed:carlos-ruiz:nota-2", text: "Primer contacto por WhatsApp, preguntó por precios." },
+    ],
+  },
+  {
+    seedKey: "seed:ana-torres",
+    name: "Ana Torres",
+    phone: "600000002",
+    followUp: { actionType: "whatsapp", dueDateOffset: -3 },
+    sale: { seedKey: "seed:ana-torres:venta-1", description: "Pack básico", amountCents: 15000 },
+  },
+  {
+    seedKey: "seed:maria-lopez",
+    name: "María López",
+    phone: "600000003",
+    followUp: { actionType: "call", dueDateOffset: 0 },
+  },
+  {
+    seedKey: "seed:marta-gomez",
+    name: "Marta Gómez",
+    phone: "600000004",
+    followUp: { actionType: "visit", dueDateOffset: 0 },
+  },
+  {
+    seedKey: "seed:javier-soto",
+    name: "Javier Soto",
+    phone: "600000005",
+    followUp: { actionType: "email", dueDateOffset: 0 },
+  },
   { seedKey: "seed:lucia-fernandez", name: "Lucía Fernández", phone: "600000006" }, // sin seguimiento: no debe aparecer en Hoy
-  { seedKey: "seed:diego-alonso", name: "Diego Alonso", phone: "600000007", followUp: { actionType: "call", dueDateOffset: 1 } }, // futuro: excluido de Hoy
+  {
+    seedKey: "seed:diego-alonso",
+    name: "Diego Alonso",
+    phone: "600000007",
+    followUp: { actionType: "call", dueDateOffset: 1 },
+  }, // futuro: excluido de Hoy
 ];
 
 export const seed = internalMutation({
@@ -72,10 +114,47 @@ export const seed = internalMutation({
       if (fixture.followUp) {
         await upsertFollowUp(ctx, {
           clientId,
-          dueDate: shiftDayKey(today, fixture.followUp.dueDateOffset),
+          dueDate: addDays(today, fixture.followUp.dueDateOffset),
           actionType: fixture.followUp.actionType,
+          assigneeId: SEED_AUTHOR.id,
+          assigneeName: SEED_AUTHOR.name,
           seedData: true,
         });
+      }
+
+      for (const note of fixture.notes ?? []) {
+        const existingNote = await ctx.db
+          .query("notes")
+          .withIndex("by_seedKey", (q) => q.eq("seedKey", note.seedKey))
+          .unique();
+        if (existingNote) continue;
+        await createNote(ctx, {
+          clientId,
+          text: note.text,
+          featured: note.featured,
+          authorId: SEED_AUTHOR.id,
+          authorName: SEED_AUTHOR.name,
+          seedData: true,
+          seedKey: note.seedKey,
+        });
+      }
+
+      if (fixture.sale) {
+        const existingSale = await ctx.db
+          .query("sales")
+          .withIndex("by_seedKey", (q) => q.eq("seedKey", fixture.sale!.seedKey))
+          .unique();
+        if (!existingSale) {
+          await createSale(ctx, {
+            clientId,
+            description: fixture.sale.description,
+            amountCents: fixture.sale.amountCents,
+            authorId: SEED_AUTHOR.id,
+            authorName: SEED_AUTHOR.name,
+            seedData: true,
+            seedKey: fixture.sale.seedKey,
+          });
+        }
       }
     }
 
@@ -87,20 +166,37 @@ export const clearSeed = internalMutation({
   args: {},
   returns: v.null(),
   handler: async (ctx) => {
-    // Usa el índice by_seedData (no un .collect() de la tabla completa) y
-    // borra solo lo marcado seedData: true — limpieza limitada e
-    // identificable, no toca nada creado manualmente.
-    const seedFollowUps = await ctx.db
-      .query("followUps")
-      .withIndex("by_seedData", (q) => q.eq("seedData", true))
-      .collect();
-    for (const row of seedFollowUps) await ctx.db.delete(row._id);
-
     const seedClients = await ctx.db
       .query("clients")
       .withIndex("by_seedData", (q) => q.eq("seedData", true))
       .collect();
-    for (const row of seedClients) await ctx.db.delete(row._id);
+
+    // Cascada por cliente: borra TODAS las notas/ventas/seguimientos de cada
+    // cliente sembrado que se va a borrar, sin filtrar por seedData — si
+    // alguien creó manualmente una nota o un seguimiento sobre un cliente
+    // sembrado, no debe sobrevivir como huérfano apuntando a un cliente ya
+    // borrado.
+    for (const client of seedClients) {
+      const notes = await ctx.db
+        .query("notes")
+        .withIndex("by_client_date", (q) => q.eq("clientId", client._id))
+        .collect();
+      for (const note of notes) await ctx.db.delete(note._id);
+
+      const sales = await ctx.db
+        .query("sales")
+        .withIndex("by_client_date", (q) => q.eq("clientId", client._id))
+        .collect();
+      for (const sale of sales) await ctx.db.delete(sale._id);
+
+      const followUps = await ctx.db
+        .query("followUps")
+        .withIndex("by_client", (q) => q.eq("clientId", client._id))
+        .collect();
+      for (const followUp of followUps) await ctx.db.delete(followUp._id);
+
+      await ctx.db.delete(client._id);
+    }
 
     return null;
   },

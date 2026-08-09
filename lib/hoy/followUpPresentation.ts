@@ -1,19 +1,16 @@
 import type { IconName } from "@/components/ui/Icon";
+import { ACTION_TYPE_LABELS_ES, type ActionType } from "@/lib/shared/actionType";
 
-export type ActionType = "call" | "whatsapp" | "email" | "visit";
+// Reexportado para no romper los imports existentes (components/hoy/FollowUpRow.tsx,
+// lib/hoy/deriveHoyViewState.ts) — la definición real vive en lib/shared/actionType.ts,
+// compartida con convex/model/followUps.ts.
+export type { ActionType };
 
 const ACTION_ICON: Record<ActionType, IconName> = {
   call: "phone",
   whatsapp: "message-circle",
   email: "mail",
   visit: "map-pin",
-};
-
-const ACTION_LABEL: Record<ActionType, string> = {
-  call: "Llamar",
-  whatsapp: "WhatsApp",
-  email: "Email",
-  visit: "Visita",
 };
 
 export function actionIcon(actionType: ActionType): IconName {
@@ -27,5 +24,5 @@ function timingSuffix(diffDays: number): string {
 }
 
 export function followUpLabel(actionType: ActionType, diffDays: number): string {
-  return `${ACTION_LABEL[actionType]} · ${timingSuffix(diffDays)}`;
+  return `${ACTION_TYPE_LABELS_ES[actionType]} · ${timingSuffix(diffDays)}`;
 }

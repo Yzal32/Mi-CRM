@@ -1,6 +1,6 @@
-import { PlaceholderScreen } from "@/components/shared/PlaceholderScreen";
+import { FichaClienteScreen } from "@/components/clientes/FichaClienteScreen";
 
 export default async function FichaClientePage({ params }: PageProps<"/clientes/[clientId]">) {
   const { clientId } = await params;
-  return <PlaceholderScreen title="Ficha de cliente" message={`Próximamente. ID de cliente: ${clientId}`} />;
+  return <FichaClienteScreen clientId={clientId} />;
 }

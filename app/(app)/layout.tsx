@@ -6,7 +6,11 @@ import { ConnectionBanner } from "@/components/shared/ConnectionBanner";
 
 export default function AppLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="flex min-h-full flex-1">
+    // id usado por components/ui/Overlay.tsx para aplicar `inert` a todo
+    // el árbol de la app mientras un overlay está abierto (portado fuera
+    // de este contenedor, a document.body — nunca dentro, o heredaría
+    // inert y dejaría de ser interactivo).
+    <div id="app-shell" className="flex min-h-full flex-1">
       <Sidebar />
       <div className="flex min-h-full flex-1 flex-col">
         <ConnectionBanner />

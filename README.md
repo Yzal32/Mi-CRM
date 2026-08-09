@@ -1,38 +1,45 @@
-# Loop — CRM
+# Loop CRM
 
-CRM simple para negocios pequeños (Next.js 16 + Convex). Ver `AGENTS.md` antes de tocar código: este proyecto usa una versión de Next.js con cambios importantes respecto al training del modelo.
+CRM para un negocio pequeño (Marta, la dueña, y Carlos, su empleado), construido con Next.js 16 + Convex.
 
-## Desarrollo local
+## Seguridad: sin autenticación todavía
 
-```bash
+No existe login real (PRO-44 pendiente en Linear). **Todas** las mutations y queries públicas de Convex son accesibles sin autenticación por cualquiera que tenga la URL del deployment — riesgo aceptado explícitamente mientras el deployment solo contenga datos ficticios (ver `convex/seed.ts`). En cuanto haya datos reales de clientes, esto deja de ser aceptable y bloquea cualquier uso hasta que exista login real.
+
+Superficie pública sin autenticación:
+
+- `clients.create`
+- `clients.getById`
+- `clients.updateStatus`
+- `followUps.listToday`
+- `followUps.upsert`
+- `followUps.complete`
+- `followUps.discard`
+- `followUps.getByClient`
+- `notes.create`
+- `notes.unfeature`
+- `notes.listByClient`
+- `sales.listByClient` (solo lectura — no existe una mutation pública de creación de ventas)
+
+Además, la autoría de notas/ventas/seguimientos (`authorId`/`authorName`, `assigneeId`/`assigneeName`) es una **identidad de demostración fija** (`convex/model/actor.ts`, "Marta") asignada siempre en servidor — nunca se acepta como argumento del cliente, así que nadie puede elegir firmar como otra persona, pero tampoco es autenticación real: todo queda atribuido a esa misma identidad fija sea quien sea quien lo creó de verdad. No es autoría fiable con datos reales.
+
+## Desarrollo
+
+`CONVEX_DEPLOYMENT=dev:useful-rat-834` (variable local, la usa la CLI) y `NEXT_PUBLIC_CONVEX_URL=https://useful-rat-834.eu-west-1.convex.cloud` (variable de bundle del cliente, mismo valor en Railway) apuntan al **mismo** deployment — no hay un Convex de producción separado del de desarrollo. `npx convex dev` sin `--once` sincroniza en continuo contra ese deployment compartido, así que un cambio a medio terminar puede llegar sin querer a la demo pública de Railway mientras se está programando.
+
+Para trabajar en local, sin tocar el deployment compartido:
+
+```
 npm install
-npx convex dev   # primera vez: pide login y rellena .env.local
-npm run dev
+npx convex codegen   # solo genera tipos, no toca el deployment
+npm run dev           # frontend Next.js
+npm test              # vitest
 ```
 
-Abre [http://localhost:3000](http://localhost:3000). La pantalla de inicio ("Hoy") necesita datos de prueba:
+Para publicar un cambio (backend + frontend), en este orden:
 
-```bash
-npx convex run seed:seed        # siembra clientes y seguimientos de ejemplo
-npx convex run seed:clearSeed   # borra solo lo sembrado
 ```
-
-No hay login real todavía (ver `lib/auth/currentUser.ts`) — es una decisión de alcance documentada, no un olvido.
-
-## Comprobaciones
-
-```bash
-npm run lint
-npm run test    # vitest — lógica pura + convex-test
-npm run build
+npm test && npm run lint && npm run build   # todo en verde antes de tocar el deployment compartido
+npx convex dev --once                        # sincroniza el backend UNA vez, no en continuo
+git push origin master                       # Railway construye el frontend a partir de aquí
 ```
-
-## Despliegue (Railway)
-
-El repositorio incluye `railway.json` con el build/start command explícitos para que Railway lo trate como una app Node/Next.js (no como sitio estático).
-
-Variables de entorno que hay que configurar en el servicio de Railway (no viven en el repo):
-
-- `NEXT_PUBLIC_CONVEX_URL` — URL del deployment de Convex contra el que debe hablar la app. **Se inyecta en el bundle del cliente en tiempo de build**, así que tiene que estar puesta en Railway antes de la primera build, no solo en runtime.
-
-**Recordatorio de alcance:** mientras no exista login real (tarea PRO-44 en Linear), esta app solo debe usarse con un deployment de Convex de datos ficticios (el del `seed.ts`), nunca con datos reales de clientes — `listToday` no tiene ninguna protección de autorización todavía.

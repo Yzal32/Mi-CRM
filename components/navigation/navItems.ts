@@ -22,3 +22,16 @@ export function isNavItemActive(pathname: string, href: string): boolean {
   if (href === "/") return pathname === "/";
   return pathname === href || pathname.startsWith(`${href}/`);
 }
+
+/**
+ * Si `pathname` es la ruta de una ficha de cliente (/clientes/<id>, nunca
+ * /clientes/nuevo ni /clientes en sí) devuelve el id; si no, null.
+ * Compartido entre TabBar (para ocultarse, PRO-24) y MobileTopBar (para
+ * cargar el nombre del cliente en el título) — misma regla en un solo sitio.
+ */
+export function extractFichaClientId(pathname: string): string | null {
+  const match = /^\/clientes\/([^/]+)$/.exec(pathname);
+  if (!match) return null;
+  const [, id] = match;
+  return id === "nuevo" ? null : id;
+}

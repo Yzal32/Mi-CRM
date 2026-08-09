@@ -48,3 +48,6 @@ next-env.d.ts
 
 # herramientas de desarrollo
 .playwright-mcp/
+
+# notas/planes de trabajo locales, no forman parte del código
+/temp/
