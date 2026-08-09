@@ -93,6 +93,22 @@ describe("LoginScreen", () => {
     expect(await screen.findByText("No se pudo iniciar sesión. Inténtalo de nuevo.")).toBeTruthy();
   });
 
+  it("un rechazo no controlado (p. ej. red caída) libera el cerrojo, muestra el error genérico y permite reintentar", async () => {
+    loginActionMock.mockRejectedValueOnce(new Error("fallo de red")).mockResolvedValueOnce(undefined);
+    render(<LoginScreen />);
+
+    fillFields();
+    clickEntrar();
+
+    const banner = await screen.findByText("No se pudo iniciar sesión. Inténtalo de nuevo.");
+    expect(banner.closest("[role='alert']")).not.toBeNull();
+
+    // Si el cerrojo no se hubiera liberado, este segundo click no llegaría
+    // a llamar de nuevo a la action.
+    clickEntrar();
+    await waitFor(() => expect(loginActionMock).toHaveBeenCalledTimes(2));
+  });
+
   it("doble click no llama dos veces a loginAction", async () => {
     let resolveLogin!: (value: undefined) => void;
     loginActionMock.mockImplementation(

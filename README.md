@@ -10,7 +10,7 @@ Desde PRO-44 existe login real: email + contraseña, sesión con cookie httpOnly
 
 ### Cómo funciona la sesión
 
-- `convex/model/sessions.ts`: token opaco de 32 bytes (`crypto.getRandomValues`), guardado como `tokenHash` (SHA-256, `crypto.subtle.digest`) — el token en claro nunca se persiste, solo viaja una vez en la respuesta del login y en la cookie httpOnly.
+- `convex/model/sessions.ts`: token opaco de 32 bytes (`crypto.getRandomValues`), guardado como `tokenHash` (SHA-256, `crypto.subtle.digest`) — el token en claro nunca se persiste; solo se **devuelve** al crearlo o rotarlo (`login`, `changePassword`), y después viaja en la cookie httpOnly en cada petición que lo necesita (`verify`, `logout`, `changePassword`).
 - Máximo `MAX_SESSIONS_PER_USER = 5` sesiones activas por usuario: al hacer un sexto login, se revoca automáticamente la más antigua. Excepción deliberada a "la sesión se mantiene hasta cierre explícito" — documentada aquí para que no se lea como un bug.
 - Cambiar la contraseña (`users.changePassword`, obligatorio tras aprovisionar o voluntario desde Ajustes) **rota** la sesión: cierra todas las sesiones del usuario, incluida la que hizo el cambio, y crea una nueva — si alguien había copiado la cookie con la contraseña antigua, deja de servirle. La cookie del navegador que hizo el cambio se sustituye en la misma respuesta, sin pedir volver a iniciar sesión.
 - Sin rate-limiting de intentos de login — riesgo aceptado explícitamente, herramienta interna sin usuarios públicos.
@@ -30,6 +30,14 @@ Superficie pública sin autenticación (sin cambios por PRO-44 — ver aviso arr
 - `notes.unfeature`
 - `notes.listByClient`
 - `sales.listByClient` (solo lectura — no existe una mutation pública de creación de ventas)
+
+Además de esta lista, `sessions.login`, `sessions.verify`, `sessions.logout` y `users.changePassword` **también** son funciones públicas sin autenticación de Convex (no usan `ctx.auth` — no hay proveedor de identidad configurado). A diferencia de las de arriba, aquí es inevitable por diseño (un login no puede exigir tener ya una sesión) y cada una impone su propio requisito lógico dentro de la función, no del framework:
+
+- `sessions.login`: exige email y contraseña correctos; sin eso no crea sesión.
+- `sessions.verify` / `sessions.logout`: exigen un token de sesión con formato válido y existente (`verify` es de solo lectura; `logout` es idempotente si el token ya no existe).
+- `users.changePassword`: exige un token de sesión válido **y** la contraseña actual correcta; rota la sesión al terminar (ver arriba).
+
+Ninguna de las cuatro es alcanzable "gratis": quien las llame necesita ya sea credenciales válidas, ya sea un token de sesión real — a diferencia de `clients.*`/`notes.*`/`followUps.*`/`sales.listByClient`, que no piden nada.
 
 Además, la autoría de notas/ventas/seguimientos (`authorId`/`authorName`, `assigneeId`/`assigneeName`) es una **identidad de demostración fija** (`convex/model/actor.ts`, "Marta") asignada siempre en servidor — nunca se acepta como argumento del cliente, así que nadie puede elegir firmar como otra persona, pero tampoco es autenticación real: todo queda atribuido a esa misma identidad fija sea quien sea quien lo creó de verdad. No es autoría fiable con datos reales.
 

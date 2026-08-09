@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { unstable_rethrow } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import { Input } from "@/components/ui/Input";
@@ -79,7 +80,12 @@ export function CambiarContrasenaScreen({ mandatory }: { mandatory: boolean }) {
     const validation: FieldErrors = {};
     if (!currentPassword) validation.currentPassword = "Introduce tu contraseña actual.";
     if (!newPassword) validation.newPassword = "Introduce una contraseña nueva.";
-    if (newPassword && confirmNewPassword && newPassword !== confirmNewPassword) {
+    // El formulario lleva noValidate (ver más abajo), así que el `required`
+    // de este campo no lo hace el navegador — sin esta comprobación se podía
+    // guardar con la confirmación vacía.
+    if (!confirmNewPassword) {
+      validation.confirmNewPassword = "Confirma la contraseña nueva.";
+    } else if (newPassword && newPassword !== confirmNewPassword) {
       validation.confirmNewPassword = "Las contraseñas no coinciden.";
     }
     if (Object.keys(validation).length > 0) {
@@ -91,12 +97,22 @@ export function CambiarContrasenaScreen({ mandatory }: { mandatory: boolean }) {
     setIsSaving(true);
     setErrors({});
 
-    // Con un cambio correcto, changePasswordAction hace redirect() por
-    // dentro (lanza — no vuelve aquí). Solo llegamos a leer `result` cuando
-    // falla.
-    const result = await changePasswordAction({ currentPassword, newPassword });
-    if (result?.error) {
-      setErrors(errorsFromCode(result.error));
+    try {
+      // Con un cambio correcto, changePasswordAction hace redirect() por
+      // dentro (lanza — no vuelve aquí). Solo llegamos a leer `result` cuando
+      // falla.
+      const result = await changePasswordAction({ currentPassword, newPassword });
+      if (result?.error) {
+        setErrors(errorsFromCode(result.error));
+        savingRef.current = false;
+        setIsSaving(false);
+      }
+    } catch (error) {
+      // redirect() de Next lanza internamente (digest NEXT_REDIRECT) — eso
+      // debe seguir su curso, no tratarse como un fallo. Cualquier otro
+      // rechazo (red caída, etc.) sí debe liberar el cerrojo y avisar.
+      unstable_rethrow(error);
+      setErrors({ form: GENERIC_ERROR });
       savingRef.current = false;
       setIsSaving(false);
     }

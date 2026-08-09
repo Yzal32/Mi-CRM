@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { unstable_rethrow } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import { Input } from "@/components/ui/Input";
@@ -71,11 +72,21 @@ export function LoginScreen() {
     setIsSubmitting(true);
     setFormError(undefined);
 
-    // Con credenciales correctas, loginAction hace redirect() por dentro
-    // (lanza — no vuelve aquí). Solo llegamos a leer `result` cuando falla.
-    const result = await loginAction({ email: email.trim(), password });
-    if (result?.error) {
-      setFormError(messageFromErrorCode(result.error));
+    try {
+      // Con credenciales correctas, loginAction hace redirect() por dentro
+      // (lanza — no vuelve aquí). Solo llegamos a leer `result` cuando falla.
+      const result = await loginAction({ email: email.trim(), password });
+      if (result?.error) {
+        setFormError(messageFromErrorCode(result.error));
+        savingRef.current = false;
+        setIsSubmitting(false);
+      }
+    } catch (error) {
+      // redirect() de Next lanza internamente (digest NEXT_REDIRECT) — eso
+      // debe seguir su curso, no tratarse como un fallo. Cualquier otro
+      // rechazo (red caída, etc.) sí debe liberar el cerrojo y avisar.
+      unstable_rethrow(error);
+      setFormError(GENERIC_ERROR);
       savingRef.current = false;
       setIsSubmitting(false);
     }

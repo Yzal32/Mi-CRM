@@ -66,6 +66,17 @@ describe("CambiarContrasenaScreen", () => {
     expect(changePasswordActionMock).not.toHaveBeenCalled();
   });
 
+  it("confirmación vacía muestra error local, no llama a changePasswordAction", async () => {
+    render(<CambiarContrasenaScreen mandatory={true} />);
+
+    fireEvent.change(screen.getByLabelText(/^Contraseña actual/), { target: { value: "temporal123" } });
+    fireEvent.change(screen.getByLabelText(/^Contraseña nueva/), { target: { value: "definitiva456" } });
+    clickGuardar();
+
+    expect(await screen.findByText("Confirma la contraseña nueva.")).toBeTruthy();
+    expect(changePasswordActionMock).not.toHaveBeenCalled();
+  });
+
   it("campos vacíos muestran error y no llaman a changePasswordAction", async () => {
     render(<CambiarContrasenaScreen mandatory={true} />);
 
@@ -104,5 +115,21 @@ describe("CambiarContrasenaScreen", () => {
 
     const banner = await screen.findByText("No se pudo cambiar la contraseña. Inténtalo de nuevo.");
     expect(banner.closest("[role='alert']")).not.toBeNull();
+  });
+
+  it("un rechazo no controlado (p. ej. red caída) libera el cerrojo, muestra el error genérico y permite reintentar", async () => {
+    changePasswordActionMock.mockRejectedValueOnce(new Error("fallo de red")).mockResolvedValueOnce(undefined);
+    render(<CambiarContrasenaScreen mandatory={true} />);
+
+    fillFields();
+    clickGuardar();
+
+    const banner = await screen.findByText("No se pudo cambiar la contraseña. Inténtalo de nuevo.");
+    expect(banner.closest("[role='alert']")).not.toBeNull();
+
+    // Si el cerrojo no se hubiera liberado, este segundo click no llegaría
+    // a llamar de nuevo a la action.
+    clickGuardar();
+    await waitFor(() => expect(changePasswordActionMock).toHaveBeenCalledTimes(2));
   });
 });
