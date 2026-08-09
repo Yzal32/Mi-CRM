@@ -110,3 +110,116 @@ export async function updateClientStatus(ctx: MutationCtx, args: UpdateClientSta
   if (!client) fail<UpdateClientStatusErrorCode>("CLIENT_NOT_FOUND", "El cliente no existe.");
   await ctx.db.patch(args.clientId, { status: args.status });
 }
+
+export type UpdateClientErrorCode =
+  | "CLIENT_NOT_FOUND"
+  | "NAME_REQUIRED"
+  | "NAME_TOO_LONG"
+  | "CONTACT_REQUIRED"
+  | "INVALID_PHONE"
+  | "INVALID_EMAIL"
+  | "DUPLICATE_PHONE";
+
+export type UpdateClientArgs = {
+  clientId: Id<"clients">;
+  // Tri-estado en los 4 campos, sin excepción: `undefined` significa "no
+  // tocar" (el usuario no editó ese campo), una cadena (incl. "" en
+  // phone/email) significa "nuevo valor". Parcheo parcial real, no
+  // sobrescritura total — evita que guardar un campo pise, sin haberlo
+  // tocado, un cambio concurrente de otro campo hecho por otra sesión.
+  name?: string;
+  phone?: string;
+  email?: string;
+  originChannel?: OriginChannel;
+};
+
+/**
+ * Mismas reglas de validación que createClient (nombre, contacto mínimo,
+ * teléfono no duplicado), aplicadas solo a los campos presentes en `args` —
+ * los ausentes conservan el valor ya guardado. CONTACT_REQUIRED se valida
+ * sobre el estado final fusionado (existente + parcheado), no solo sobre
+ * los campos que llegaron en esta llamada.
+ */
+export async function updateClient(ctx: MutationCtx, args: UpdateClientArgs): Promise<void> {
+  const client = await ctx.db.get(args.clientId);
+  if (!client) fail<UpdateClientErrorCode>("CLIENT_NOT_FOUND", "El cliente no existe.");
+
+  const patch: {
+    name?: string;
+    phone?: string;
+    phoneKey?: string;
+    email?: string;
+    originChannel?: OriginChannel;
+  } = {};
+
+  if (args.name !== undefined) {
+    const name = args.name.trim();
+    if (!name) {
+      fail<UpdateClientErrorCode>("NAME_REQUIRED", "Introduce el nombre del cliente.");
+    }
+    if (name.length > NAME_MAX_LENGTH) {
+      fail<UpdateClientErrorCode>("NAME_TOO_LONG", "El nombre es demasiado largo.");
+    }
+    patch.name = name;
+  }
+
+  let finalPhoneKey = client.phoneKey;
+  if (args.phone !== undefined) {
+    const rawPhone = args.phone.trim();
+    if (rawPhone) {
+      if (rawPhone.length > PHONE_MAX_LENGTH) {
+        fail<UpdateClientErrorCode>("INVALID_PHONE", "Ese teléfono no es válido.");
+      }
+      const normalized = normalizePhoneKey(rawPhone);
+      if (!normalized) {
+        fail<UpdateClientErrorCode>("INVALID_PHONE", "Ese teléfono no es válido.");
+      }
+      patch.phone = rawPhone;
+      patch.phoneKey = normalized;
+      finalPhoneKey = normalized;
+    } else {
+      // ctx.db.patch borra el campo cuando se le pasa `undefined` explícito
+      // (a diferencia de omitir la clave, que deja el valor existente
+      // intacto) — es justo lo que se quiere aquí: el usuario borró el
+      // teléfono a propósito.
+      patch.phone = undefined;
+      patch.phoneKey = undefined;
+      finalPhoneKey = undefined;
+    }
+  }
+
+  let finalEmail = client.email;
+  if (args.email !== undefined) {
+    const rawEmail = args.email.trim();
+    if (rawEmail) {
+      if (rawEmail.length > EMAIL_MAX_LENGTH || !isValidEmail(rawEmail)) {
+        fail<UpdateClientErrorCode>("INVALID_EMAIL", "Ese email no es válido.");
+      }
+      patch.email = rawEmail.toLowerCase();
+      finalEmail = patch.email;
+    } else {
+      patch.email = undefined;
+      finalEmail = undefined;
+    }
+  }
+
+  if (!finalPhoneKey && !finalEmail) {
+    fail<UpdateClientErrorCode>("CONTACT_REQUIRED", "Necesitas al menos un teléfono o un email para guardar el cliente.");
+  }
+
+  if (patch.phoneKey) {
+    const existing = await ctx.db
+      .query("clients")
+      .withIndex("by_phoneKey", (q) => q.eq("phoneKey", patch.phoneKey))
+      .unique();
+    if (existing && existing._id !== args.clientId) {
+      fail<UpdateClientErrorCode>("DUPLICATE_PHONE", "Ya existe un cliente con este teléfono.");
+    }
+  }
+
+  if (args.originChannel !== undefined) patch.originChannel = args.originChannel;
+
+  if (Object.keys(patch).length === 0) return;
+
+  await ctx.db.patch(args.clientId, patch);
+}

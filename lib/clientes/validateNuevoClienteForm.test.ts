@@ -37,4 +37,18 @@ describe("validateNuevoClienteForm", () => {
     expect(errors.email).toBeDefined();
     expect(errors.form).toBeUndefined();
   });
+
+  it("rechaza un teléfono de más de 30 caracteres aunque el formato y el número de dígitos sean válidos", () => {
+    // 10 dígitos (formato válido, dentro del rango 6-15 de normalizePhoneKey)
+    // separados por guiones de sobra: 37 caracteres en total.
+    const longPhone = "6---2---2---3---3---4---5---5---6---6";
+    const errors = validateNuevoClienteForm({ name: "Cliente", phone: longPhone, email: "" });
+    expect(errors.phone).toBeDefined();
+  });
+
+  it("rechaza un email de más de 200 caracteres aunque el formato sea válido", () => {
+    const longEmail = `${"a".repeat(195)}@x.com`;
+    const errors = validateNuevoClienteForm({ name: "Cliente", phone: "", email: longEmail });
+    expect(errors.email).toBeDefined();
+  });
 });

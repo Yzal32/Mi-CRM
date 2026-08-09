@@ -6,6 +6,7 @@ import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
+import { IconButton } from "@/components/ui/IconButton";
 import { Select } from "@/components/ui/Select";
 import { DetailRow } from "@/components/ui/DetailRow";
 import {
@@ -15,6 +16,7 @@ import {
   type OriginChannel,
 } from "@/lib/clientes/clientOptions";
 import { convexErrorCode } from "@/lib/shared/convexError";
+import { EditarClienteOverlay } from "./EditarClienteOverlay";
 
 const ORIGIN_CHANNEL_LABELS: Record<OriginChannel, string> = Object.fromEntries(
   ORIGIN_CHANNEL_OPTIONS.map((option) => [option.value, option.label]),
@@ -33,6 +35,7 @@ export function ClienteHeaderCard({ client }: { client: Client }) {
   const updateStatus = useMutation(api.clients.updateStatus);
   const [pendingStatus, setPendingStatus] = useState<ClientStatus | null>(null);
   const [statusError, setStatusError] = useState<string | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
   // Cerrojo síncrono además del `disabled` del select — React no lo aplica
   // a tiempo entre dos cambios muy seguidos.
   const lockRef = useRef(false);
@@ -87,6 +90,7 @@ export function ClienteHeaderCard({ client }: { client: Client }) {
             />
           </div>
         </div>
+        <IconButton icon="pencil" label="Editar cliente" variant="secondary" onClick={() => setEditOpen(true)} />
       </div>
 
       {statusError && (
@@ -104,6 +108,17 @@ export function ClienteHeaderCard({ client }: { client: Client }) {
           value={`Llegó por: ${ORIGIN_CHANNEL_LABELS[originChannel]}`}
         />
       </div>
+
+      {editOpen && (
+        <EditarClienteOverlay
+          clientId={client._id}
+          name={client.name}
+          phone={client.phone}
+          email={client.email}
+          originChannel={originChannel}
+          onClose={() => setEditOpen(false)}
+        />
+      )}
     </div>
   );
 }

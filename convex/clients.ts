@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { createClient, updateClientStatus } from "./model/clients";
+import { createClient, updateClient, updateClientStatus } from "./model/clients";
 
 const originChannelValidator = v.union(
   v.literal("web"),
@@ -79,6 +79,25 @@ export const updateStatus = mutation({
   returns: v.null(),
   handler: async (ctx, args) => {
     await updateClientStatus(ctx, args);
+    return null;
+  },
+});
+
+// Mismo riesgo aceptado que `create`/`updateStatus`: sin autenticación
+// todavía (ver README). `name` es v.optional aquí (a diferencia de
+// `create`, donde es obligatorio): en la edición, "no enviarlo" es una
+// opción legítima que significa "no tocar este campo", no un olvido.
+export const update = mutation({
+  args: {
+    clientId: v.id("clients"),
+    name: v.optional(v.string()),
+    phone: v.optional(v.string()),
+    email: v.optional(v.string()),
+    originChannel: v.optional(originChannelValidator),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await updateClient(ctx, args);
     return null;
   },
 });

@@ -15,6 +15,8 @@ export type NuevoClienteFormErrors = {
 };
 
 const NAME_MAX_LENGTH = 200;
+const PHONE_MAX_LENGTH = 30;
+const EMAIL_MAX_LENGTH = 200;
 
 /**
  * Validación instantánea en cliente — mismo criterio y mismos mensajes que
@@ -34,12 +36,12 @@ export function validateNuevoClienteForm(values: NuevoClienteFormValues): NuevoC
   }
 
   const phone = values.phone.trim();
-  if (phone && !normalizePhoneKey(phone)) {
+  if (phone && (phone.length > PHONE_MAX_LENGTH || !normalizePhoneKey(phone))) {
     errors.phone = "Ese teléfono no es válido.";
   }
 
   const email = values.email.trim();
-  if (email && !isValidEmail(email)) {
+  if (email && (email.length > EMAIL_MAX_LENGTH || !isValidEmail(email))) {
     errors.email = "Ese email no es válido.";
   }
 

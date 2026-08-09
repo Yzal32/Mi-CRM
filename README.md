@@ -11,6 +11,7 @@ Superficie pública sin autenticación:
 - `clients.create`
 - `clients.getById`
 - `clients.updateStatus`
+- `clients.update` (edición de datos del cliente — endpoint nuevo bajo el mismo riesgo ya aceptado arriba)
 - `followUps.listToday`
 - `followUps.upsert`
 - `followUps.complete`
