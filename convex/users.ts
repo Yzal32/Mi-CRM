@@ -1,6 +1,6 @@
 import { v } from "convex/values";
-import { internalMutation, mutation } from "./_generated/server";
-import { changePassword as changePasswordModel, createUser } from "./model/users";
+import { internalMutation } from "./_generated/server";
+import { createUser } from "./model/users";
 
 /**
  * internalMutation: SOLO invocable por CLI (`npx convex run
@@ -32,24 +32,4 @@ export const provisionUser = internalMutation({
   },
   returns: v.id("users"),
   handler: async (ctx, args) => createUser(ctx, { ...args, mustChangePassword: true }),
-});
-
-/**
- * Mutation pública — requiere una sesión válida (`token`), no expone nada
- * que un usuario ya autenticado no pudiera pedir sobre sí mismo. Cubre
- * tanto el cambio obligatorio (mustChangePassword: true, tras
- * provisionUser) como el voluntario desde Ajustes (PRO-57) — la propia
- * mutation no distingue los dos casos, ambos son "cambiar mi contraseña
- * conociendo la actual". Devuelve un token de sesión nuevo (rotación, ver
- * convex/model/users.ts): el caller (Server Action) debe sustituir la
- * cookie del navegador por él.
- */
-export const changePassword = mutation({
-  args: {
-    token: v.string(),
-    currentPassword: v.string(),
-    newPassword: v.string(),
-  },
-  returns: v.object({ token: v.string() }),
-  handler: async (ctx, args) => changePasswordModel(ctx, args),
 });

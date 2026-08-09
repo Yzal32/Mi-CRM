@@ -133,20 +133,6 @@ export default defineSchema({
     .index("by_seedKey", ["seedKey"])
     .index("by_seedData", ["seedData"]),
 
-  sessions: defineTable({
-    userId: v.id("users"),
-    // SHA-256 hex del token de sesión — el token en claro nunca se
-    // persiste (ver convex/model/sessions.ts). Un volcado de esta tabla no
-    // basta para secuestrar una sesión.
-    tokenHash: v.string(),
-    // Fecha civil "YYYY-MM-DD" vía businessDayKey(), solo para auditoría —
-    // esta tabla no expira sesiones por fecha (ver MAX_SESSIONS_PER_USER en
-    // convex/model/sessions.ts para el único límite que sí se aplica).
-    createdDate: v.string(),
-  })
-    .index("by_tokenHash", ["tokenHash"])
-    .index("by_userId", ["userId"]),
-
   sales: defineTable({
     clientId: v.id("clients"),
     description: v.string(),
