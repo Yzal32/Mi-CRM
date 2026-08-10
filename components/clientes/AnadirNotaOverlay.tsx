@@ -1,8 +1,8 @@
 "use client";
 
 import { useRef, useState, type FormEvent } from "react";
-import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { useAuthedMutation } from "@/lib/convex/authedHooks";
 import type { Id } from "@/convex/_generated/dataModel";
 import { Overlay } from "@/components/ui/Overlay";
 import { Button } from "@/components/ui/Button";
@@ -30,7 +30,7 @@ function validate(text: string): string | undefined {
 }
 
 export function AnadirNotaOverlay({ clientId, featured, onClose }: Props) {
-  const createNote = useMutation(api.notes.create);
+  const createNote = useAuthedMutation(api.notes.create);
   const [text, setText] = useState("");
   const [isFeatured, setIsFeatured] = useState(false);
   const [step, setStep] = useState<Step>("form");

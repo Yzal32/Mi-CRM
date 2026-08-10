@@ -16,6 +16,16 @@ export function proxy(request: NextRequest) {
   if (request.nextUrl.pathname === "/login") {
     return NextResponse.next();
   }
+  // PRO-59: este endpoint es el único que puede emitir/renovar el
+  // accessToken de corta duración precisamente cuando la sesión ha dejado
+  // de ser válida (SESSION_INVALID) — si el check optimista de aquí lo
+  // interceptara antes de llegar al Route Handler, respondería siempre con
+  // una redirección HTML a /login en vez de dejarle devolver su propio
+  // 401/403 JSON, y ConvexAccessTokenProvider.tsx nunca podría distinguir
+  // los casos. Ruta exacta, no todo `/api/*`.
+  if (request.nextUrl.pathname === "/api/auth/convex-token") {
+    return NextResponse.next();
+  }
   if (!request.cookies.has(SESSION_COOKIE_NAME)) {
     return NextResponse.redirect(new URL("/login", request.url));
   }

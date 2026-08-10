@@ -29,4 +29,13 @@ describe("proxy", () => {
     const response = proxy(makeRequest("/", "abc123"));
     expect(response.headers.get("location")).toBeNull();
   });
+
+  // PRO-59: sin esta exclusión, una petición sin cookie a este endpoint
+  // recibiría una redirección HTML a /login en vez de llegar al Route
+  // Handler, que necesita poder responder su propio 401 JSON ({error:
+  // "NO_SESSION"}) — ver app/api/auth/convex-token/route.ts.
+  test("sin cookie y /api/auth/convex-token -> deja pasar (no redirige)", () => {
+    const response = proxy(makeRequest("/api/auth/convex-token"));
+    expect(response.headers.get("location")).toBeNull();
+  });
 });

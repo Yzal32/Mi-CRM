@@ -1,8 +1,8 @@
 "use client";
 
-import { useQuery } from "convex/react";
 import { useRouter } from "next/navigation";
 import { api } from "@/convex/_generated/api";
+import { useAuthedQuery } from "@/lib/convex/authedHooks";
 import { IconButton } from "@/components/ui/IconButton";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -19,15 +19,15 @@ export function FichaClienteScreen({ clientId }: { clientId: string }) {
   // clientId llega como string plano de la URL — clients.getById lo
   // normaliza en servidor (ctx.db.normalizeId); un ID malformado y uno
   // válido pero borrado producen el mismo resultado (null).
-  const client = useQuery(api.clients.getById, { clientId });
+  const client = useAuthedQuery(api.clients.getById, { clientId });
   const viewState = deriveFichaViewState(client);
 
   // Las tres queries dependientes se lanzan con "skip" hasta tener un
   // client._id real — nunca con el string crudo de la URL, que revienta
   // su validador v.id("clients") si es malformado.
-  const notes = useQuery(api.notes.listByClient, client ? { clientId: client._id } : "skip");
-  const sales = useQuery(api.sales.listByClient, client ? { clientId: client._id } : "skip");
-  const followUp = useQuery(api.followUps.getByClient, client ? { clientId: client._id } : "skip");
+  const notes = useAuthedQuery(api.notes.listByClient, client ? { clientId: client._id } : "skip");
+  const sales = useAuthedQuery(api.sales.listByClient, client ? { clientId: client._id } : "skip");
+  const followUp = useAuthedQuery(api.followUps.getByClient, client ? { clientId: client._id } : "skip");
   const today = useBusinessToday();
 
   // Un único estado de carga derivado: el Skeleton se mantiene hasta que

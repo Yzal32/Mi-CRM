@@ -3,6 +3,7 @@ import { mutation, query } from "./_generated/server";
 import type { Doc } from "./_generated/dataModel";
 import { getActor } from "./model/actor";
 import { createNote, unfeatureNote } from "./model/notes";
+import { requireAccessToken } from "./model/auth";
 
 const LIST_LIMIT = 500;
 // +2 de margen sobre LIST_LIMIT: una destacada dentro de la ventana ocupa
@@ -40,13 +41,14 @@ function toNoteDto(note: Doc<"notes">) {
 }
 
 export const listByClient = query({
-  args: { clientId: v.id("clients") },
+  args: { token: v.string(), clientId: v.id("clients") },
   returns: v.object({
     featured: v.union(noteDto, v.null()),
     items: v.array(noteDto),
     truncated: v.boolean(),
   }),
   handler: async (ctx, args) => {
+    await requireAccessToken(ctx, args.token);
     // La destacada se resuelve aparte del listado paginado: si el cliente
     // tiene más de 500 notas y la destacada es antigua, `items` no la
     // traería — pero debe seguir siempre visible en la ficha.
@@ -77,6 +79,7 @@ export const listByClient = query({
 // pueda firmar una nota como otra persona llamando a la mutation a mano.
 export const create = mutation({
   args: {
+    token: v.string(),
     clientId: v.id("clients"),
     text: v.string(),
     featured: v.optional(v.boolean()),
@@ -84,15 +87,17 @@ export const create = mutation({
   },
   returns: v.id("notes"),
   handler: async (ctx, args) => {
+    await requireAccessToken(ctx, args.token);
     const actor = await getActor(ctx);
     return createNote(ctx, { ...args, authorId: actor.id, authorName: actor.name });
   },
 });
 
 export const unfeature = mutation({
-  args: { noteId: v.id("notes") },
+  args: { token: v.string(), noteId: v.id("notes") },
   returns: v.null(),
   handler: async (ctx, args) => {
+    await requireAccessToken(ctx, args.token);
     await unfeatureNote(ctx, args);
     return null;
   },

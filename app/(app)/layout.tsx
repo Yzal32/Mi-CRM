@@ -4,6 +4,8 @@ import { Sidebar } from "@/components/navigation/Sidebar";
 import { TabBar } from "@/components/navigation/TabBar";
 import { MobileTopBar } from "@/components/navigation/MobileTopBar";
 import { ConnectionBanner } from "@/components/shared/ConnectionBanner";
+import { ConvexAccessTokenProvider } from "@/components/providers/ConvexAccessTokenProvider";
+import { ConvexAuthErrorBoundary } from "@/components/providers/ConvexAuthErrorBoundary";
 import { getSessionUser } from "@/lib/auth/session";
 
 // Verificación real de sesión (no solo el check optimista de proxy.ts, ver
@@ -23,13 +25,24 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     // de este contenedor, a document.body — nunca dentro, o heredaría
     // inert y dejaría de ser interactivo).
     <div id="app-shell" className="flex min-h-full flex-1">
-      <Sidebar />
-      <div className="flex min-h-full flex-1 flex-col">
-        <ConnectionBanner />
-        <MobileTopBar />
-        <main className="flex-1 pb-[calc(64px+env(safe-area-inset-bottom))] lg:pb-0">{children}</main>
-        <TabBar />
-      </div>
+      {/* PRO-59: el token de sesión largo ya validado arriba (getSessionUser)
+          nunca llega al navegador — este provider intercambia la cookie
+          httpOnly por un accessToken de corta duración que sí puede viajar
+          en las llamadas de convex/react (ver lib/convex/authedHooks.ts). El
+          boundary envuelve TODO este contenido, no solo {children}: es lo
+          único que cubre errores UNAUTHENTICATED del resto del shell
+          (MobileTopBar en particular, fuera de {children}). */}
+      <ConvexAccessTokenProvider>
+        <ConvexAuthErrorBoundary>
+          <Sidebar />
+          <div className="flex min-h-full flex-1 flex-col">
+            <ConnectionBanner />
+            <MobileTopBar />
+            <main className="flex-1 pb-[calc(64px+env(safe-area-inset-bottom))] lg:pb-0">{children}</main>
+            <TabBar />
+          </div>
+        </ConvexAuthErrorBoundary>
+      </ConvexAccessTokenProvider>
     </div>
   );
 }

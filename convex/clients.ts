@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { createClient, updateClient, updateClientStatus } from "./model/clients";
+import { requireAccessToken } from "./model/auth";
 
 const originChannelValidator = v.union(
   v.literal("web"),
@@ -30,13 +31,11 @@ const clientDto = v.object({
   signupDate: v.optional(v.string()),
 });
 
-// Primera mutation pública del proyecto: sin login real todavía (PRO-44),
-// cualquiera con la URL de Convex podría llamarla. Riesgo aceptado
-// explícitamente para este deployment de demostración con datos ficticios
-// — ver plan de PRO-9 y README.md. Sin seedData/seedKey en el validador,
-// igual que internal.seed.seed: solo convex/seed.ts los usa, vía el helper.
+// PRO-59: exige un accessToken vigente (ver convex/model/auth.ts) — ya no
+// alcanzable "gratis" con solo la URL del deployment, ver README.md.
 export const create = mutation({
   args: {
+    token: v.string(),
     name: v.string(),
     phone: v.optional(v.string()),
     email: v.optional(v.string()),
@@ -44,7 +43,10 @@ export const create = mutation({
     status: v.optional(statusValidator),
   },
   returns: v.id("clients"),
-  handler: async (ctx, args) => createClient(ctx, args),
+  handler: async (ctx, args) => {
+    await requireAccessToken(ctx, args.token);
+    return createClient(ctx, args);
+  },
 });
 
 // clientId llega como string plano (la ruta de Next.js entrega un string,
@@ -53,9 +55,10 @@ export const create = mutation({
 // ambos casos se trata igual, como "cliente no encontrado", sin reventar
 // el validador de un v.id("clients") con un ID malformado.
 export const getById = query({
-  args: { clientId: v.string() },
+  args: { token: v.string(), clientId: v.string() },
   returns: v.union(clientDto, v.null()),
   handler: async (ctx, args) => {
+    await requireAccessToken(ctx, args.token);
     const id = ctx.db.normalizeId("clients", args.clientId);
     if (!id) return null;
     const client = await ctx.db.get(id);
@@ -73,22 +76,22 @@ export const getById = query({
   },
 });
 
-// Mismo riesgo aceptado que `create`: sin autenticación todavía (ver README).
 export const updateStatus = mutation({
-  args: { clientId: v.id("clients"), status: statusValidator },
+  args: { token: v.string(), clientId: v.id("clients"), status: statusValidator },
   returns: v.null(),
   handler: async (ctx, args) => {
+    await requireAccessToken(ctx, args.token);
     await updateClientStatus(ctx, args);
     return null;
   },
 });
 
-// Mismo riesgo aceptado que `create`/`updateStatus`: sin autenticación
-// todavía (ver README). `name` es v.optional aquí (a diferencia de
-// `create`, donde es obligatorio): en la edición, "no enviarlo" es una
-// opción legítima que significa "no tocar este campo", no un olvido.
+// `name` es v.optional aquí (a diferencia de `create`, donde es
+// obligatorio): en la edición, "no enviarlo" es una opción legítima que
+// significa "no tocar este campo", no un olvido.
 export const update = mutation({
   args: {
+    token: v.string(),
     clientId: v.id("clients"),
     name: v.optional(v.string()),
     phone: v.optional(v.string()),
@@ -97,6 +100,7 @@ export const update = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
+    await requireAccessToken(ctx, args.token);
     await updateClient(ctx, args);
     return null;
   },

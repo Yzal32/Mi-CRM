@@ -14,8 +14,8 @@ vi.mock("next/navigation", () => ({
 
 const createClientMock = vi.fn();
 
-vi.mock("convex/react", () => ({
-  useMutation: () => createClientMock,
+vi.mock("@/lib/convex/authedHooks", () => ({
+  useAuthedMutation: () => createClientMock,
 }));
 
 function fillRequiredFields() {

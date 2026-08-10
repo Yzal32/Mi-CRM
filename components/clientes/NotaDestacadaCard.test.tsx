@@ -6,8 +6,8 @@ import { NotaDestacadaCard } from "./NotaDestacadaCard";
 
 const mutationMock = vi.fn();
 
-vi.mock("convex/react", () => ({
-  useMutation: () => mutationMock,
+vi.mock("@/lib/convex/authedHooks", () => ({
+  useAuthedMutation: () => mutationMock,
 }));
 
 const NOTE = { _id: "note1" as Id<"notes">, text: "Pidió que le llamáramos esta semana.", date: "2026-08-08", authorName: "Marta" };

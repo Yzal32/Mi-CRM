@@ -4,6 +4,7 @@ import type { Doc } from "./_generated/dataModel";
 import { calendarDayDiff, isValidBusinessDayKey } from "../lib/shared/businessDay";
 import { getActor } from "./model/actor";
 import { completeFollowUp, discardFollowUp, upsertFollowUp } from "./model/followUps";
+import { requireAccessToken } from "./model/auth";
 
 // Tope documentado por rango (atrasados / de hoy), cada uno con su propio
 // límite independiente — así un backlog grande de atrasados nunca puede
@@ -24,6 +25,7 @@ const followUpItem = v.object({
 
 export const listToday = query({
   args: {
+    token: v.string(),
     today: v.string(),
     search: v.optional(v.string()),
   },
@@ -34,6 +36,7 @@ export const listToday = query({
     todayTruncated: v.boolean(),
   }),
   handler: async (ctx, args) => {
+    await requireAccessToken(ctx, args.token);
     if (!isValidBusinessDayKey(args.today)) {
       throw new Error(`today inválida: "${args.today}"`);
     }
@@ -117,9 +120,10 @@ function toFollowUpDto(row: Doc<"followUps">) {
 // si esta query cae justo en ese instante. Se elige el más reciente por
 // _creationTime, mismo criterio de desempate que usa upsertFollowUp.
 export const getByClient = query({
-  args: { clientId: v.id("clients") },
+  args: { token: v.string(), clientId: v.id("clients") },
   returns: v.union(followUpDto, v.null()),
   handler: async (ctx, args) => {
+    await requireAccessToken(ctx, args.token);
     const rows = await ctx.db
       .query("followUps")
       .withIndex("by_client", (q) => q.eq("clientId", args.clientId))
@@ -136,30 +140,43 @@ export const getByClient = query({
 // directamente (no a esta mutation pública).
 export const upsert = mutation({
   args: {
+    token: v.string(),
     clientId: v.id("clients"),
     dueDate: v.string(),
     actionType: actionTypeValidator,
   },
   returns: v.id("followUps"),
   handler: async (ctx, args) => {
+    await requireAccessToken(ctx, args.token);
     const actor = await getActor(ctx);
-    return upsertFollowUp(ctx, { ...args, assigneeId: actor.id, assigneeName: actor.name });
+    // Reconstruye el objeto explícitamente, sin `token`: upsertFollowUp lo
+    // pasa tal cual a ctx.db.insert/patch, que rechaza cualquier campo que
+    // no esté en el schema de `followUps`.
+    return upsertFollowUp(ctx, {
+      clientId: args.clientId,
+      dueDate: args.dueDate,
+      actionType: args.actionType,
+      assigneeId: actor.id,
+      assigneeName: actor.name,
+    });
   },
 });
 
 export const complete = mutation({
-  args: { followUpId: v.id("followUps") },
+  args: { token: v.string(), followUpId: v.id("followUps") },
   returns: v.id("notes"),
   handler: async (ctx, args) => {
+    await requireAccessToken(ctx, args.token);
     const actor = await getActor(ctx);
     return completeFollowUp(ctx, { followUpId: args.followUpId, authorId: actor.id, authorName: actor.name });
   },
 });
 
 export const discard = mutation({
-  args: { followUpId: v.id("followUps") },
+  args: { token: v.string(), followUpId: v.id("followUps") },
   returns: v.null(),
   handler: async (ctx, args) => {
+    await requireAccessToken(ctx, args.token);
     await discardFollowUp(ctx, args);
     return null;
   },

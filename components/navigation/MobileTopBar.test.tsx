@@ -13,8 +13,8 @@ vi.mock("next/navigation", () => ({
 
 const useQueryMock = vi.fn();
 
-vi.mock("convex/react", () => ({
-  useQuery: (...args: unknown[]) => useQueryMock(...args),
+vi.mock("@/lib/convex/authedHooks", () => ({
+  useAuthedQuery: (...args: unknown[]) => useQueryMock(...args),
 }));
 
 afterEach(() => {

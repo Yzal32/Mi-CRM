@@ -2,9 +2,9 @@
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { useMutation } from "convex/react";
 import { ConvexError } from "convex/values";
 import { api } from "@/convex/_generated/api";
+import { useAuthedMutation } from "@/lib/convex/authedHooks";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import { Icon } from "@/components/ui/Icon";
@@ -48,7 +48,7 @@ function convexErrorCode(error: unknown): string | undefined {
 
 export function NuevoClienteScreen() {
   const router = useRouter();
-  const createClient = useMutation(api.clients.create);
+  const createClient = useAuthedMutation(api.clients.create);
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");

@@ -18,9 +18,9 @@ const useQueryMock = vi.fn((ref: unknown, args: unknown) => {
   return queryResults.get(getFunctionName(ref as never));
 });
 
-vi.mock("convex/react", () => ({
-  useQuery: (...callArgs: [unknown, unknown]) => useQueryMock(...callArgs),
-  useMutation: () => mutationMock,
+vi.mock("@/lib/convex/authedHooks", () => ({
+  useAuthedQuery: (...callArgs: [unknown, unknown]) => useQueryMock(...callArgs),
+  useAuthedMutation: () => mutationMock,
 }));
 
 vi.mock("next/navigation", () => ({

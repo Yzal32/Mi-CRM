@@ -1,6 +1,7 @@
 import { compareSync, truncates } from "bcryptjs";
-import type { Id } from "../_generated/dataModel";
+import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "../_generated/server";
+import { internal } from "../_generated/api";
 import { businessDayKey } from "../../lib/shared/businessDay";
 import type { UserRole } from "./users";
 import { EMAIL_MAX_LENGTH, MAX_PASSWORD_INPUT_LENGTH } from "./inputLimits";
@@ -54,6 +55,25 @@ async function sha256Hex(value: string): Promise<string> {
 }
 
 /**
+ * Único punto que borra una fila de `sessions` (PRO-59): borra primero
+ * todos los `accessTokens` derivados de esa sesión, luego la sesión misma.
+ * createSessionForUser/destroySession/destroySessionsForUser reusan esto en
+ * vez de un `ctx.db.delete(session._id)` directo — si alguno lo hiciera por
+ * su cuenta, los accessTokens de esa sesión quedarían huérfanos para
+ * siempre (ninguna sesión desde la que issueAccessToken pudiera limpiarlos).
+ */
+export async function deleteSessionAndAccessTokens(ctx: MutationCtx, sessionId: Id<"sessions">): Promise<void> {
+  const tokens = await ctx.db
+    .query("accessTokens")
+    .withIndex("by_sessionId", (q) => q.eq("sessionId", sessionId))
+    .collect();
+  for (const token of tokens) {
+    await ctx.db.delete(token._id);
+  }
+  await ctx.db.delete(sessionId);
+}
+
+/**
  * Único punto de creación de una fila de `sessions`: aplica el límite por
  * usuario antes de insertar, así ningún caller (login, changePassword,
  * futuro PRO-47) puede olvidarse de él. Si por cualquier motivo hubiera más
@@ -71,7 +91,7 @@ export async function createSessionForUser(ctx: MutationCtx, userId: Id<"users">
     const excess = existing.length - MAX_SESSIONS_PER_USER + 1;
     const oldestFirst = [...existing].sort((a, b) => a._creationTime - b._creationTime);
     for (const session of oldestFirst.slice(0, excess)) {
-      await ctx.db.delete(session._id);
+      await deleteSessionAndAccessTokens(ctx, session._id);
     }
   }
   const token = generateToken();
@@ -113,12 +133,19 @@ export async function login(ctx: MutationCtx, args: { email: string; password: s
   return { token, userId: user._id, name: user.name, role: user.role, mustChangePassword: user.mustChangePassword };
 }
 
+type ActiveSession = { session: Doc<"sessions">; user: Doc<"users"> };
+
 /**
- * Único punto de verificación de un token de sesión. Revocación en
- * caliente: si el usuario ha pasado a "inactive" después de crear la
- * sesión, deja de verificar sin necesidad de borrar la fila.
+ * Único punto de búsqueda de una sesión activa a partir de un token de
+ * sesión largo: formato, existencia y cuenta no desactivada. Deliberadamente
+ * NO mira `mustChangePassword` — `verifySession` sigue necesitando reconocer
+ * una sesión así de "activa" para poder redirigir al formulario de cambio de
+ * contraseña (ese flag se comprueba aparte, en cada caller que lo necesite:
+ * `issueAccessToken` aquí mismo, `app/(app)/layout.tsx` para la navegación).
+ * Devuelve también la fila de `sessions` (no solo el usuario) porque
+ * `issueAccessToken` necesita su `_id` para enlazar el `accessToken` nuevo.
  */
-export async function verifySession(ctx: QueryCtx | MutationCtx, token: string): Promise<VerifiedUser | null> {
+async function findActiveSession(ctx: QueryCtx | MutationCtx, token: string): Promise<ActiveSession | null> {
   if (!TOKEN_PATTERN.test(token)) return null;
   const tokenHash = await sha256Hex(token);
   const session = await ctx.db
@@ -128,6 +155,18 @@ export async function verifySession(ctx: QueryCtx | MutationCtx, token: string):
   if (!session) return null;
   const user = await ctx.db.get(session.userId);
   if (!user || user.status === "inactive") return null;
+  return { session, user };
+}
+
+/**
+ * Único punto de verificación de un token de sesión. Revocación en
+ * caliente: si el usuario ha pasado a "inactive" después de crear la
+ * sesión, deja de verificar sin necesidad de borrar la fila.
+ */
+export async function verifySession(ctx: QueryCtx | MutationCtx, token: string): Promise<VerifiedUser | null> {
+  const active = await findActiveSession(ctx, token);
+  if (!active) return null;
+  const { user } = active;
   return { userId: user._id, name: user.name, email: user.email, role: user.role, mustChangePassword: user.mustChangePassword };
 }
 
@@ -139,7 +178,7 @@ export async function destroySession(ctx: MutationCtx, token: string): Promise<v
     .query("sessions")
     .withIndex("by_tokenHash", (q) => q.eq("tokenHash", tokenHash))
     .unique();
-  if (session) await ctx.db.delete(session._id);
+  if (session) await deleteSessionAndAccessTokens(ctx, session._id);
 }
 
 /**
@@ -155,6 +194,122 @@ export async function destroySessionsForUser(ctx: MutationCtx, userId: Id<"users
     .withIndex("by_userId", (q) => q.eq("userId", userId))
     .collect();
   for (const session of sessions) {
-    await ctx.db.delete(session._id);
+    await deleteSessionAndAccessTokens(ctx, session._id);
   }
+}
+
+export type IssueAccessTokenErrorCode = "SESSION_INVALID" | "PASSWORD_CHANGE_REQUIRED";
+
+export type IssueAccessTokenResult = { accessToken: string; expiresAt: number; serverNow: number };
+
+// 20 min: suficientemente corto para que un token filtrado (p. ej. en un log
+// de red) tenga una ventana de uso limitada, suficientemente largo para no
+// forzar refrescos constantes durante una sesión de trabajo normal.
+export const ACCESS_TOKEN_TTL_MS = 20 * 60 * 1000;
+// Margen para varias pestañas/dispositivos emitiendo tokens de forma
+// independiente sin invalidarse entre sí (ver accessTokens como tabla
+// aparte, no un campo único en `sessions`). Al llegar a este límite, emitir
+// uno más desaloja el activo más antiguo — no es un error, es la política de
+// desalojo documentada aquí y en README.md.
+export const MAX_ACCESS_TOKENS_PER_SESSION = 8;
+
+/**
+ * Emite un accessToken de corta duración a partir de un token de sesión ya
+ * validado. Única mutation del par — toda la limpieza física de
+ * `accessTokens` (expirados + desalojo por límite) vive aquí, nunca en
+ * verifyAccessToken (que es de solo lectura, ver más abajo).
+ */
+export async function issueAccessToken(ctx: MutationCtx, sessionToken: string): Promise<IssueAccessTokenResult> {
+  const active = await findActiveSession(ctx, sessionToken);
+  if (!active) {
+    fail<IssueAccessTokenErrorCode>("SESSION_INVALID", "Tu sesión ha caducado. Vuelve a iniciar sesión.");
+  }
+  const { session, user } = active;
+  // A diferencia de findActiveSession (que deliberadamente no lo mira, ver
+  // su docstring), aquí sí bloquea: una cuenta con el cambio de contraseña
+  // pendiente no puede obtener credenciales para llamar a clients.*/notes.*/
+  // followUps.*/sales.listByClient directamente — cerraría exactamente el
+  // mismo hueco que PRO-59 existe para tapar.
+  if (user.mustChangePassword) {
+    fail<IssueAccessTokenErrorCode>("PASSWORD_CHANGE_REQUIRED", "Debes cambiar tu contraseña antes de continuar.");
+  }
+
+  const now = Date.now();
+  const existing = await ctx.db
+    .query("accessTokens")
+    .withIndex("by_sessionId", (q) => q.eq("sessionId", session._id))
+    .collect();
+  const stillActive: Doc<"accessTokens">[] = [];
+  for (const row of existing) {
+    if (row.expiresAt <= now) {
+      await ctx.db.delete(row._id);
+    } else {
+      stillActive.push(row);
+    }
+  }
+  if (stillActive.length >= MAX_ACCESS_TOKENS_PER_SESSION) {
+    const excess = stillActive.length - MAX_ACCESS_TOKENS_PER_SESSION + 1;
+    const oldestFirst = [...stillActive].sort((a, b) => a._creationTime - b._creationTime);
+    for (const row of oldestFirst.slice(0, excess)) {
+      await ctx.db.delete(row._id);
+    }
+  }
+
+  const accessToken = generateToken();
+  const tokenHash = await sha256Hex(accessToken);
+  // `now` se reutiliza para expiresAt y serverNow — deben ser el mismo
+  // instante exacto, no dos lecturas de reloj separadas: el provider cliente
+  // (ConvexAccessTokenProvider) usa serverNow para corregir su propio reloj
+  // contra el de Convex, y esa corrección solo es válida si expiresAt se
+  // calculó desde ese mismo instante.
+  const expiresAt = now + ACCESS_TOKEN_TTL_MS;
+  const accessTokenId = await ctx.db.insert("accessTokens", { sessionId: session._id, tokenHash, expiresAt });
+  // Ronda 6 de auditoría: Convex solo reevalúa una query en vivo cuando
+  // cambia un documento que leyó, nunca porque el reloj de pared avance por
+  // sí solo — verifyAccessToken comparando expiresAt contra Date.now() (más
+  // abajo) no basta para invalidar una suscripción que ya lo leyó una vez.
+  // Programar aquí el borrado físico de esta fila crea esa escritura real en
+  // el instante de caducidad, forzando la reevaluación; el chequeo temporal
+  // de verifyAccessToken se conserva como defensa adicional (p. ej. mientras
+  // el scheduler no ha llegado a ejecutar esta función todavía).
+  await ctx.scheduler.runAfter(ACCESS_TOKEN_TTL_MS, internal.sessions.expireAccessToken, { accessTokenId });
+  return { accessToken, expiresAt, serverNow: now };
+}
+
+/**
+ * Ejecutada por el scheduler de Convex (ver issueAccessToken) exactamente
+ * ACCESS_TOKEN_TTL_MS después de emitir el token. Idempotente ante una fila
+ * que ya no existe: la sesión pudo borrarse entera (deleteSessionAndAccessTokens)
+ * o este accessToken concreto pudo ser desalojado antes por el límite de
+ * MAX_ACCESS_TOKENS_PER_SESSION — en ambos casos no hay nada que borrar.
+ */
+export async function expireAccessTokenIfDue(ctx: MutationCtx, accessTokenId: Id<"accessTokens">): Promise<void> {
+  const row = await ctx.db.get(accessTokenId);
+  if (row) await ctx.db.delete(accessTokenId);
+}
+
+/**
+ * Verifica un accessToken de corta duración. De solo lectura a propósito
+ * (nunca `ctx.db.delete`): esta función también se llama desde queries
+ * (`QueryCtx`, sin acceso de escritura) en las 13 funciones públicas de
+ * negocio. Un token expirado simplemente deja de verificar; su limpieza
+ * física ocurre en la próxima `issueAccessToken` de esa sesión, al borrarse
+ * la sesión entera vía `deleteSessionAndAccessTokens`, o vía el borrado
+ * programado de expireAccessTokenIfDue — este chequeo temporal es una
+ * defensa adicional, no el mecanismo principal de invalidación reactiva.
+ */
+export async function verifyAccessToken(ctx: QueryCtx | MutationCtx, accessToken: string): Promise<VerifiedUser | null> {
+  if (!TOKEN_PATTERN.test(accessToken)) return null;
+  const tokenHash = await sha256Hex(accessToken);
+  const row = await ctx.db
+    .query("accessTokens")
+    .withIndex("by_tokenHash", (q) => q.eq("tokenHash", tokenHash))
+    .unique();
+  if (!row) return null;
+  if (row.expiresAt <= Date.now()) return null;
+  const session = await ctx.db.get(row.sessionId);
+  if (!session) return null;
+  const user = await ctx.db.get(session.userId);
+  if (!user || user.status !== "active" || user.mustChangePassword) return null;
+  return { userId: user._id, name: user.name, email: user.email, role: user.role, mustChangePassword: user.mustChangePassword };
 }

@@ -147,6 +147,24 @@ export default defineSchema({
     .index("by_tokenHash", ["tokenHash"])
     .index("by_userId", ["userId"]),
 
+  // PRO-59: tokens de acceso de corta duración para autenticar las llamadas
+  // en vivo de convex/react (clients.*/notes.*/followUps.*/sales.listByClient),
+  // derivados de una sesión ya validada — ver convex/model/sessions.ts
+  // (issueAccessToken/verifyAccessToken). Tabla independiente de `sessions`,
+  // no un campo en ella: varias pestañas/refrescos pueden tener cada una su
+  // propio accessToken vigente sin invalidarse entre sí.
+  accessTokens: defineTable({
+    sessionId: v.id("sessions"),
+    // Mismo criterio que sessions.tokenHash: SHA-256 hex, el token en claro
+    // nunca se persiste.
+    tokenHash: v.string(),
+    // Epoch ms (a diferencia de createdDate/date, que son fechas civiles en
+    // el resto de este schema) — issueAccessToken lo compara con Date.now().
+    expiresAt: v.number(),
+  })
+    .index("by_tokenHash", ["tokenHash"])
+    .index("by_sessionId", ["sessionId"]),
+
   sales: defineTable({
     clientId: v.id("clients"),
     description: v.string(),

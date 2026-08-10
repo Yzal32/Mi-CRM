@@ -1,8 +1,8 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { useAuthedMutation } from "@/lib/convex/authedHooks";
 import type { Id } from "@/convex/_generated/dataModel";
 import { Icon } from "@/components/ui/Icon";
 import { formatBusinessDate } from "@/lib/shared/businessDay";
@@ -16,7 +16,7 @@ type FeaturedNote = {
 };
 
 export function NotaDestacadaCard({ note }: { note: FeaturedNote }) {
-  const unfeature = useMutation(api.notes.unfeature);
+  const unfeature = useAuthedMutation(api.notes.unfeature);
   const [error, setError] = useState<string | null>(null);
   const [isRemoving, setIsRemoving] = useState(false);
   const lockRef = useRef(false);

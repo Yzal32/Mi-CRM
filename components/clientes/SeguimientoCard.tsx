@@ -1,8 +1,8 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { useAuthedMutation } from "@/lib/convex/authedHooks";
 import type { Id } from "@/convex/_generated/dataModel";
 import { Icon } from "@/components/ui/Icon";
 import { Button } from "@/components/ui/Button";
@@ -28,8 +28,8 @@ export function SeguimientoCard({
   followUp: FollowUp | null;
   today: string;
 }) {
-  const complete = useMutation(api.followUps.complete);
-  const discard = useMutation(api.followUps.discard);
+  const complete = useAuthedMutation(api.followUps.complete);
+  const discard = useAuthedMutation(api.followUps.discard);
   const [overlayOpen, setOverlayOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);

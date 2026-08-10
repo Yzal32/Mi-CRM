@@ -2,25 +2,37 @@
 
 CRM para un negocio pequeño (Marta, la dueña, y Carlos, su empleado), construido con Next.js 16 + Convex.
 
-## Seguridad: hay login real, pero las funciones de Convex siguen sin autenticar
+## Seguridad: login real + funciones de Convex autenticadas (PRO-44 + PRO-59)
 
-Desde PRO-44 existe login real: email + contraseña, sesión con cookie httpOnly (`session_token`), verificada en `app/(app)/layout.tsx` antes de dejar entrar a cualquier pantalla del CRM (`proxy.ts` solo hace un check optimista de que la cookie exista, sin tocar Convex — la comprobación real vive en el layout, ver `lib/auth/session.ts`).
+Desde PRO-44 existe login real: email + contraseña, sesión con cookie httpOnly (`session_token`), verificada en `app/(app)/layout.tsx` antes de dejar entrar a cualquier pantalla del CRM (`proxy.ts` solo hace un check optimista de que la cookie exista, sin tocar Convex — la comprobación real vive en el layout, ver `lib/auth/session.ts`). Esa cookie es la puerta de **navegación** de Next.js.
 
-**Importante: esto es una puerta de navegación de Next.js, no autenticación de las funciones de Convex.** `clients.*`, `notes.*`, `followUps.*` y el resto de la superficie listada abajo siguen siendo alcanzables directamente por cualquiera que tenga la URL del deployment y el nombre de la función — con o sin sesión iniciada en la web. La cookie de sesión es httpOnly a propósito (para que un XSS no pueda robarla), lo que significa que el JavaScript del navegador no puede leerla, así que esas funciones —llamadas hoy directamente desde componentes cliente por WebSocket— no tienen ninguna vía para comprobarla. Cerrar ese hueco es una tarea aparte, **PRO-59**, bloqueada por PRO-44 y bloqueante a su vez de meter datos reales de clientes en el deployment — el riesgo que ya aceptaba esta sección mientras los datos sean ficticios (ver `convex/seed.ts`) sigue exactamente igual, sin cambios.
+Desde PRO-59, las funciones de Convex en sí (`clients.*`, `notes.*`, `followUps.*`, `sales.listByClient`) también exigen autenticación — ya no basta con la URL del deployment y el nombre de la función. La cookie de sesión es httpOnly a propósito (para que un XSS no pueda robarla), lo que significa que el JavaScript del navegador nunca puede leerla directamente; en su lugar, cada una de esas 13 funciones exige un **accessToken** de corta duración, derivado de la sesión ya validada, que sí puede viajar en las llamadas de `convex/react`. El riesgo que este README aceptaba antes mientras el deployment tuviera datos ficticios ya no aplica a esta superficie.
 
-### Cómo funciona la sesión
+### Cómo funciona la sesión (PRO-44)
 
 - `convex/model/sessions.ts`: token opaco de 32 bytes (`crypto.getRandomValues`), guardado como `tokenHash` (SHA-256, `crypto.subtle.digest`) — el token en claro nunca se persiste; solo se **devuelve** al crearlo o rotarlo (`login`, `changePassword`), y después viaja en la cookie httpOnly en cada petición que lo necesita (`verify`, `logout`, `changePassword`).
 - Máximo `MAX_SESSIONS_PER_USER = 5` sesiones activas por usuario: al hacer un sexto login, se revoca automáticamente la más antigua. Excepción deliberada a "la sesión se mantiene hasta cierre explícito" — documentada aquí para que no se lea como un bug.
 - Cambiar la contraseña (`users.changePassword`, obligatorio tras aprovisionar o voluntario desde Ajustes) **rota** la sesión: cierra todas las sesiones del usuario, incluida la que hizo el cambio, y crea una nueva — si alguien había copiado la cookie con la contraseña antigua, deja de servirle. La cookie del navegador que hizo el cambio se sustituye en la misma respuesta, sin pedir volver a iniciar sesión.
+- `deleteSessionAndAccessTokens` (`convex/model/sessions.ts`) es el **único** punto que borra una fila de `sessions` — usado por la expulsión de `createSessionForUser`, `destroySession` y `destroySessionsForUser`. Borra primero los `accessTokens` derivados de esa sesión y luego la sesión misma, así ningún camino puede dejar tokens huérfanos.
 - Sin rate-limiting de intentos de login — riesgo aceptado explícitamente, herramienta interna sin usuarios públicos.
 
-Superficie pública sin autenticación (sin cambios por PRO-44 — ver aviso arriba):
+### Cómo funciona la autenticación de las funciones de Convex (PRO-59)
+
+- `accessTokens` (`convex/schema.ts`): tabla independiente de `sessions` — no un campo único en ella — para que varias pestañas o dispositivos con la misma sesión puedan tener cada uno su propio accessToken vigente sin invalidarse entre sí. TTL de 20 min (`ACCESS_TOKEN_TTL_MS`), máximo 8 tokens activos por sesión (`MAX_ACCESS_TOKENS_PER_SESSION`) — al llegar al límite, emitir uno más desaloja el activo más antiguo.
+- `sessions.issueAccessToken` (mutation pública, pero solo la llama `app/api/auth/convex-token/route.ts`, nunca un componente directamente): a partir del token de sesión largo (la cookie httpOnly), valida la sesión, rechaza si `mustChangePassword` está activo, limpia físicamente los tokens ya expirados de esa sesión y aplica el límite de 8 antes de emitir uno nuevo. También programa, vía `ctx.scheduler.runAfter`, la ejecución de `sessions.expireAccessToken` (internal mutation) exactamente `ACCESS_TOKEN_TTL_MS` después: Convex solo reevalúa una `query` en vivo cuando cambia un documento que leyó, nunca por el simple paso del tiempo, así que sin este borrado programado una suscripción que ya verificó el token una vez seguiría sirviendo el mismo resultado después de caducar, hasta que algún otro escritura no relacionada la tocara. `expireAccessTokenIfDue` (`convex/model/sessions.ts`) es idempotente ante una fila que ya no existe (sesión borrada, o token desalojado antes por el límite de 8).
+- `verifyAccessToken`/`requireAccessToken` (`convex/model/sessions.ts` / `convex/model/auth.ts`): de solo lectura — nunca borran nada, ni siquiera un token ya expirado (esa limpieza física vive en `issueAccessToken` y en el borrado programado de arriba). Cada una de las 13 funciones de negocio llama a `requireAccessToken(ctx, args.token)` como primera línea; si falla, lanza `ConvexError({ code: "UNAUTHENTICATED" })`. La comprobación de `expiresAt` contra `Date.now()` que hace `verifyAccessToken` es una defensa adicional (cubre la ventana antes de que el scheduler llegue a ejecutarse), no el mecanismo principal de invalidación.
+- `app/api/auth/convex-token/route.ts` — único puente entre la cookie httpOnly y el navegador: `POST` únicamente (mutar/rotar credenciales vía `GET` sería vulnerable con `SameSite=Lax`), con validación de origen fail-closed (`Sec-Fetch-Site` si el navegador lo manda, si no `Origin` comparado contra el propio deployment; si faltan ambas cabeceras, rechaza) y `Cache-Control: private, no-store` en toda respuesta. `proxy.ts` excluye esta ruta exacta de su redirección a `/login`, para que pueda responder su propio 401/403 JSON en vez de una redirección HTML.
+- `components/providers/ConvexAccessTokenProvider.tsx` ("use client"): pide y renueva el accessToken; lo guarda solo en memoria (estado de React), nunca en `document.cookie` ni localStorage, y nunca intenta tocar la cookie httpOnly de sesión (no podría — es server-only). Corrige el desajuste entre el reloj del dispositivo y el de Convex usando el `serverNow` que devuelve el endpoint, en vez de comparar `expiresAt` directamente contra `Date.now()` local.
+- `components/providers/ConvexAuthErrorBoundary.tsx`: captura `UNAUTHENTICATED` en el resto del shell (`Sidebar`, `MobileTopBar`, etc. — fuera de `{children}`, que ya cubre `app/(app)/error.tsx`). Como mucho un intento automático de recuperación por incidente: si el token renovado también falla, navega a `/login` en vez de reintentar indefinidamente.
+- `lib/convex/authedHooks.ts` (`useAuthedQuery`/`useAuthedMutation`): inyectan el accessToken vigente en cada llamada; un `"skip"` explícito del consumidor siempre se respeta, con o sin token disponible.
+- Dos estados terminales del provider: `SESSION_INVALID`/`NO_SESSION` (la cookie larga ya no vale — el propio Route Handler la borra, navega a `/login`) y `PASSWORD_CHANGE_REQUIRED` (la sesión sigue siendo válida, solo falta completar el cambio de contraseña — la cookie larga se conserva, navega a `/cambiar-contrasena`). Este segundo caso es alcanzable con la app ya abierta si alguien fuerza el cambio de contraseña de la cuenta activa a media sesión.
+
+Funciones públicas de Convex que ahora exigen `token` (accessToken de PRO-59):
 
 - `clients.create`
 - `clients.getById`
 - `clients.updateStatus`
-- `clients.update` (edición de datos del cliente — endpoint nuevo bajo el mismo riesgo ya aceptado arriba)
+- `clients.update`
 - `followUps.listToday`
 - `followUps.upsert`
 - `followUps.complete`
@@ -31,13 +43,14 @@ Superficie pública sin autenticación (sin cambios por PRO-44 — ver aviso arr
 - `notes.listByClient`
 - `sales.listByClient` (solo lectura — no existe una mutation pública de creación de ventas)
 
-Además de esta lista, `sessions.login`, `sessions.verify`, `sessions.logout` y `users.changePassword` **también** son funciones públicas sin autenticación de Convex (no usan `ctx.auth` — no hay proveedor de identidad configurado). A diferencia de las de arriba, aquí es inevitable por diseño (un login no puede exigir tener ya una sesión) y cada una impone su propio requisito lógico dentro de la función, no del framework:
+Además de esta lista, `sessions.login`, `sessions.verify`, `sessions.logout`, `sessions.issueAccessToken` y `users.changePassword` **también** son funciones públicas sin autenticación de Convex (no usan `ctx.auth` — no hay proveedor de identidad configurado). A diferencia de las de arriba, aquí es inevitable por diseño (un login no puede exigir tener ya una sesión, y emitir un accessToken exige el token de sesión largo, no uno de acceso) y cada una impone su propio requisito lógico dentro de la función, no del framework:
 
 - `sessions.login`: exige email y contraseña correctos; sin eso no crea sesión.
 - `sessions.verify` / `sessions.logout`: exigen un token de sesión con formato válido y existente (`verify` es de solo lectura; `logout` es idempotente si el token ya no existe).
+- `sessions.issueAccessToken`: exige un token de sesión válido y `mustChangePassword: false`; rechaza con `PASSWORD_CHANGE_REQUIRED` si el cambio de contraseña sigue pendiente.
 - `users.changePassword`: exige un token de sesión válido **y** la contraseña actual correcta; rota la sesión al terminar (ver arriba).
 
-Ninguna de las cuatro es alcanzable "gratis": quien las llame necesita ya sea credenciales válidas, ya sea un token de sesión real — a diferencia de `clients.*`/`notes.*`/`followUps.*`/`sales.listByClient`, que no piden nada.
+Ninguna de las cinco es alcanzable "gratis": quien las llame necesita ya sea credenciales válidas, ya sea un token de sesión real — a diferencia de antes de PRO-59, `clients.*`/`notes.*`/`followUps.*`/`sales.listByClient` tampoco lo son: exigen su propio accessToken (ver arriba).
 
 Además, la autoría de notas/ventas/seguimientos (`authorId`/`authorName`, `assigneeId`/`assigneeName`) es una **identidad de demostración fija** (`convex/model/actor.ts`, "Marta") asignada siempre en servidor — nunca se acepta como argumento del cliente, así que nadie puede elegir firmar como otra persona, pero tampoco es autenticación real: todo queda atribuido a esa misma identidad fija sea quien sea quien lo creó de verdad. No es autoría fiable con datos reales.
 

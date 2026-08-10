@@ -3,13 +3,15 @@ import { ConvexError } from "convex/values";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import schema from "./schema";
+import { issueTestAccessToken } from "./testHelpers";
 
 const modules = import.meta.glob("./**/*.ts");
 
 describe("clients.create", () => {
   test("crea un cliente y devuelve su id", async () => {
     const t = convexTest(schema, modules);
-    const id = await t.mutation(api.clients.create, { name: "Carlos Ruiz", phone: "622334556" });
+    const token = await issueTestAccessToken(t);
+    const id = await t.mutation(api.clients.create, { token, name: "Carlos Ruiz", phone: "622334556" });
 
     const doc = await t.run((ctx) => ctx.db.get(id));
     expect(doc?.name).toBe("Carlos Ruiz");
@@ -18,10 +20,11 @@ describe("clients.create", () => {
 
   test("rechaza sin nombre, exponiendo el código en error.data.code", async () => {
     const t = convexTest(schema, modules);
+    const token = await issueTestAccessToken(t);
 
     let caught: unknown;
     try {
-      await t.mutation(api.clients.create, { name: "", phone: "622334556" });
+      await t.mutation(api.clients.create, { token, name: "", phone: "622334556" });
     } catch (error) {
       caught = error;
     }
@@ -29,35 +32,53 @@ describe("clients.create", () => {
     expect(caught).toBeInstanceOf(ConvexError);
     expect((caught as ConvexError<{ code: string }>).data.code).toBe("NAME_REQUIRED");
   });
+
+  test("rechaza sin token válido con UNAUTHENTICATED", async () => {
+    const t = convexTest(schema, modules);
+
+    let caught: unknown;
+    try {
+      await t.mutation(api.clients.create, { token: "a".repeat(64), name: "Carlos Ruiz", phone: "622334556" });
+    } catch (error) {
+      caught = error;
+    }
+
+    expect(caught).toBeInstanceOf(ConvexError);
+    expect((caught as ConvexError<{ code: string }>).data.code).toBe("UNAUTHENTICATED");
+  });
 });
 
 describe("clients.getById", () => {
   test("devuelve el cliente por un id válido", async () => {
     const t = convexTest(schema, modules);
-    const id = await t.mutation(api.clients.create, { name: "Carlos Ruiz", phone: "622334556" });
+    const token = await issueTestAccessToken(t);
+    const id = await t.mutation(api.clients.create, { token, name: "Carlos Ruiz", phone: "622334556" });
 
-    const result = await t.query(api.clients.getById, { clientId: id });
+    const result = await t.query(api.clients.getById, { token, clientId: id });
     expect(result?.name).toBe("Carlos Ruiz");
   });
 
   test("devuelve null con un ID malformado, sin reventar el validador", async () => {
     const t = convexTest(schema, modules);
-    await expect(t.query(api.clients.getById, { clientId: "no-es-un-id-valido" })).resolves.toBeNull();
+    const token = await issueTestAccessToken(t);
+    await expect(t.query(api.clients.getById, { token, clientId: "no-es-un-id-valido" })).resolves.toBeNull();
   });
 
   test("devuelve null con un ID válido pero de un cliente borrado", async () => {
     const t = convexTest(schema, modules);
-    const id = await t.mutation(api.clients.create, { name: "Carlos Ruiz", phone: "622334556" });
+    const token = await issueTestAccessToken(t);
+    const id = await t.mutation(api.clients.create, { token, name: "Carlos Ruiz", phone: "622334556" });
     await t.run((ctx) => ctx.db.delete(id));
 
-    expect(await t.query(api.clients.getById, { clientId: id })).toBeNull();
+    expect(await t.query(api.clients.getById, { token, clientId: id })).toBeNull();
   });
 
   test("el DTO no expone phoneKey, seedData ni seedKey", async () => {
     const t = convexTest(schema, modules);
-    const id = await t.mutation(api.clients.create, { name: "Carlos Ruiz", phone: "622334556" });
+    const token = await issueTestAccessToken(t);
+    const id = await t.mutation(api.clients.create, { token, name: "Carlos Ruiz", phone: "622334556" });
 
-    const result = await t.query(api.clients.getById, { clientId: id });
+    const result = await t.query(api.clients.getById, { token, clientId: id });
     expect(result).not.toHaveProperty("phoneKey");
     expect(result).not.toHaveProperty("seedData");
     expect(result).not.toHaveProperty("seedKey");
@@ -67,9 +88,10 @@ describe("clients.getById", () => {
 describe("clients.updateStatus", () => {
   test("cambia el estado del cliente", async () => {
     const t = convexTest(schema, modules);
-    const id = await t.mutation(api.clients.create, { name: "Carlos Ruiz", phone: "622334556" });
+    const token = await issueTestAccessToken(t);
+    const id = await t.mutation(api.clients.create, { token, name: "Carlos Ruiz", phone: "622334556" });
 
-    await t.mutation(api.clients.updateStatus, { clientId: id, status: "won" });
+    await t.mutation(api.clients.updateStatus, { token, clientId: id, status: "won" });
 
     const doc = await t.run((ctx) => ctx.db.get(id));
     expect(doc?.status).toBe("won");
@@ -77,12 +99,13 @@ describe("clients.updateStatus", () => {
 
   test("CLIENT_NOT_FOUND con un cliente borrado", async () => {
     const t = convexTest(schema, modules);
-    const id = await t.mutation(api.clients.create, { name: "Carlos Ruiz", phone: "622334556" });
+    const token = await issueTestAccessToken(t);
+    const id = await t.mutation(api.clients.create, { token, name: "Carlos Ruiz", phone: "622334556" });
     await t.run((ctx) => ctx.db.delete(id));
 
     let caught: unknown;
     try {
-      await t.mutation(api.clients.updateStatus, { clientId: id, status: "won" });
+      await t.mutation(api.clients.updateStatus, { token, clientId: id, status: "won" });
     } catch (error) {
       caught = error;
     }
@@ -91,11 +114,31 @@ describe("clients.updateStatus", () => {
 });
 
 describe("clients.update", () => {
+  test("UNAUTHENTICATED no deja escritura parcial: el documento queda intacto", async () => {
+    const t = convexTest(schema, modules);
+    const token = await issueTestAccessToken(t);
+    const id = await t.mutation(api.clients.create, { token, name: "Carlos Ruiz", phone: "622334556" });
+    const before = await t.run((ctx) => ctx.db.get(id));
+
+    let caught: unknown;
+    try {
+      await t.mutation(api.clients.update, { token: "a".repeat(64), clientId: id, name: "Nombre Colado" });
+    } catch (error) {
+      caught = error;
+    }
+    expect((caught as ConvexError<{ code: string }>).data.code).toBe("UNAUTHENTICATED");
+
+    const after = await t.run((ctx) => ctx.db.get(id));
+    expect(after).toEqual(before);
+  });
+
   test("caso feliz: actualiza nombre, teléfono, email y canal de origen", async () => {
     const t = convexTest(schema, modules);
-    const id = await t.mutation(api.clients.create, { name: "Carlos Ruiz", phone: "622334556" });
+    const token = await issueTestAccessToken(t);
+    const id = await t.mutation(api.clients.create, { token, name: "Carlos Ruiz", phone: "622334556" });
 
     await t.mutation(api.clients.update, {
+      token,
       clientId: id,
       name: "Carlos R.",
       phone: "699111222",
@@ -112,12 +155,13 @@ describe("clients.update", () => {
 
   test("CLIENT_NOT_FOUND con un cliente borrado", async () => {
     const t = convexTest(schema, modules);
-    const id = await t.mutation(api.clients.create, { name: "Carlos Ruiz", phone: "622334556" });
+    const token = await issueTestAccessToken(t);
+    const id = await t.mutation(api.clients.create, { token, name: "Carlos Ruiz", phone: "622334556" });
     await t.run((ctx) => ctx.db.delete(id));
 
     let caught: unknown;
     try {
-      await t.mutation(api.clients.update, { clientId: id, name: "Carlos Ruiz" });
+      await t.mutation(api.clients.update, { token, clientId: id, name: "Carlos Ruiz" });
     } catch (error) {
       caught = error;
     }
@@ -126,11 +170,12 @@ describe("clients.update", () => {
 
   test("NAME_REQUIRED si se envía un nombre vacío", async () => {
     const t = convexTest(schema, modules);
-    const id = await t.mutation(api.clients.create, { name: "Carlos Ruiz", phone: "622334556" });
+    const token = await issueTestAccessToken(t);
+    const id = await t.mutation(api.clients.create, { token, name: "Carlos Ruiz", phone: "622334556" });
 
     let caught: unknown;
     try {
-      await t.mutation(api.clients.update, { clientId: id, name: "   " });
+      await t.mutation(api.clients.update, { token, clientId: id, name: "   " });
     } catch (error) {
       caught = error;
     }
@@ -139,11 +184,12 @@ describe("clients.update", () => {
 
   test("NAME_TOO_LONG si el nombre supera el máximo", async () => {
     const t = convexTest(schema, modules);
-    const id = await t.mutation(api.clients.create, { name: "Carlos Ruiz", phone: "622334556" });
+    const token = await issueTestAccessToken(t);
+    const id = await t.mutation(api.clients.create, { token, name: "Carlos Ruiz", phone: "622334556" });
 
     let caught: unknown;
     try {
-      await t.mutation(api.clients.update, { clientId: id, name: "a".repeat(201) });
+      await t.mutation(api.clients.update, { token, clientId: id, name: "a".repeat(201) });
     } catch (error) {
       caught = error;
     }
@@ -152,11 +198,12 @@ describe("clients.update", () => {
 
   test("INVALID_PHONE si el teléfono enviado no es válido", async () => {
     const t = convexTest(schema, modules);
-    const id = await t.mutation(api.clients.create, { name: "Carlos Ruiz", phone: "622334556" });
+    const token = await issueTestAccessToken(t);
+    const id = await t.mutation(api.clients.create, { token, name: "Carlos Ruiz", phone: "622334556" });
 
     let caught: unknown;
     try {
-      await t.mutation(api.clients.update, { clientId: id, phone: "abc" });
+      await t.mutation(api.clients.update, { token, clientId: id, phone: "abc" });
     } catch (error) {
       caught = error;
     }
@@ -165,11 +212,12 @@ describe("clients.update", () => {
 
   test("INVALID_EMAIL si el email enviado no es válido", async () => {
     const t = convexTest(schema, modules);
-    const id = await t.mutation(api.clients.create, { name: "Carlos Ruiz", phone: "622334556" });
+    const token = await issueTestAccessToken(t);
+    const id = await t.mutation(api.clients.create, { token, name: "Carlos Ruiz", phone: "622334556" });
 
     let caught: unknown;
     try {
-      await t.mutation(api.clients.update, { clientId: id, email: "no-valido" });
+      await t.mutation(api.clients.update, { token, clientId: id, email: "no-valido" });
     } catch (error) {
       caught = error;
     }
@@ -178,12 +226,13 @@ describe("clients.update", () => {
 
   test("DUPLICATE_PHONE si el teléfono ya lo usa otro cliente", async () => {
     const t = convexTest(schema, modules);
-    await t.mutation(api.clients.create, { name: "Ana", phone: "600111222" });
-    const id = await t.mutation(api.clients.create, { name: "Carlos Ruiz", phone: "622334556" });
+    const token = await issueTestAccessToken(t);
+    await t.mutation(api.clients.create, { token, name: "Ana", phone: "600111222" });
+    const id = await t.mutation(api.clients.create, { token, name: "Carlos Ruiz", phone: "622334556" });
 
     let caught: unknown;
     try {
-      await t.mutation(api.clients.update, { clientId: id, phone: "600111222" });
+      await t.mutation(api.clients.update, { token, clientId: id, phone: "600111222" });
     } catch (error) {
       caught = error;
     }
@@ -192,9 +241,10 @@ describe("clients.update", () => {
 
   test("guardar el mismo teléfono reescrito con otro formato no choca contra sí mismo", async () => {
     const t = convexTest(schema, modules);
-    const id = await t.mutation(api.clients.create, { name: "Carlos Ruiz", phone: "622 33 45 56" });
+    const token = await issueTestAccessToken(t);
+    const id = await t.mutation(api.clients.create, { token, name: "Carlos Ruiz", phone: "622 33 45 56" });
 
-    await t.mutation(api.clients.update, { clientId: id, phone: "622334556" });
+    await t.mutation(api.clients.update, { token, clientId: id, phone: "622334556" });
 
     const doc = await t.run((ctx) => ctx.db.get(id));
     expect(doc?.phone).toBe("622334556");
@@ -202,9 +252,10 @@ describe("clients.update", () => {
 
   test("omitir name conserva el nombre existente", async () => {
     const t = convexTest(schema, modules);
-    const id = await t.mutation(api.clients.create, { name: "Carlos Ruiz", phone: "622334556" });
+    const token = await issueTestAccessToken(t);
+    const id = await t.mutation(api.clients.create, { token, name: "Carlos Ruiz", phone: "622334556" });
 
-    await t.mutation(api.clients.update, { clientId: id, phone: "699111222" });
+    await t.mutation(api.clients.update, { token, clientId: id, phone: "699111222" });
 
     const doc = await t.run((ctx) => ctx.db.get(id));
     expect(doc?.name).toBe("Carlos Ruiz");
@@ -213,14 +264,16 @@ describe("clients.update", () => {
 
   test("omitir phone/email/originChannel conserva sus valores existentes", async () => {
     const t = convexTest(schema, modules);
+    const token = await issueTestAccessToken(t);
     const id = await t.mutation(api.clients.create, {
+      token,
       name: "Carlos Ruiz",
       phone: "622334556",
       email: "carlos@ejemplo.com",
       originChannel: "referral",
     });
 
-    await t.mutation(api.clients.update, { clientId: id, name: "Carlos R." });
+    await t.mutation(api.clients.update, { token, clientId: id, name: "Carlos R." });
 
     const doc = await t.run((ctx) => ctx.db.get(id));
     expect(doc?.name).toBe("Carlos R.");
@@ -231,13 +284,15 @@ describe("clients.update", () => {
 
   test("omitir originChannel en un cliente con canal distinto de web lo conserva (no cae al default)", async () => {
     const t = convexTest(schema, modules);
+    const token = await issueTestAccessToken(t);
     const id = await t.mutation(api.clients.create, {
+      token,
       name: "Carlos Ruiz",
       phone: "622334556",
       originChannel: "whatsapp",
     });
 
-    await t.mutation(api.clients.update, { clientId: id, name: "Carlos R." });
+    await t.mutation(api.clients.update, { token, clientId: id, name: "Carlos R." });
 
     const doc = await t.run((ctx) => ctx.db.get(id));
     expect(doc?.originChannel).toBe("whatsapp");
@@ -245,9 +300,10 @@ describe("clients.update", () => {
 
   test("omitir los 4 campos a la vez no falla y no cambia nada (patch vacío)", async () => {
     const t = convexTest(schema, modules);
-    const id = await t.mutation(api.clients.create, { name: "Carlos Ruiz", phone: "622334556" });
+    const token = await issueTestAccessToken(t);
+    const id = await t.mutation(api.clients.create, { token, name: "Carlos Ruiz", phone: "622334556" });
 
-    await t.mutation(api.clients.update, { clientId: id });
+    await t.mutation(api.clients.update, { token, clientId: id });
 
     const doc = await t.run((ctx) => ctx.db.get(id));
     expect(doc?.name).toBe("Carlos Ruiz");
@@ -256,13 +312,15 @@ describe("clients.update", () => {
 
   test("borrar el teléfono con email presente elimina phoneKey", async () => {
     const t = convexTest(schema, modules);
+    const token = await issueTestAccessToken(t);
     const id = await t.mutation(api.clients.create, {
+      token,
       name: "Carlos Ruiz",
       phone: "622334556",
       email: "carlos@ejemplo.com",
     });
 
-    await t.mutation(api.clients.update, { clientId: id, phone: "" });
+    await t.mutation(api.clients.update, { token, clientId: id, phone: "" });
 
     const doc = await t.run((ctx) => ctx.db.get(id));
     expect(doc?.phone).toBeUndefined();
@@ -272,14 +330,16 @@ describe("clients.update", () => {
 
   test("el teléfono liberado por un borrado se puede reutilizar en otro cliente", async () => {
     const t = convexTest(schema, modules);
+    const token = await issueTestAccessToken(t);
     const id = await t.mutation(api.clients.create, {
+      token,
       name: "Carlos Ruiz",
       phone: "622334556",
       email: "carlos@ejemplo.com",
     });
-    await t.mutation(api.clients.update, { clientId: id, phone: "" });
+    await t.mutation(api.clients.update, { token, clientId: id, phone: "" });
 
-    const otherId = await t.mutation(api.clients.create, { name: "Ana", phone: "622334556" });
+    const otherId = await t.mutation(api.clients.create, { token, name: "Ana", phone: "622334556" });
 
     const other = await t.run((ctx) => ctx.db.get(otherId));
     expect(other?.phone).toBe("622334556");
@@ -287,7 +347,9 @@ describe("clients.update", () => {
 
   test("borrar teléfono y email a la vez rechaza con CONTACT_REQUIRED", async () => {
     const t = convexTest(schema, modules);
+    const token = await issueTestAccessToken(t);
     const id = await t.mutation(api.clients.create, {
+      token,
       name: "Carlos Ruiz",
       phone: "622334556",
       email: "carlos@ejemplo.com",
@@ -295,7 +357,7 @@ describe("clients.update", () => {
 
     let caught: unknown;
     try {
-      await t.mutation(api.clients.update, { clientId: id, phone: "", email: "" });
+      await t.mutation(api.clients.update, { token, clientId: id, phone: "", email: "" });
     } catch (error) {
       caught = error;
     }

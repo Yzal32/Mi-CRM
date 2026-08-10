@@ -1,8 +1,8 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { useAuthedMutation } from "@/lib/convex/authedHooks";
 import type { Id } from "@/convex/_generated/dataModel";
 import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
@@ -32,7 +32,7 @@ type Client = {
 };
 
 export function ClienteHeaderCard({ client }: { client: Client }) {
-  const updateStatus = useMutation(api.clients.updateStatus);
+  const updateStatus = useAuthedMutation(api.clients.updateStatus);
   const [pendingStatus, setPendingStatus] = useState<ClientStatus | null>(null);
   const [statusError, setStatusError] = useState<string | null>(null);
   const [editOpen, setEditOpen] = useState(false);

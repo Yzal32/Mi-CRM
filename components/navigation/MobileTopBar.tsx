@@ -1,8 +1,8 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { useAuthedQuery } from "@/lib/convex/authedHooks";
 import { TopBar } from "@/components/ui/TopBar";
 import { IconButton } from "@/components/ui/IconButton";
 import { extractFichaClientId, isNavItemActive, navItems } from "./navItems";
@@ -18,7 +18,7 @@ export function MobileTopBar() {
   // navegar — viola las Rules of Hooks y puede fallar en runtime, no es
   // solo un aviso de lint. Los `return` condicionales van siempre después.
   const fichaClientId = extractFichaClientId(pathname);
-  const client = useQuery(api.clients.getById, fichaClientId ? { clientId: fichaClientId } : "skip");
+  const client = useAuthedQuery(api.clients.getById, fichaClientId ? { clientId: fichaClientId } : "skip");
 
   // Nuevo cliente es una pantalla de formulario/detalle, no un destino de
   // pestaña: título propio y botón atrás a la pantalla que la abrió

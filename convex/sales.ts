@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { query } from "./_generated/server";
 import type { Doc } from "./_generated/dataModel";
+import { requireAccessToken } from "./model/auth";
 
 const LIST_LIMIT = 500;
 
@@ -32,9 +33,10 @@ function toSaleDto(sale: Doc<"sales">) {
 // ventas aquí (ver convex/model/sales.ts) — el registro de ventas real es
 // PRO-17/23, fuera de alcance de esta tarea.
 export const listByClient = query({
-  args: { clientId: v.id("clients") },
+  args: { token: v.string(), clientId: v.id("clients") },
   returns: v.object({ items: v.array(saleDto), truncated: v.boolean() }),
   handler: async (ctx, args) => {
+    await requireAccessToken(ctx, args.token);
     const raw = await ctx.db
       .query("sales")
       .withIndex("by_client_date", (q) => q.eq("clientId", args.clientId))

@@ -7,8 +7,8 @@ import { AnadirNotaOverlay } from "./AnadirNotaOverlay";
 
 const mutationMock = vi.fn();
 
-vi.mock("convex/react", () => ({
-  useMutation: () => mutationMock,
+vi.mock("@/lib/convex/authedHooks", () => ({
+  useAuthedMutation: () => mutationMock,
 }));
 
 const CLIENT_ID = "client1" as Id<"clients">;

@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { useAuthedQuery } from "@/lib/convex/authedHooks";
 import { useBusinessToday } from "@/lib/hoy/useBusinessToday";
 import { useDebouncedValue } from "@/lib/hooks/useDebouncedValue";
 import { deriveHoyViewState } from "@/lib/hoy/deriveHoyViewState";
@@ -19,7 +19,7 @@ export function HoyScreen() {
   const debouncedQuery = useDebouncedValue(query, 250);
   const search = debouncedQuery.trim() || undefined;
 
-  const data = useQuery(api.followUps.listToday, { today, search });
+  const data = useAuthedQuery(api.followUps.listToday, { today, search });
   const hasSearchTerm = Boolean(search);
   const state = deriveHoyViewState({ data, hasSearchTerm });
 

@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { useAuthedMutation } from "@/lib/convex/authedHooks";
 import type { Id } from "@/convex/_generated/dataModel";
 import { Overlay } from "@/components/ui/Overlay";
 import { Button } from "@/components/ui/Button";
@@ -39,7 +39,7 @@ type Props = {
  * campo que el usuario nunca tocó, pisando el cambio ajeno.
  */
 export function EditarClienteOverlay({ clientId, name: initialName, phone, email, originChannel, onClose }: Props) {
-  const updateClient = useMutation(api.clients.update);
+  const updateClient = useAuthedMutation(api.clients.update);
   const [name, setName] = useState(initialName);
   const [phoneValue, setPhoneValue] = useState(phone ?? "");
   const [emailValue, setEmailValue] = useState(email ?? "");

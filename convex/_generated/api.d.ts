@@ -11,6 +11,7 @@
 import type * as clients from "../clients.js";
 import type * as followUps from "../followUps.js";
 import type * as model_actor from "../model/actor.js";
+import type * as model_auth from "../model/auth.js";
 import type * as model_clients from "../model/clients.js";
 import type * as model_errors from "../model/errors.js";
 import type * as model_followUps from "../model/followUps.js";
@@ -23,6 +24,7 @@ import type * as notes from "../notes.js";
 import type * as sales from "../sales.js";
 import type * as seed from "../seed.js";
 import type * as sessions from "../sessions.js";
+import type * as testHelpers from "../testHelpers.js";
 import type * as users from "../users.js";
 
 import type {
@@ -35,6 +37,7 @@ declare const fullApi: ApiFromModules<{
   clients: typeof clients;
   followUps: typeof followUps;
   "model/actor": typeof model_actor;
+  "model/auth": typeof model_auth;
   "model/clients": typeof model_clients;
   "model/errors": typeof model_errors;
   "model/followUps": typeof model_followUps;
@@ -47,6 +50,7 @@ declare const fullApi: ApiFromModules<{
   sales: typeof sales;
   seed: typeof seed;
   sessions: typeof sessions;
+  testHelpers: typeof testHelpers;
   users: typeof users;
 }>;
 

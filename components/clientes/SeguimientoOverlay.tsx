@@ -1,8 +1,8 @@
 "use client";
 
 import { useRef, useState, type FormEvent, type RefObject } from "react";
-import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { useAuthedMutation } from "@/lib/convex/authedHooks";
 import type { Id } from "@/convex/_generated/dataModel";
 import { Overlay } from "@/components/ui/Overlay";
 import { Button } from "@/components/ui/Button";
@@ -26,7 +26,7 @@ type Props = {
  * hay uno) — el tipo de acción es editable en ambos casos.
  */
 export function SeguimientoOverlay({ clientId, followUp, today, returnFocusRef, onClose }: Props) {
-  const upsert = useMutation(api.followUps.upsert);
+  const upsert = useAuthedMutation(api.followUps.upsert);
   const [dueDate, setDueDate] = useState(followUp?.dueDate ?? "");
   const [actionType, setActionType] = useState<ActionType>(followUp?.actionType ?? "call");
   const [error, setError] = useState<string | null>(null);

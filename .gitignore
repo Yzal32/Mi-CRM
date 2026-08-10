@@ -51,3 +51,7 @@ next-env.d.ts
 
 # notas/planes de trabajo locales, no forman parte del código
 /temp/
+
+# scripts/credenciales desechables de pruebas E2E manuales (PRO-59) — nunca
+# debe llegar al repo, contiene tokens/contraseñas de cuentas de prueba
+.e2e-scratch/
