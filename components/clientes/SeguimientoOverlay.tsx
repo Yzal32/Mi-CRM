@@ -47,10 +47,13 @@ export function SeguimientoOverlay({ clientId, followUp, today, returnFocusRef, 
       await upsert({ clientId, dueDate, actionType });
       onClose();
     } catch (err) {
+      const code = convexErrorCode(err);
       setError(
-        convexErrorCode(err) === "CLIENT_NOT_FOUND"
+        code === "CLIENT_NOT_FOUND"
           ? "Este cliente ya no existe."
-          : "No se pudo guardar el seguimiento. Inténtalo de nuevo.",
+          : code === "DUE_DATE_IN_PAST"
+            ? "No puedes elegir una fecha pasada."
+            : "No se pudo guardar el seguimiento. Inténtalo de nuevo.",
       );
       savingRef.current = false;
       setIsSaving(false);
@@ -97,6 +100,7 @@ export function SeguimientoOverlay({ clientId, followUp, today, returnFocusRef, 
             <input
               type="date"
               value={dueDate}
+              min={today}
               onChange={(event) => setDueDate(event.target.value)}
               className="h-11 rounded-md border border-border bg-surface px-4 font-body text-text outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus-ring)]"
             />

@@ -1,10 +1,11 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import type { Doc } from "./_generated/dataModel";
-import { calendarDayDiff, isValidBusinessDayKey } from "../lib/shared/businessDay";
+import { businessDayKey, calendarDayDiff, isValidBusinessDayKey } from "../lib/shared/businessDay";
 import { getActor } from "./model/actor";
-import { completeFollowUp, discardFollowUp, upsertFollowUp } from "./model/followUps";
+import { completeFollowUp, discardFollowUp, upsertFollowUp, type FollowUpErrorCode } from "./model/followUps";
 import { requireAccessToken } from "./model/auth";
+import { fail } from "./model/errors";
 
 // Tope documentado por rango (atrasados / de hoy), cada uno con su propio
 // límite independiente — así un backlog grande de atrasados nunca puede
@@ -148,6 +149,20 @@ export const upsert = mutation({
   returns: v.id("followUps"),
   handler: async (ctx, args) => {
     await requireAccessToken(ctx, args.token);
+    // Repite la comprobación de formato que upsertFollowUp también hace
+    // internamente: sin esto, un dueDate malformado que comparase como
+    // "menor" que hoy por orden de string devolvería DUE_DATE_IN_PAST en
+    // vez de INVALID_DUE_DATE — fija el orden de precedencia correcto en
+    // la frontera pública.
+    if (!isValidBusinessDayKey(args.dueDate)) {
+      fail<FollowUpErrorCode>("INVALID_DUE_DATE", `La fecha "${args.dueDate}" no es válida.`);
+    }
+    // No en el pasado: solo aquí, nunca en upsertFollowUp — convex/seed.ts
+    // llama a upsertFollowUp directamente con fechas pasadas a propósito,
+    // para generar seguimientos atrasados de demostración.
+    if (args.dueDate < businessDayKey(new Date())) {
+      fail<FollowUpErrorCode>("DUE_DATE_IN_PAST", `La fecha "${args.dueDate}" ya ha pasado.`);
+    }
     const actor = await getActor(ctx);
     // Reconstruye el objeto explícitamente, sin `token`: upsertFollowUp lo
     // pasa tal cual a ctx.db.insert/patch, que rechaza cualquier campo que

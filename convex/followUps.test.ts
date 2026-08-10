@@ -1,12 +1,17 @@
 import { convexTest } from "convex-test";
 import { ConvexError } from "convex/values";
-import { describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { api } from "./_generated/api";
 import schema from "./schema";
 import { LIMIT } from "./followUps";
 import { issueTestAccessToken } from "./testHelpers";
+import { addDays, businessDayKey } from "../lib/shared/businessDay";
 
 const modules = import.meta.glob("./**/*.ts");
+
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 type CodeErrorData = { code: string; message: string };
 
@@ -150,7 +155,12 @@ describe("followUps.upsert / complete / discard / getByClient (capa pública)", 
     const token = await issueTestAccessToken(t);
     const clientId = await t.run((ctx) => ctx.db.insert("clients", { name: "Cliente Test" }));
 
-    const followUpId = await t.mutation(api.followUps.upsert, { token, clientId, dueDate: "2026-08-08", actionType: "call" });
+    const followUpId = await t.mutation(api.followUps.upsert, {
+      token,
+      clientId,
+      dueDate: addDays(businessDayKey(new Date()), 1),
+      actionType: "call",
+    });
     const doc = await t.run((ctx) => ctx.db.get(followUpId));
 
     expect(doc?.assigneeId).toBe("stub-marta");
@@ -162,7 +172,12 @@ describe("followUps.upsert / complete / discard / getByClient (capa pública)", 
     const clientId = await t.run((ctx) => ctx.db.insert("clients", { name: "Cliente Test" }));
 
     const error = await captureError(
-      t.mutation(api.followUps.upsert, { token: "a".repeat(64), clientId, dueDate: "2026-08-08", actionType: "call" }),
+      t.mutation(api.followUps.upsert, {
+        token: "a".repeat(64),
+        clientId,
+        dueDate: addDays(businessDayKey(new Date()), 1),
+        actionType: "call",
+      }),
     );
     expect(error.data.code).toBe("UNAUTHENTICATED");
     expect(await t.run((ctx) => ctx.db.query("followUps").collect())).toHaveLength(0);
@@ -174,15 +189,76 @@ describe("followUps.upsert / complete / discard / getByClient (capa pública)", 
     const clientId = await t.run((ctx) => ctx.db.insert("clients", { name: "Cliente Test" }));
     await t.run((ctx) => ctx.db.delete(clientId));
 
-    const error = await captureError(t.mutation(api.followUps.upsert, { token, clientId, dueDate: "2026-08-08", actionType: "call" }));
+    const error = await captureError(
+      t.mutation(api.followUps.upsert, {
+        token,
+        clientId,
+        dueDate: addDays(businessDayKey(new Date()), 1),
+        actionType: "call",
+      }),
+    );
     expect(error.data.code).toBe("CLIENT_NOT_FOUND");
+  });
+
+  test("upsert rechaza una dueDate anterior a hoy con DUE_DATE_IN_PAST, sin escritura parcial", async () => {
+    const t = convexTest(schema, modules);
+    const token = await issueTestAccessToken(t);
+    const clientId = await t.run((ctx) => ctx.db.insert("clients", { name: "Cliente Test" }));
+
+    const error = await captureError(
+      t.mutation(api.followUps.upsert, {
+        token,
+        clientId,
+        dueDate: addDays(businessDayKey(new Date()), -1),
+        actionType: "call",
+      }),
+    );
+    expect(error.data.code).toBe("DUE_DATE_IN_PAST");
+    expect(await t.run((ctx) => ctx.db.query("followUps").collect())).toHaveLength(0);
+  });
+
+  // Prueba directa de la precedencia: sin repetir isValidBusinessDayKey en
+  // el handler público, este caso devolvería DUE_DATE_IN_PAST (por orden de
+  // string) en vez de INVALID_DUE_DATE.
+  test("upsert rechaza un dueDate malformado con INVALID_DUE_DATE, no DUE_DATE_IN_PAST, sin escritura parcial", async () => {
+    const t = convexTest(schema, modules);
+    const token = await issueTestAccessToken(t);
+    const clientId = await t.run((ctx) => ctx.db.insert("clients", { name: "Cliente Test" }));
+
+    const error = await captureError(
+      t.mutation(api.followUps.upsert, { token, clientId, dueDate: "no-es-fecha", actionType: "call" }),
+    );
+    expect(error.data.code).toBe("INVALID_DUE_DATE");
+    expect(await t.run((ctx) => ctx.db.query("followUps").collect())).toHaveLength(0);
+  });
+
+  test("upsert acepta dueDate igual a hoy", async () => {
+    // Único test de este archivo que necesita "hoy" exacto: reloj congelado
+    // para eliminar la carrera de cruzar medianoche en Madrid entre calcular
+    // la fecha aquí y que el handler la calcule otra vez por su cuenta.
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-08-10T10:00:00.000Z"));
+    const t = convexTest(schema, modules);
+    const token = await issueTestAccessToken(t);
+    const clientId = await t.run((ctx) => ctx.db.insert("clients", { name: "Cliente Test" }));
+    const today = businessDayKey(new Date());
+
+    const followUpId = await t.mutation(api.followUps.upsert, { token, clientId, dueDate: today, actionType: "call" });
+    const doc = await t.run((ctx) => ctx.db.get(followUpId));
+
+    expect(doc?.dueDate).toBe(today);
   });
 
   test("complete delega en el modelo (crea nota, borra el seguimiento)", async () => {
     const t = convexTest(schema, modules);
     const token = await issueTestAccessToken(t);
     const clientId = await t.run((ctx) => ctx.db.insert("clients", { name: "Cliente Test" }));
-    const followUpId = await t.mutation(api.followUps.upsert, { token, clientId, dueDate: "2026-08-08", actionType: "call" });
+    const followUpId = await t.mutation(api.followUps.upsert, {
+      token,
+      clientId,
+      dueDate: addDays(businessDayKey(new Date()), 1),
+      actionType: "call",
+    });
 
     const noteId = await t.mutation(api.followUps.complete, { token, followUpId });
 
@@ -194,7 +270,12 @@ describe("followUps.upsert / complete / discard / getByClient (capa pública)", 
     const t = convexTest(schema, modules);
     const token = await issueTestAccessToken(t);
     const clientId = await t.run((ctx) => ctx.db.insert("clients", { name: "Cliente Test" }));
-    const followUpId = await t.mutation(api.followUps.upsert, { token, clientId, dueDate: "2026-08-08", actionType: "call" });
+    const followUpId = await t.mutation(api.followUps.upsert, {
+      token,
+      clientId,
+      dueDate: addDays(businessDayKey(new Date()), 1),
+      actionType: "call",
+    });
 
     await t.mutation(api.followUps.discard, { token, followUpId });
 

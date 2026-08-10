@@ -5,7 +5,7 @@ import { ACTION_TYPE_LABELS_ES, type ActionType } from "../../lib/shared/actionT
 import { fail } from "./errors";
 import { createNote } from "./notes";
 
-export type FollowUpErrorCode = "INVALID_DUE_DATE" | "CLIENT_NOT_FOUND" | "FOLLOW_UP_NOT_FOUND";
+export type FollowUpErrorCode = "INVALID_DUE_DATE" | "DUE_DATE_IN_PAST" | "CLIENT_NOT_FOUND" | "FOLLOW_UP_NOT_FOUND";
 
 export type UpsertFollowUpArgs = {
   clientId: Id<"clients">;

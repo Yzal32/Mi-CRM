@@ -41,6 +41,25 @@ describe("upsertFollowUp", () => {
     expect(rows[0].assigneeId).toBe("stub-marta");
   });
 
+  // Documenta a propósito, no por casualidad: upsertFollowUp NUNCA valida
+  // "no en el pasado" — esa comprobación vive solo en la mutation pública
+  // followUps.upsert (convex/followUps.ts). Es necesario porque
+  // convex/seed.ts llama a este helper directamente con fechas pasadas
+  // (dueDateOffset negativo) para generar seguimientos atrasados de
+  // demostración. Sin este test, alguien podría "corregir" esto añadiendo
+  // la validación aquí y romper el seeding sin darse cuenta.
+  test("acepta una fecha pasada a propósito — excepción necesaria para convex/seed.ts", async () => {
+    const t = convexTest(schema, modules);
+    const clientId = await t.run(async (ctx) => ctx.db.insert("clients", { name: "Cliente Test" }));
+
+    const followUpId = await t.run((ctx) =>
+      upsertFollowUp(ctx, { clientId, dueDate: "2020-01-01", actionType: "call", ...ACTOR }),
+    );
+
+    const doc = await t.run((ctx) => ctx.db.get(followUpId));
+    expect(doc?.dueDate).toBe("2020-01-01");
+  });
+
   test("rechaza una dueDate inválida con error tipado", async () => {
     const t = convexTest(schema, modules);
     const clientId = await t.run(async (ctx) => ctx.db.insert("clients", { name: "Cliente Test" }));
