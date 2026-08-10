@@ -42,7 +42,7 @@
 <div style="max-width:1300px;margin:0 auto;padding:40px 20px 8px;display:flex;flex-direction:column;gap:6px">
   <span style="font:800 24px/1.2 var(--font-sans);color:var(--color-text)">Loop</span>
   <h1 style="font:var(--text-screen-title);color:var(--color-text);margin:0">Pantalla — Lista de clientes</h1>
-  <p style="font:var(--text-body);color:var(--color-text-secondary);margin:0;max-width:640px">Se llega desde Seguimiento. Buscador con filtro en vivo (por nombre, teléfono o negocio), acceso a la ficha de cada cliente y a "Nuevo cliente".</p>
+  <p style="font:var(--text-body);color:var(--color-text-secondary);margin:0;max-width:640px">Se llega desde Seguimiento. Buscador con filtro en vivo (por nombre o teléfono), acceso a la ficha de cada cliente y a "Nuevo cliente".</p>
 </div>
 
 <div style="max-width:1300px;margin:0 auto;padding:24px 20px 8px;display:flex;flex-wrap:wrap;gap:32px;align-items:flex-start">
@@ -53,7 +53,7 @@
       <x-import component-from-global-scope="LoopDesignSystem_97c4ea.TopBar" title="Clientes" onBack="{{ noop }}" hint-size="100%,56px"></x-import>
       <div style="padding:var(--space-4);display:flex;flex-direction:column;gap:14px;padding-bottom:88px">
 
-        <x-import component-from-global-scope="LoopDesignSystem_97c4ea.SearchBar" value="{{ query }}" onChange="{{ onQueryChange }}" placeholder="Buscar por nombre, teléfono o negocio" hint-size="100%,44px"></x-import>
+        <x-import component-from-global-scope="LoopDesignSystem_97c4ea.SearchBar" value="{{ query }}" onChange="{{ onQueryChange }}" placeholder="Buscar por nombre o teléfono" hint-size="100%,44px"></x-import>
 
         <span style="font:var(--text-caption);color:var(--color-text-tertiary)">{{ resultCountLabel }}</span>
 
@@ -82,7 +82,7 @@
     <div style="width:390px;background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);overflow:hidden">
       <x-import component-from-global-scope="LoopDesignSystem_97c4ea.TopBar" title="Clientes" onBack="{{ noop }}" hint-size="100%,56px"></x-import>
       <div style="padding:var(--space-4);display:flex;flex-direction:column;gap:16px;padding-bottom:88px">
-        <x-import component-from-global-scope="LoopDesignSystem_97c4ea.SearchBar" value="" onChange="{{ noop }}" placeholder="Buscar por nombre, teléfono o negocio" hint-size="100%,44px"></x-import>
+        <x-import component-from-global-scope="LoopDesignSystem_97c4ea.SearchBar" value="" onChange="{{ noop }}" placeholder="Buscar por nombre o teléfono" hint-size="100%,44px"></x-import>
         <x-import component-from-global-scope="LoopDesignSystem_97c4ea.EmptyState" icon="users" title="Aún no tienes clientes" message="Añade tu primer cliente para empezar a hacer seguimiento." actionLabel="Añadir cliente" onAction="{{ noop }}" hint-size="100%,300px"></x-import>
       </div>
       <x-import component-from-global-scope="LoopDesignSystem_97c4ea.TabBar" active="clients" hint-size="100%,64px"></x-import>
@@ -100,7 +100,7 @@
         <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Button" variant="primary" onClick="{{ noop }}" hint-size="auto,44px">Nuevo cliente</x-import>
       </div>
 
-      <x-import component-from-global-scope="LoopDesignSystem_97c4ea.SearchBar" value="{{ query }}" onChange="{{ onQueryChange }}" placeholder="Buscar por nombre, teléfono o negocio" hint-size="360px,44px"></x-import>
+      <x-import component-from-global-scope="LoopDesignSystem_97c4ea.SearchBar" value="{{ query }}" onChange="{{ onQueryChange }}" placeholder="Buscar por nombre o teléfono" hint-size="360px,44px"></x-import>
 
       <span style="font:var(--text-caption);color:var(--color-text-tertiary)">{{ resultCountLabel }}</span>
 
@@ -139,14 +139,14 @@ class Component extends DCLogic {
   state = { query: '' };
 
   clients = [
-    { name: 'Carlos Ruiz', business: 'Taller Ruiz', phone: '622 334 556', status: 'new', overdue: true, followUpType: 'call' },
-    { name: 'Ana Torres', business: 'Peluquería Ana', phone: '611 220 987', status: 'contacted', overdue: true, followUpType: 'whatsapp' },
-    { name: 'María López', business: 'Panadería López', phone: '655 102 340', status: 'interested', overdue: false, followUpType: 'call' },
-    { name: 'Marta Gómez', business: 'Boutique Marta', phone: '699 405 112', status: 'won', overdue: false, followUpType: 'visit' },
-    { name: 'Javier Soto', business: 'Ferretería Soto', phone: '633 890 221', status: 'lost', overdue: false, followUpType: null },
-    { name: 'Lucía Fernández', business: 'Clínica Fernández', phone: '644 771 903', status: 'interested', overdue: false, followUpType: 'email' },
-    { name: 'Pedro Navarro', business: 'Autoescuela Navarro', phone: '677 502 334', status: 'contacted', overdue: false, followUpType: null },
-    { name: 'Sara Ibáñez', business: 'Estudio Ibáñez', phone: '688 213 447', status: 'new', overdue: false, followUpType: 'call' }
+    { name: 'Carlos Ruiz', phone: '622 334 556', status: 'new', overdue: true, followUpType: 'call' },
+    { name: 'Ana Torres', phone: '611 220 987', status: 'contacted', overdue: true, followUpType: 'whatsapp' },
+    { name: 'María López', phone: '655 102 340', status: 'interested', overdue: false, followUpType: 'call' },
+    { name: 'Marta Gómez', phone: '699 405 112', status: 'won', overdue: false, followUpType: 'visit' },
+    { name: 'Javier Soto', phone: '633 890 221', status: 'lost', overdue: false, followUpType: null },
+    { name: 'Lucía Fernández', phone: '644 771 903', status: 'interested', overdue: false, followUpType: 'email' },
+    { name: 'Pedro Navarro', phone: '677 502 334', status: 'contacted', overdue: false, followUpType: null },
+    { name: 'Sara Ibáñez', phone: '688 213 447', status: 'new', overdue: false, followUpType: 'call' }
   ];
 
   iconByType = { call: 'phone', whatsapp: 'message-circle', email: 'mail', visit: 'map-pin' };
@@ -157,12 +157,11 @@ class Component extends DCLogic {
     const matches = this.clients.filter(c =>
       !q ||
       c.name.toLowerCase().includes(q) ||
-      c.business.toLowerCase().includes(q) ||
       c.phone.toLowerCase().includes(q)
     );
     const filteredClients = matches.map(c => ({
       ...c,
-      meta: `${c.business} · ${c.phone}`,
+      meta: c.phone,
       hasFollowUp: !!c.followUpType,
       followUpIcon: c.followUpType ? this.iconByType[c.followUpType] : '',
       followUpLabel: c.followUpType ? (c.overdue ? `${this.labelByType[c.followUpType]} · atrasado` : this.labelByType[c.followUpType]) : '',

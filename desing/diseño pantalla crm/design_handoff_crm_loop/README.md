@@ -39,14 +39,14 @@ Puntos clave del sistema:
 - **Navegación**: TabBar/Sidebar con Clientes, Hoy (activa), Estadísticas, Ajustes. Tocar una fila abriría la Ficha de cliente.
 
 ### 3. Lista de clientes (`03 - Lista de Clientes.dc.html`)
-- **Propósito**: encontrar un cliente por nombre, teléfono o negocio, o dar de alta uno nuevo.
+- **Propósito**: encontrar un cliente por nombre o teléfono, o dar de alta uno nuevo.
 - **Layout**: buscador arriba, botón flotante "+" en móvil / botón "Nuevo cliente" en escritorio, lista de clientes (avatar, nombre, badge de estado, icono de seguimiento pendiente/atrasado si aplica). Estado vacío con CTA "Añadir cliente".
-- **Comportamiento**: filtro en vivo por nombre, teléfono o negocio.
+- **Comportamiento**: filtro en vivo por nombre o teléfono.
 - **Navegación**: viene de "Hoy"; toca un cliente → Ficha de cliente; "+" → Nuevo cliente.
 
 ### 4. Nuevo cliente (`04 - Nuevo Cliente.dc.html`)
 - **Propósito**: alta rápida de cliente (menos de 30 segundos).
-- **Layout**: Nombre y Teléfono destacados arriba (lo esencial); separador "Opcional"; debajo Email, Negocio, Canal de origen (selector de 6 opciones: Web, Redes sociales, Email, WhatsApp, Recomendación, Visita en tienda) y Estado (5 opciones, "Nuevo" por defecto). Botón "Guardar" a ancho completo.
+- **Layout**: Nombre y Teléfono destacados arriba (lo esencial); separador "Opcional"; debajo Email, Canal de origen (selector de 6 opciones: Web, Redes sociales, Email, WhatsApp, Recomendación, Visita en tienda) y Estado (5 opciones, "Nuevo" por defecto). Botón "Guardar" a ancho completo.
 - **Validación**: si no hay teléfono ni email, error de formulario ("Necesitas al menos un teléfono o un email..."). Si el teléfono ya existe, error específico bajo el campo Teléfono.
 - **Comportamiento**: al guardar con éxito, navegaría a la Ficha del cliente recién creado.
 

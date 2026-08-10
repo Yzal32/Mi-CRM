@@ -73,7 +73,6 @@
 
         <div style="display:flex;flex-direction:column;gap:12px">
           <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Input" label="Email" value="{{ email }}" onChange="{{ onEmailChange }}" type="email" placeholder="correo@ejemplo.com" hint-size="100%,44px"></x-import>
-          <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Input" label="Negocio" value="{{ business }}" onChange="{{ onBusinessChange }}" placeholder="Nombre del negocio" hint-size="100%,44px"></x-import>
           <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Select" label="Canal de origen" value="{{ channel }}" onChange="{{ onChannelChange }}" options="{{ channelOptions }}" hint-size="100%,44px"></x-import>
           <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Select" label="Estado" value="{{ status }}" onChange="{{ onStatusChange }}" options="{{ statusOptions }}" hint-size="100%,44px"></x-import>
         </div>
@@ -120,7 +119,6 @@
 
         <div style="display:flex;gap:14px">
           <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Input" label="Email" value="{{ email }}" onChange="{{ onEmailChange }}" type="email" placeholder="correo@ejemplo.com" hint-size="100%,44px"></x-import>
-          <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Input" label="Negocio" value="{{ business }}" onChange="{{ onBusinessChange }}" placeholder="Nombre del negocio" hint-size="100%,44px"></x-import>
         </div>
         <div style="display:flex;gap:14px">
           <x-import component-from-global-scope="LoopDesignSystem_97c4ea.Select" label="Canal de origen" value="{{ channel }}" onChange="{{ onChannelChange }}" options="{{ channelOptions }}" hint-size="100%,44px"></x-import>
@@ -147,7 +145,7 @@
 <script type="text/x-dc" data-dc-script>
 class Component extends DCLogic {
   state = {
-    name: '', phone: '', email: '', business: '',
+    name: '', phone: '', email: '',
     channel: 'web', status: 'new',
     nameError: '', phoneError: '', formError: '', toastMessage: ''
   };
@@ -199,7 +197,6 @@ class Component extends DCLogic {
       name: this.state.name,
       phone: this.state.phone,
       email: this.state.email,
-      business: this.state.business,
       channel: this.state.channel,
       status: this.state.status,
       nameError: this.state.nameError,
@@ -211,7 +208,6 @@ class Component extends DCLogic {
       onNameChange: e => this.setState({ name: e.target.value }),
       onPhoneChange: e => this.setState({ phone: e.target.value }),
       onEmailChange: e => this.setState({ email: e.target.value }),
-      onBusinessChange: e => this.setState({ business: e.target.value }),
       onChannelChange: e => this.setState({ channel: e.target.value }),
       onStatusChange: e => this.setState({ status: e.target.value }),
       onSave: this.handleSave,
