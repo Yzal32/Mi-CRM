@@ -58,5 +58,5 @@ export async function changePasswordAction(
     return { error: "UNKNOWN" };
   }
   await setSessionCookie(result.token); // sustituye la cookie por el token rotado
-  redirect("/");
+  redirect("/?passwordChanged=1"); // HoyScreen muestra un toast de confirmación y limpia el query param
 }

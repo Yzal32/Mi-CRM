@@ -42,13 +42,13 @@ describe("changePasswordAction", () => {
     expect(mutationMock).not.toHaveBeenCalled();
   });
 
-  it("cambio correcto sustituye la cookie por el token rotado y redirige a /", async () => {
+  it("cambio correcto sustituye la cookie por el token rotado y redirige a / con el flag de confirmación", async () => {
     cookieGetMock.mockReturnValue({ value: "a".repeat(64) });
     mutationMock.mockResolvedValue({ token: "b".repeat(64) });
 
     await expect(
       changePasswordAction({ currentPassword: "temporal123", newPassword: "definitiva456" }),
-    ).rejects.toThrow("NEXT_REDIRECT:/");
+    ).rejects.toThrow("NEXT_REDIRECT:/?passwordChanged=1");
 
     expect(setSessionCookieMock).toHaveBeenCalledWith("b".repeat(64));
     expect(setSessionCookieMock).not.toHaveBeenCalledWith("a".repeat(64));
