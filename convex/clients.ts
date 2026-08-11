@@ -116,6 +116,7 @@ const clientSearchItem = v.object({
   clientId: v.id("clients"),
   name: v.string(),
   phone: v.optional(v.string()),
+  status: v.optional(statusValidator),
 });
 
 // Trunca por PUNTOS DE CÓDIGO, no por unidades UTF-16: `for...of` sobre un
@@ -242,7 +243,9 @@ export const search = query({
     const rows = [...merged.values()];
 
     return {
-      items: rows.slice(0, LIST_LIMIT).map((client) => ({ clientId: client._id, name: client.name, phone: client.phone })),
+      items: rows
+        .slice(0, LIST_LIMIT)
+        .map((client) => ({ clientId: client._id, name: client.name, phone: client.phone, status: client.status })),
       truncated: rows.length > LIST_LIMIT,
     };
   },

@@ -2,10 +2,11 @@ import { describe, expect, it } from "vitest";
 import type { Id } from "@/convex/_generated/dataModel";
 import { deriveClientesViewState, type ClientesSearchResult } from "./deriveClientesViewState";
 
-const client = (overrides: Partial<ClientesSearchResult["items"][number]> = {}) => ({
+const client = (overrides: Partial<ClientesSearchResult["items"][number]> = {}): ClientesSearchResult["items"][number] => ({
   clientId: "c1" as Id<"clients">,
   name: "Cliente",
   phone: "622334556",
+  status: undefined,
   ...overrides,
 });
 

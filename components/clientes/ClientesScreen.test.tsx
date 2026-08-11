@@ -54,4 +54,36 @@ describe("ClientesScreen — búsqueda con debounce", () => {
     const link = screen.getByRole("link", { name: /Carlos Ruiz/ });
     expect(link.getAttribute("href")).toBe("/clientes/c1");
   });
+
+  it("PRO-12: pinta el badge con el estado de cada cliente", () => {
+    vi.useFakeTimers();
+    useQueryMock.mockReturnValue({
+      items: [{ clientId: "c1", name: "Carlos Ruiz", phone: "622334556", status: "won" }],
+      truncated: false,
+    });
+    render(<ClientesScreen />);
+
+    fireEvent.change(getSearchInput(), { target: { value: "Carlos" } });
+    act(() => {
+      vi.advanceTimersByTime(250);
+    });
+
+    expect(screen.getByText("Venta cerrada")).toBeTruthy();
+  });
+
+  it("PRO-12: sin status persistido (cliente legacy), el badge cae a 'Nuevo'", () => {
+    vi.useFakeTimers();
+    useQueryMock.mockReturnValue({
+      items: [{ clientId: "c1", name: "Carlos Ruiz", phone: "622334556" }],
+      truncated: false,
+    });
+    render(<ClientesScreen />);
+
+    fireEvent.change(getSearchInput(), { target: { value: "Carlos" } });
+    act(() => {
+      vi.advanceTimersByTime(250);
+    });
+
+    expect(screen.getByText("Nuevo")).toBeTruthy();
+  });
 });

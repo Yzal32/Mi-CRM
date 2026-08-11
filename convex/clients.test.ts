@@ -368,6 +368,22 @@ describe("clients.update", () => {
 });
 
 describe("clients.search", () => {
+  test("PRO-12: el status del cliente viaja en el item y se actualiza tras updateStatus", async () => {
+    const t = convexTest(schema, modules);
+    const token = await issueTestAccessToken(t);
+    const clientId = await t.mutation(api.clients.create, { token, name: "Carlos Ruiz", phone: "622334556" });
+
+    const initial = await t.query(api.clients.search, { token, search: "Carlos" });
+    const initialItem = initial.items.find((item) => item.clientId === clientId);
+    expect(initialItem?.status).toBe("new");
+
+    await t.mutation(api.clients.updateStatus, { token, clientId, status: "interested" });
+
+    const updated = await t.query(api.clients.search, { token, search: "Carlos" });
+    const updatedItem = updated.items.find((item) => item.clientId === clientId);
+    expect(updatedItem?.status).toBe("interested");
+  });
+
   test("encuentra por prefijo de una palabra del nombre, insensible a mayúsculas", async () => {
     const t = convexTest(schema, modules);
     const token = await issueTestAccessToken(t);

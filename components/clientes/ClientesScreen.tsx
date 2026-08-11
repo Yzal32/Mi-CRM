@@ -41,7 +41,13 @@ export function ClientesScreen() {
             <p className="font-secondary m-0 text-text-tertiary">Hay más clientes de los que se muestran aquí; afina la búsqueda.</p>
           )}
           {data.items.map((client) => (
-            <ClienteRow key={client.clientId} clientId={client.clientId} name={client.name} phone={client.phone} />
+            <ClienteRow
+              key={client.clientId}
+              clientId={client.clientId}
+              name={client.name}
+              phone={client.phone}
+              status={client.status}
+            />
           ))}
         </div>
       )}
