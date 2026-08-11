@@ -368,18 +368,20 @@ describe("clients.update", () => {
 });
 
 describe("clients.search", () => {
+  const TODAY = "2026-08-08";
+
   test("PRO-12: el status del cliente viaja en el item y se actualiza tras updateStatus", async () => {
     const t = convexTest(schema, modules);
     const token = await issueTestAccessToken(t);
     const clientId = await t.mutation(api.clients.create, { token, name: "Carlos Ruiz", phone: "622334556" });
 
-    const initial = await t.query(api.clients.search, { token, search: "Carlos" });
+    const initial = await t.query(api.clients.search, { token, search: "Carlos", today: TODAY });
     const initialItem = initial.items.find((item) => item.clientId === clientId);
     expect(initialItem?.status).toBe("new");
 
     await t.mutation(api.clients.updateStatus, { token, clientId, status: "interested" });
 
-    const updated = await t.query(api.clients.search, { token, search: "Carlos" });
+    const updated = await t.query(api.clients.search, { token, search: "Carlos", today: TODAY });
     const updatedItem = updated.items.find((item) => item.clientId === clientId);
     expect(updatedItem?.status).toBe("interested");
   });
@@ -390,7 +392,7 @@ describe("clients.search", () => {
     await t.mutation(api.clients.create, { token, name: "Carlos Ruiz", phone: "622334556" });
     await t.mutation(api.clients.create, { token, name: "Ana Torres", phone: "611220987" });
 
-    const result = await t.query(api.clients.search, { token, search: "car" });
+    const result = await t.query(api.clients.search, { token, search: "car", today: TODAY });
     expect(result.items).toHaveLength(1);
     expect(result.items[0].name).toBe("Carlos Ruiz");
     expect(result.truncated).toBe(false);
@@ -401,7 +403,7 @@ describe("clients.search", () => {
     const token = await issueTestAccessToken(t);
     await t.mutation(api.clients.create, { token, name: "Carlos Ruiz", phone: "622334556" });
 
-    const result = await t.query(api.clients.search, { token, search: "ruiz" });
+    const result = await t.query(api.clients.search, { token, search: "ruiz", today: TODAY });
     expect(result.items).toHaveLength(1);
     expect(result.items[0].name).toBe("Carlos Ruiz");
   });
@@ -411,7 +413,7 @@ describe("clients.search", () => {
     const token = await issueTestAccessToken(t);
     await t.mutation(api.clients.create, { token, name: "Carlos Ruiz", phone: "622334556" });
 
-    const result = await t.query(api.clients.search, { token, search: "arlos" });
+    const result = await t.query(api.clients.search, { token, search: "arlos", today: TODAY });
     expect(result.items).toEqual([]);
   });
 
@@ -420,7 +422,7 @@ describe("clients.search", () => {
     const token = await issueTestAccessToken(t);
     await t.mutation(api.clients.create, { token, name: "María López", phone: "622334556" });
 
-    const result = await t.query(api.clients.search, { token, search: "maria" });
+    const result = await t.query(api.clients.search, { token, search: "maria", today: TODAY });
     expect(result.items).toHaveLength(1);
     expect(result.items[0].name).toBe("María López");
   });
@@ -430,7 +432,7 @@ describe("clients.search", () => {
     const token = await issueTestAccessToken(t);
     await t.mutation(api.clients.create, { token, name: "Nunez Sin Tilde", phone: "622334556" });
 
-    const result = await t.query(api.clients.search, { token, search: "ÑÚÑEZ" });
+    const result = await t.query(api.clients.search, { token, search: "ÑÚÑEZ", today: TODAY });
     expect(result.items).toHaveLength(1);
     expect(result.items[0].name).toBe("Nunez Sin Tilde");
   });
@@ -442,10 +444,10 @@ describe("clients.search", () => {
 
     await t.mutation(api.clients.update, { token, clientId: id, name: "Verónica Nueva" });
 
-    const oldName = await t.query(api.clients.search, { token, search: "andres" });
+    const oldName = await t.query(api.clients.search, { token, search: "andres", today: TODAY });
     expect(oldName.items).toEqual([]);
 
-    const newName = await t.query(api.clients.search, { token, search: "veronica" });
+    const newName = await t.query(api.clients.search, { token, search: "veronica", today: TODAY });
     expect(newName.items).toHaveLength(1);
     expect(newName.items[0].name).toBe("Verónica Nueva");
   });
@@ -455,7 +457,7 @@ describe("clients.search", () => {
     const token = await issueTestAccessToken(t);
     await t.mutation(api.clients.create, { token, name: "Carlos Ruiz", phone: "622334556" });
 
-    const result = await t.query(api.clients.search, { token, search: "622" });
+    const result = await t.query(api.clients.search, { token, search: "622", today: TODAY });
     expect(result.items).toHaveLength(1);
     expect(result.items[0].name).toBe("Carlos Ruiz");
   });
@@ -465,7 +467,7 @@ describe("clients.search", () => {
     const token = await issueTestAccessToken(t);
     await t.mutation(api.clients.create, { token, name: "Carlos Ruiz", phone: "622334556" });
 
-    const result = await t.query(api.clients.search, { token, search: "4556" });
+    const result = await t.query(api.clients.search, { token, search: "4556", today: TODAY });
     expect(result.items).toEqual([]);
   });
 
@@ -474,7 +476,7 @@ describe("clients.search", () => {
     const token = await issueTestAccessToken(t);
     await t.mutation(api.clients.create, { token, name: "Carlos Ruiz", phone: "622 33 45 56" });
 
-    const result = await t.query(api.clients.search, { token, search: "622-33-45" });
+    const result = await t.query(api.clients.search, { token, search: "622-33-45", today: TODAY });
     expect(result.items).toHaveLength(1);
     expect(result.items[0].name).toBe("Carlos Ruiz");
   });
@@ -484,7 +486,7 @@ describe("clients.search", () => {
     const token = await issueTestAccessToken(t);
     await t.mutation(api.clients.create, { token, name: "Carlos Ruiz", phone: "+34 622 334 556" });
 
-    const result = await t.query(api.clients.search, { token, search: "+34 622 334 556" });
+    const result = await t.query(api.clients.search, { token, search: "+34 622 334 556", today: TODAY });
     expect(result.items).toHaveLength(1);
     expect(result.items[0].name).toBe("Carlos Ruiz");
   });
@@ -494,7 +496,7 @@ describe("clients.search", () => {
     const token = await issueTestAccessToken(t);
     await t.mutation(api.clients.create, { token, name: "Sin Teléfono", email: "sin@ejemplo.com" });
 
-    const result = await t.query(api.clients.search, { token, search: "622" });
+    const result = await t.query(api.clients.search, { token, search: "622", today: TODAY });
     expect(result.items).toEqual([]);
   });
 
@@ -503,7 +505,7 @@ describe("clients.search", () => {
     const token = await issueTestAccessToken(t);
     await t.mutation(api.clients.create, { token, name: "Carlos Ruiz", phone: "622334556" });
 
-    const result = await t.query(api.clients.search, { token, search: "inexistente" });
+    const result = await t.query(api.clients.search, { token, search: "inexistente", today: TODAY });
     expect(result.items).toEqual([]);
     expect(result.truncated).toBe(false);
   });
@@ -513,7 +515,7 @@ describe("clients.search", () => {
     const token = await issueTestAccessToken(t);
     await t.mutation(api.clients.create, { token, name: "Carlos Ruiz", phone: "622334556" });
 
-    const result = await t.query(api.clients.search, { token, search: "   " });
+    const result = await t.query(api.clients.search, { token, search: "   ", today: TODAY });
     expect(result.items).toEqual([]);
     expect(result.truncated).toBe(false);
   });
@@ -522,11 +524,17 @@ describe("clients.search", () => {
     const t = convexTest(schema, modules);
     let caught: unknown;
     try {
-      await t.query(api.clients.search, { token: "a".repeat(64), search: "carlos" });
+      await t.query(api.clients.search, { token: "a".repeat(64), search: "carlos", today: TODAY });
     } catch (error) {
       caught = error;
     }
     expect((caught as ConvexError<{ code: string }>).data.code).toBe("UNAUTHENTICATED");
+  });
+
+  test("rechaza today inválida", async () => {
+    const t = convexTest(schema, modules);
+    const token = await issueTestAccessToken(t);
+    await expect(t.query(api.clients.search, { token, search: "carlos", today: "no-es-una-fecha" })).rejects.toThrow();
   });
 
   test("una coincidencia de teléfono no se pierde aunque el buscador de nombre esté lleno", async () => {
@@ -547,7 +555,7 @@ describe("clients.search", () => {
       phone: "622334556",
     });
 
-    const result = await t.query(api.clients.search, { token, search: "622" });
+    const result = await t.query(api.clients.search, { token, search: "622", today: TODAY });
     expect(result.truncated).toBe(true);
     expect(result.items.some((item) => item.clientId === target)).toBe(true);
   }, 30000);
@@ -563,7 +571,7 @@ describe("clients.search", () => {
     });
     await t.mutation(api.clients.create, { token, name: "Zzz Objetivo", phone: "600111222" });
 
-    const result = await t.query(api.clients.search, { token, search: "Objetivo" });
+    const result = await t.query(api.clients.search, { token, search: "Objetivo", today: TODAY });
     expect(result.items).toHaveLength(1);
     expect(result.items[0].name).toBe("Zzz Objetivo");
   }, 30000);
@@ -579,10 +587,143 @@ describe("clients.search", () => {
       }
     });
 
-    const result = await t.query(api.clients.search, { token, search: "600" });
+    const result = await t.query(api.clients.search, { token, search: "600", today: TODAY });
     expect(result.truncated).toBe(true);
     expect(result.items).toHaveLength(LIST_LIMIT);
   }, 30000);
+
+  test("PRO-19: followUp viaja en el item — hoy, atrasado, futuro y sin seguimiento", async () => {
+    const t = convexTest(schema, modules);
+    const token = await issueTestAccessToken(t);
+    const hoyId = await t.mutation(api.clients.create, { token, name: "Cliente Hoy", phone: "600111111" });
+    const atrasadoId = await t.mutation(api.clients.create, { token, name: "Cliente Atrasado", phone: "600111112" });
+    const futuroId = await t.mutation(api.clients.create, { token, name: "Cliente Futuro", phone: "600111113" });
+    const sinId = await t.mutation(api.clients.create, { token, name: "Cliente Sin Seguimiento", phone: "600111114" });
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("followUps", { clientId: hoyId, dueDate: TODAY, actionType: "call" });
+      await ctx.db.insert("followUps", { clientId: atrasadoId, dueDate: "2026-08-01", actionType: "whatsapp" });
+      await ctx.db.insert("followUps", { clientId: futuroId, dueDate: "2026-08-15", actionType: "email" });
+    });
+
+    const result = await t.query(api.clients.search, { token, search: "Cliente", today: TODAY });
+    const byId = (id: string) => result.items.find((item) => item.clientId === id);
+
+    expect(byId(hoyId)?.followUp).toEqual({ actionType: "call", diffDays: 0 });
+    expect(byId(atrasadoId)?.followUp?.actionType).toBe("whatsapp");
+    expect(byId(atrasadoId)?.followUp?.diffDays).toBeGreaterThan(0);
+    expect(byId(futuroId)?.followUp?.actionType).toBe("email");
+    expect(byId(futuroId)?.followUp?.diffDays).toBeLessThan(0);
+    expect(byId(sinId)?.followUp).toBeUndefined();
+  });
+
+  test("PRO-19/M-01: el followUp de un cliente mostrado no se pierde aunque haya más de LIST_LIMIT seguimientos de otros clientes", async () => {
+    const t = convexTest(schema, modules);
+    const token = await issueTestAccessToken(t);
+    const targetId = await t.mutation(api.clients.create, { token, name: "Objetivo Con Seguimiento", phone: "600222333" });
+    await t.run(async (ctx) => {
+      await ctx.db.insert("followUps", { clientId: targetId, dueDate: TODAY, actionType: "visit" });
+      for (let i = 0; i <= LIST_LIMIT; i++) {
+        const name = `Otro ${i}`;
+        // nameFold obligatorio: search usa un searchIndex sobre nameFold —
+        // un documento sin ese campo hace que convex-test reviente al
+        // tokenizar (ver otros bucles de relleno en este mismo archivo).
+        const otherId = await ctx.db.insert("clients", { name, nameFold: foldDiacritics(name) });
+        await ctx.db.insert("followUps", { clientId: otherId, dueDate: TODAY, actionType: "call" });
+      }
+    });
+
+    const result = await t.query(api.clients.search, { token, search: "Objetivo", today: TODAY });
+    const item = result.items.find((i) => i.clientId === targetId);
+    expect(item?.followUp).toEqual({ actionType: "visit", diffDays: 0 });
+  }, 30000);
+
+  test("PRO-19/M-05: un cliente con dos followUps (duplicado transitorio) no rompe la búsqueda, gana el más reciente", async () => {
+    const t = convexTest(schema, modules);
+    const token = await issueTestAccessToken(t);
+    const clientId = await t.mutation(api.clients.create, { token, name: "Cliente Duplicado", phone: "600333444" });
+    await t.run(async (ctx) => {
+      await ctx.db.insert("followUps", { clientId, dueDate: "2026-08-01", actionType: "call" });
+      await ctx.db.insert("followUps", { clientId, dueDate: "2026-08-09", actionType: "visit" });
+    });
+
+    const result = await t.query(api.clients.search, { token, search: "Duplicado", today: TODAY });
+    const item = result.items.find((i) => i.clientId === clientId);
+    expect(item?.followUp?.actionType).toBe("visit");
+  });
+});
+
+describe("clients.list", () => {
+  const TODAY = "2026-08-08";
+
+  test("sin clientes devuelve items vacío, sin truncar", async () => {
+    const t = convexTest(schema, modules);
+    const token = await issueTestAccessToken(t);
+    const result = await t.query(api.clients.list, { token, today: TODAY });
+    expect(result).toEqual({ items: [], truncated: false });
+  });
+
+  test("lista todos los clientes ordenados por nameFold (sin diacríticos ni mayúsculas)", async () => {
+    const t = convexTest(schema, modules);
+    const token = await issueTestAccessToken(t);
+    await t.mutation(api.clients.create, { token, name: "Zoe", phone: "600000001" });
+    await t.mutation(api.clients.create, { token, name: "ana", phone: "600000002" });
+    await t.mutation(api.clients.create, { token, name: "Ángel", phone: "600000003" });
+
+    const result = await t.query(api.clients.list, { token, today: TODAY });
+    expect(result.items.map((item) => item.name)).toEqual(["ana", "Ángel", "Zoe"]);
+    expect(result.truncated).toBe(false);
+  });
+
+  test("rechaza sin token válido con UNAUTHENTICATED", async () => {
+    const t = convexTest(schema, modules);
+    let caught: unknown;
+    try {
+      await t.query(api.clients.list, { token: "a".repeat(64), today: TODAY });
+    } catch (error) {
+      caught = error;
+    }
+    expect((caught as ConvexError<{ code: string }>).data.code).toBe("UNAUTHENTICATED");
+  });
+
+  test("rechaza today inválida", async () => {
+    const t = convexTest(schema, modules);
+    const token = await issueTestAccessToken(t);
+    await expect(t.query(api.clients.list, { token, today: "no-es-una-fecha" })).rejects.toThrow();
+  });
+
+  test("PRO-19/M-02+M-04: con más de LIST_LIMIT clientes, sobreviven los primeros LIST_LIMIT por nameFold — incluyendo uno insertado el último pero alfabéticamente primero", async () => {
+    const t = convexTest(schema, modules);
+    const token = await issueTestAccessToken(t);
+    await t.run(async (ctx) => {
+      for (let i = 0; i < LIST_LIMIT; i++) {
+        const name = `Relleno ${String(i).padStart(3, "0")}`;
+        await ctx.db.insert("clients", { name, nameFold: foldDiacritics(name) });
+      }
+      // Insertado en último lugar (sería el último por orden de creación),
+      // pero "Aaron" es alfabéticamente anterior a todos los "Relleno NNN"
+      // — el bug original (take antes de ordenar) lo habría dejado fuera.
+      const name = "Aaron Primero";
+      await ctx.db.insert("clients", { name, nameFold: foldDiacritics(name) });
+    });
+
+    const result = await t.query(api.clients.list, { token, today: TODAY });
+    expect(result.truncated).toBe(true);
+    expect(result.items).toHaveLength(LIST_LIMIT);
+    expect(result.items[0].name).toBe("Aaron Primero");
+    expect(result.items.some((item) => item.name === `Relleno ${String(LIST_LIMIT - 1).padStart(3, "0")}`)).toBe(false);
+  }, 30000);
+
+  test("PRO-19: followUp viaja en el item de list", async () => {
+    const t = convexTest(schema, modules);
+    const token = await issueTestAccessToken(t);
+    const clientId = await t.mutation(api.clients.create, { token, name: "Con Seguimiento", phone: "600555666" });
+    await t.run((ctx) => ctx.db.insert("followUps", { clientId, dueDate: TODAY, actionType: "email" }));
+
+    const result = await t.query(api.clients.list, { token, today: TODAY });
+    const item = result.items.find((i) => i.clientId === clientId);
+    expect(item?.followUp).toEqual({ actionType: "email", diffDays: 0 });
+  });
 });
 
 // String.prototype.isWellFormed() es ES2024 — el tsconfig de convex/ fija

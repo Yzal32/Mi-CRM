@@ -17,10 +17,15 @@ export function actionIcon(actionType: ActionType): IconName {
   return ACTION_ICON[actionType];
 }
 
+// diffDays negativo = seguimiento futuro (PRO-19: clients.search/list, a
+// diferencia de listToday, que nunca pasa negativo aquí — por eso este
+// caso no se había ejercitado hasta ahora).
 function timingSuffix(diffDays: number): string {
-  if (diffDays <= 0) return "hoy";
+  if (diffDays === 0) return "hoy";
   if (diffDays === 1) return "venció ayer";
-  return `hace ${diffDays} días`;
+  if (diffDays > 1) return `hace ${diffDays} días`;
+  if (diffDays === -1) return "mañana";
+  return `en ${Math.abs(diffDays)} días`;
 }
 
 export function followUpLabel(actionType: ActionType, diffDays: number): string {

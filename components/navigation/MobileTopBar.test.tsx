@@ -82,4 +82,45 @@ describe("MobileTopBar", () => {
     render(<MobileTopBar />);
     expect(screen.getByText("Cliente")).toBeTruthy();
   });
+
+  // PRO-19: la pestaña Clientes reutiliza el mismo "+" que ya usa Hoy.
+  it('en /clientes aparece el link "Nuevo cliente" hacia /clientes/nuevo', () => {
+    currentPathname = "/clientes";
+    useQueryMock.mockReturnValue(undefined);
+    render(<MobileTopBar />);
+    const link = screen.getByRole("link", { name: "Nuevo cliente" });
+    expect(link.getAttribute("href")).toBe("/clientes/nuevo");
+  });
+
+  it('en / (Hoy) sigue apareciendo el link "Nuevo cliente" (regresión)', () => {
+    currentPathname = "/";
+    useQueryMock.mockReturnValue(undefined);
+    render(<MobileTopBar />);
+    expect(screen.getByRole("link", { name: "Nuevo cliente" })).toBeTruthy();
+  });
+
+  it('en /estadisticas y /ajustes NO aparece el link "Nuevo cliente" (regresión)', () => {
+    currentPathname = "/estadisticas";
+    useQueryMock.mockReturnValue(undefined);
+    const { rerender } = render(<MobileTopBar />);
+    expect(screen.queryByRole("link", { name: "Nuevo cliente" })).toBeNull();
+
+    currentPathname = "/ajustes";
+    rerender(<MobileTopBar />);
+    expect(screen.queryByRole("link", { name: "Nuevo cliente" })).toBeNull();
+  });
+
+  it('en /clientes/nuevo NO aparece el botón "+" (ya está en la propia pantalla de alta)', () => {
+    currentPathname = "/clientes/nuevo";
+    useQueryMock.mockReturnValue(undefined);
+    render(<MobileTopBar />);
+    expect(screen.queryByRole("link", { name: "Nuevo cliente" })).toBeNull();
+  });
+
+  it('en la ficha de un cliente (/clientes/<id>) NO aparece el botón "+"', () => {
+    currentPathname = "/clientes/abc123";
+    useQueryMock.mockReturnValue({ name: "Carlos Ruiz" });
+    render(<MobileTopBar />);
+    expect(screen.queryByRole("link", { name: "Nuevo cliente" })).toBeNull();
+  });
 });

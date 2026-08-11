@@ -2,9 +2,11 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { createClient, updateClient, updateClientStatus } from "./model/clients";
 import { requireAccessToken } from "./model/auth";
+import { loadPendingFollowUpsByClient, type PendingFollowUpInfo } from "./model/followUps";
 import { foldDiacritics } from "../lib/shared/foldDiacritics";
 import { phoneSearchDigits } from "../lib/shared/normalizePhoneKey";
-import type { Doc } from "./_generated/dataModel";
+import { isValidBusinessDayKey } from "../lib/shared/businessDay";
+import type { Doc, Id } from "./_generated/dataModel";
 import type { QueryCtx } from "./_generated/server";
 
 const originChannelValidator = v.union(
@@ -23,6 +25,10 @@ const statusValidator = v.union(
   v.literal("won"),
   v.literal("lost"),
 );
+
+// Mismo literal que convex/followUps.ts — el archivo ya duplica validadores
+// locales por convención del proyecto (ver statusValidator arriba).
+const actionTypeValidator = v.union(v.literal("call"), v.literal("whatsapp"), v.literal("email"), v.literal("visit"));
 
 const clientDto = v.object({
   _id: v.id("clients"),
@@ -117,7 +123,21 @@ const clientSearchItem = v.object({
   name: v.string(),
   phone: v.optional(v.string()),
   status: v.optional(statusValidator),
+  // PRO-19: aviso de seguimiento pendiente (icono + texto en la fila),
+  // resuelto por loadPendingFollowUpsByClient — undefined si el cliente no
+  // tiene ninguno.
+  followUp: v.optional(v.object({ actionType: actionTypeValidator, diffDays: v.number() })),
 });
+
+function toClientSearchItem(client: Doc<"clients">, followUpByClient: Map<Id<"clients">, PendingFollowUpInfo>) {
+  return {
+    clientId: client._id,
+    name: client.name,
+    phone: client.phone,
+    status: client.status,
+    followUp: followUpByClient.get(client._id),
+  };
+}
 
 // Trunca por PUNTOS DE CÓDIGO, no por unidades UTF-16: `for...of` sobre un
 // string itera por code point, tratando un par subrogado (p. ej. un
@@ -198,10 +218,11 @@ async function searchByPhonePrefix(ctx: QueryCtx, phoneTerm: string, limit: numb
 // producto: es lo que un índice real de Convex puede ofrecer sin escanear
 // la tabla completa).
 export const search = query({
-  args: { token: v.string(), search: v.string() },
+  args: { token: v.string(), search: v.string(), today: v.string() },
   returns: v.object({ items: v.array(clientSearchItem), truncated: v.boolean() }),
   handler: async (ctx, args) => {
     await requireAccessToken(ctx, args.token);
+    if (!isValidBusinessDayKey(args.today)) throw new Error(`today inválida: "${args.today}"`);
     const bounded = truncateCodePoints(args.search.trim(), 100);
     // No consulta `clients` (requireAccessToken sí toca la base de datos,
     // para verificar el token, antes de llegar aquí).
@@ -242,11 +263,39 @@ export const search = query({
     for (const client of nameMatches) merged.set(client._id, client);
     const rows = [...merged.values()];
 
+    // followUp se resuelve DESPUÉS de recortar a LIST_LIMIT, nunca sobre
+    // los candidatos fusionados completos (que pueden superar 300 antes de
+    // cortar) — evita disparar más consultas by_client de las necesarias
+    // cuando la fusión es más ancha que lo que realmente se va a mostrar.
+    const finalRows = rows.slice(0, LIST_LIMIT);
+    const followUpByClient = await loadPendingFollowUpsByClient(ctx, finalRows.map((client) => client._id), args.today);
+
     return {
-      items: rows
-        .slice(0, LIST_LIMIT)
-        .map((client) => ({ clientId: client._id, name: client.name, phone: client.phone, status: client.status })),
+      items: finalRows.map((client) => toClientSearchItem(client, followUpByClient)),
       truncated: rows.length > LIST_LIMIT,
     };
+  },
+});
+
+// PRO-19: listado completo de clientes (pantalla "Lista de clientes"),
+// ordenado por nameFold vía el índice regular `by_nameFold` — coste
+// proporcional a LIST_LIMIT+1 documentos leídos, nunca al tamaño de
+// `clients`, mismo modelo que `by_phoneKey` en `search` (arriba). El orden
+// resultante es por nameFold (sin diacríticos, en minúsculas), no una
+// collation española completa, pero es el mismo criterio de plegado que ya
+// acepta el buscador (PRO-10).
+export const list = query({
+  args: { token: v.string(), today: v.string() },
+  returns: v.object({ items: v.array(clientSearchItem), truncated: v.boolean() }),
+  handler: async (ctx, args) => {
+    await requireAccessToken(ctx, args.token);
+    if (!isValidBusinessDayKey(args.today)) throw new Error(`today inválida: "${args.today}"`);
+
+    const rows = await ctx.db.query("clients").withIndex("by_nameFold").take(LIST_LIMIT + 1);
+    const truncated = rows.length > LIST_LIMIT;
+    const sliced = rows.slice(0, LIST_LIMIT);
+    const followUpByClient = await loadPendingFollowUpsByClient(ctx, sliced.map((client) => client._id), args.today);
+
+    return { items: sliced.map((client) => toClientSearchItem(client, followUpByClient)), truncated };
   },
 });

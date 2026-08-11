@@ -1,15 +1,16 @@
 import type { FunctionReturnType } from "convex/server";
 import type { api } from "@/convex/_generated/api";
 
-export type ClientesSearchResult = FunctionReturnType<typeof api.clients.search>;
-export type ClientesViewState = "idle" | "loading" | "noResults" | "hasResults";
+export type ClientesSearchResult = FunctionReturnType<typeof api.clients.list>;
+export type ClientesViewState = "loading" | "empty" | "noResults" | "hasResults";
 
 /**
- * "idle" existe porque, a diferencia de Hoy (que siempre llama a
- * listToday), aquí no se llama a clients.search en absoluto sin término
- * (ver ClientesScreen: useAuthedQuery con "skip") — por eso hasSearchTerm
- * se comprueba ANTES que data === undefined, para no confundir "no hay
- * término todavía" con "la query está en vuelo".
+ * PRO-19: ya no existe "idle" — a diferencia del buscador original
+ * (PRO-10), ahora siempre hay una query en vuelo (clients.list sin término,
+ * clients.search con término; ver ClientesScreen). "empty" (tabla clients
+ * vacía de verdad) y "noResults" (hay término pero cero coincidencias) son
+ * estados distintos: el mockup los distingue ("Aún no tienes clientes" vs
+ * "Sin resultados").
  */
 export function deriveClientesViewState({
   data,
@@ -18,7 +19,7 @@ export function deriveClientesViewState({
   data: ClientesSearchResult | undefined;
   hasSearchTerm: boolean;
 }): ClientesViewState {
-  if (!hasSearchTerm) return "idle";
   if (data === undefined) return "loading";
-  return data.items.length === 0 ? "noResults" : "hasResults";
+  if (data.items.length > 0) return "hasResults";
+  return hasSearchTerm ? "noResults" : "empty";
 }

@@ -64,7 +64,15 @@ export default defineSchema({
     // de tests. Coste de consulta proporcional a los resultados devueltos,
     // no al tamaño de la tabla. Ver convex/clients.ts (search) — el
     // teléfono usa `by_phoneKey` (arriba), no este índice.
-    .searchIndex("search_name", { searchField: "nameFold" }),
+    .searchIndex("search_name", { searchField: "nameFold" })
+    // Índice REGULAR (no de texto) sobre el mismo campo `nameFold`, para
+    // PRO-19 (Lista de clientes): permite leer clientes ya ordenados
+    // alfabéticamente (sin diacríticos/mayúsculas) con coste proporcional a
+    // los resultados devueltos, nunca al tamaño de la tabla — igual modelo
+    // que `by_phoneKey`. `search_name` (arriba) no sirve para esto: un
+    // searchIndex solo admite consultas con un término de búsqueda, no un
+    // listado ordenado simple. Ver convex/clients.ts (list).
+    .index("by_nameFold", ["nameFold"]),
 
   followUps: defineTable({
     clientId: v.id("clients"),

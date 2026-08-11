@@ -43,12 +43,17 @@ export function MobileTopBar() {
 
   const active = navItems.find((item) => isNavItemActive(pathname, item.href));
   const isHoy = active?.value === "today";
+  // PRO-19: la pestaña Clientes reutiliza el mismo "+" que Hoy en vez de un
+  // FAB propio (decisión de producto, evita un componente flotante nuevo
+  // sin precedente en el repo). Los returns de arriba (/clientes/nuevo,
+  // ficha de cliente) ya garantizan que nunca aparece ahí.
+  const isClients = active?.value === "clients";
   return (
     <div className="lg:hidden">
       <TopBar
         title={active?.label ?? "Loop"}
         action={
-          isHoy ? (
+          isHoy || isClients ? (
             <IconButton icon="plus" label="Nuevo cliente" variant="primary" href="/clientes/nuevo" size={36} />
           ) : undefined
         }

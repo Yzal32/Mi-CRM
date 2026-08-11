@@ -1,6 +1,6 @@
 import type { Id } from "../_generated/dataModel";
-import type { MutationCtx } from "../_generated/server";
-import { formatBusinessDate, isValidBusinessDayKey } from "../../lib/shared/businessDay";
+import type { MutationCtx, QueryCtx } from "../_generated/server";
+import { calendarDayDiff, formatBusinessDate, isValidBusinessDayKey } from "../../lib/shared/businessDay";
 import { ACTION_TYPE_LABELS_ES, type ActionType } from "../../lib/shared/actionType";
 import { fail } from "./errors";
 import { createNote } from "./notes";
@@ -52,6 +52,44 @@ export async function upsertFollowUp(ctx: MutationCtx, args: UpsertFollowUpArgs)
     return survivor._id;
   }
   return ctx.db.insert("followUps", args);
+}
+
+export type PendingFollowUpInfo = { actionType: ActionType; diffDays: number };
+
+/**
+ * Seguimiento pendiente de cada cliente en `clientIds`, para pantallas de
+ * lista (PRO-19: clients.search/list) — una consulta indexada (`by_client`)
+ * por cada cliente que el caller va a mostrar, nunca un escaneo de toda
+ * `followUps` con un tope propio (eso podía dejar fuera el seguimiento de
+ * un cliente sí mostrado si la tabla superaba ese tope). Sin `.unique()`:
+ * igual que getByClient (convex/followUps.ts), un cliente puede tener
+ * transitoriamente más de un seguimiento (upsertFollowUp los repara en la
+ * siguiente escritura) — se elige el más reciente por `_creationTime`,
+ * mismo criterio de desempate. A diferencia de listToday, SÍ incluye
+ * seguimientos futuros (`diffDays` puede ser negativo): positivo =
+ * atrasado, 0 = hoy, negativo = futuro.
+ */
+export async function loadPendingFollowUpsByClient(
+  ctx: QueryCtx,
+  clientIds: Id<"clients">[],
+  today: string,
+): Promise<Map<Id<"clients">, PendingFollowUpInfo>> {
+  const byClient = new Map<Id<"clients">, PendingFollowUpInfo>();
+  await Promise.all(
+    clientIds.map(async (clientId) => {
+      const rows = await ctx.db
+        .query("followUps")
+        .withIndex("by_client", (q) => q.eq("clientId", clientId))
+        .collect();
+      if (rows.length === 0) return;
+      const mostRecent = rows.reduce((a, b) => (b._creationTime > a._creationTime ? b : a));
+      byClient.set(clientId, {
+        actionType: mostRecent.actionType,
+        diffDays: calendarDayDiff(mostRecent.dueDate, today),
+      });
+    }),
+  );
+  return byClient;
 }
 
 export type DiscardFollowUpArgs = { followUpId: Id<"followUps"> };

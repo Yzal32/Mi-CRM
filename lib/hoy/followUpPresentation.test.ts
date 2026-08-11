@@ -11,9 +11,8 @@ describe("actionIcon", () => {
 });
 
 describe("followUpLabel", () => {
-  it("usa 'hoy' cuando diffDays es 0 o negativo", () => {
+  it("usa 'hoy' cuando diffDays es exactamente 0", () => {
     expect(followUpLabel("call", 0)).toBe("Llamar · hoy");
-    expect(followUpLabel("visit", -1)).toBe("Visita · hoy");
   });
 
   it("usa 'venció ayer' cuando diffDays es 1", () => {
@@ -23,5 +22,15 @@ describe("followUpLabel", () => {
   it("usa 'hace N días' cuando diffDays es mayor que 1", () => {
     expect(followUpLabel("whatsapp", 3)).toBe("WhatsApp · hace 3 días");
     expect(followUpLabel("email", 10)).toBe("Email · hace 10 días");
+  });
+
+  // PRO-19: diffDays negativo (seguimiento futuro) — listToday nunca lo
+  // pasaba, así que este caso no se había ejercitado hasta ahora.
+  it("usa 'mañana' cuando diffDays es -1", () => {
+    expect(followUpLabel("visit", -1)).toBe("Visita · mañana");
+  });
+
+  it("usa 'en N días' cuando diffDays es menor que -1", () => {
+    expect(followUpLabel("email", -3)).toBe("Email · en 3 días");
   });
 });
