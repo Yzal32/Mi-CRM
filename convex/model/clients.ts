@@ -1,6 +1,7 @@
 import type { Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 import { businessDayKey } from "../../lib/shared/businessDay";
+import { foldDiacritics } from "../../lib/shared/foldDiacritics";
 import { isValidEmail } from "../../lib/shared/isValidEmail";
 import { normalizePhoneKey } from "../../lib/shared/normalizePhoneKey";
 import { fail } from "./errors";
@@ -95,6 +96,7 @@ export async function createClient(ctx: MutationCtx, args: CreateClientArgs): Pr
     signupDate: businessDayKey(new Date()),
     seedData: args.seedData,
     seedKey: args.seedKey,
+    nameFold: foldDiacritics(name),
   });
 }
 
@@ -150,6 +152,7 @@ export async function updateClient(ctx: MutationCtx, args: UpdateClientArgs): Pr
     phoneKey?: string;
     email?: string;
     originChannel?: OriginChannel;
+    nameFold?: string;
   } = {};
 
   if (args.name !== undefined) {
@@ -161,6 +164,7 @@ export async function updateClient(ctx: MutationCtx, args: UpdateClientArgs): Pr
       fail<UpdateClientErrorCode>("NAME_TOO_LONG", "El nombre es demasiado largo.");
     }
     patch.name = name;
+    patch.nameFold = foldDiacritics(name);
   }
 
   let finalPhoneKey = client.phoneKey;

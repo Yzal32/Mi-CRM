@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { normalizePhoneKey } from "./normalizePhoneKey";
+import { normalizePhoneKey, phoneSearchDigits } from "./normalizePhoneKey";
 
 describe("normalizePhoneKey", () => {
   it("acepta un número nacional simple", () => {
@@ -44,5 +44,31 @@ describe("normalizePhoneKey", () => {
 
   it("solo permite un '+' inicial, no en cualquier posición", () => {
     expect(normalizePhoneKey("622+334556")).toBeNull();
+  });
+});
+
+describe("phoneSearchDigits", () => {
+  it("recorta +34/0034 igual que normalizePhoneKey", () => {
+    expect(phoneSearchDigits("+34 622 334 556")).toBe("622334556");
+    expect(phoneSearchDigits("0034622334556")).toBe("622334556");
+  });
+
+  it("acepta términos cortos que normalizePhoneKey rechazaría", () => {
+    expect(phoneSearchDigits("622")).toBe("622");
+    expect(normalizePhoneKey("622")).toBeNull();
+  });
+
+  it("descarta ruido no numérico en vez de rechazar la cadena entera", () => {
+    expect(phoneSearchDigits("abc622")).toBe("622");
+  });
+
+  it("reconoce el prefijo aunque haya texto antes", () => {
+    expect(phoneSearchDigits("Tel: +34 622 334 556")).toBe("622334556");
+  });
+
+  it("cadena vacía, solo espacios, o sin ningún dígito/'+' devuelve cadena vacía", () => {
+    expect(phoneSearchDigits("")).toBe("");
+    expect(phoneSearchDigits("   ")).toBe("");
+    expect(phoneSearchDigits("llámame")).toBe("");
   });
 });

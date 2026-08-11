@@ -1,5 +1,5 @@
-import { PlaceholderScreen } from "@/components/shared/PlaceholderScreen";
+import { ClientesScreen } from "@/components/clientes/ClientesScreen";
 
 export default function ClientesPage() {
-  return <PlaceholderScreen title="Clientes" message="Próximamente: buscador y listado de clientes." />;
+  return <ClientesScreen />;
 }

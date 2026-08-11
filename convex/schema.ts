@@ -44,10 +44,27 @@ export default defineSchema({
     // acepta estos campos como argumento.
     seedData: v.optional(v.boolean()),
     seedKey: v.optional(v.string()),
+    // Proyección de `name` sin diacríticos ni mayúsculas (ver
+    // lib/shared/foldDiacritics.ts), mantenida por createClient/updateClient
+    // — a diferencia de phoneKey, SÍ requiere backfill para los clientes
+    // creados antes de este campo (ver convex/migrations.ts,
+    // backfillClientsNameFold), porque no es un campo que ya existiera
+    // poblado. Es lo que indexa search_name (abajo), no `name` directamente:
+    // así "maria" encuentra "María" y viceversa (PRO-10, feedback de
+    // producto — un trabajador que escribe rápido puede no poner la tilde).
+    nameFold: v.optional(v.string()),
   })
     .index("by_seedKey", ["seedKey"])
     .index("by_seedData", ["seedData"])
-    .index("by_phoneKey", ["phoneKey"]),
+    .index("by_phoneKey", ["phoneKey"])
+    // Índice de texto sobre `nameFold`, no sobre `name`: el índice de texto
+    // de Convex hace casefolding pero no plegado de diacríticos, así que
+    // indexar `name` tal cual dejaba "maria" (sin tilde) sin encontrar
+    // "María" — confirmado contra un deployment real, no solo el simulador
+    // de tests. Coste de consulta proporcional a los resultados devueltos,
+    // no al tamaño de la tabla. Ver convex/clients.ts (search) — el
+    // teléfono usa `by_phoneKey` (arriba), no este índice.
+    .searchIndex("search_name", { searchField: "nameFold" }),
 
   followUps: defineTable({
     clientId: v.id("clients"),
