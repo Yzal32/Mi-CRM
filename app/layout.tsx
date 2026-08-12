@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans } from "next/font/google";
+import localFont from "next/font/local";
 import { ConvexClientProvider } from "@/components/providers/ConvexClientProvider";
 import "./globals.css";
 
-const plusJakartaSans = Plus_Jakarta_Sans({
+const plusJakartaSans = localFont({
+  src: "./fonts/PlusJakartaSans-Variable.woff2",
   variable: "--font-plus-jakarta-sans",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
+  weight: "400 800",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
