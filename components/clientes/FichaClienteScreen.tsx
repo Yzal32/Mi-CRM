@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { api } from "@/convex/_generated/api";
 import { useAuthedQuery } from "@/lib/convex/authedHooks";
+import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -41,7 +42,10 @@ export function FichaClienteScreen({ clientId }: { clientId: string }) {
     <div className="mx-auto flex max-w-5xl flex-col gap-5 px-4 py-4 lg:px-12 lg:py-10">
       <div className="hidden items-center gap-3 lg:flex">
         <IconButton icon="arrow-left" label="Volver" variant="secondary" onClick={() => router.back()} />
-        <h1 className="font-screen-title m-0 text-text">{client?.name ?? "Cliente"}</h1>
+        <h1 className="font-screen-title m-0 flex-1 text-text">{client?.name ?? "Cliente"}</h1>
+        <Button href={`/clientes/${clientId}/venta`} variant="ghost" size="sm">
+          + Registrar venta
+        </Button>
       </div>
 
       {showSkeleton && <Skeleton rows={5} />}
@@ -68,7 +72,7 @@ export function FichaClienteScreen({ clientId }: { clientId: string }) {
               items={notes?.items ?? []}
               truncated={notes?.truncated ?? false}
             />
-            <HistorialComprasSection items={sales?.items ?? []} truncated={sales?.truncated ?? false} />
+            <HistorialComprasSection clientId={clientId} items={sales?.items ?? []} truncated={sales?.truncated ?? false} />
           </div>
         </div>
       )}

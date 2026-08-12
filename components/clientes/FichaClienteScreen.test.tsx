@@ -116,6 +116,15 @@ describe("FichaClienteScreen — camino principal completo", () => {
     expect(screen.queryByRole("status", { name: "Cargando" })).toBeNull();
   });
 
+  it('el enlace "+ Registrar venta" aparece dos veces (cabecera escritorio + historial móvil), ambos con el href correcto', () => {
+    setReadyQueries();
+    render(<FichaClienteScreen clientId={CLIENT_ID} />);
+
+    const links = screen.getAllByRole("link", { name: "+ Registrar venta" });
+    expect(links).toHaveLength(2);
+    links.forEach((link) => expect(link.getAttribute("href")).toBe("/clientes/client1/venta"));
+  });
+
   it("muestra la nota destacada, las notas normales y el historial de compras cuando hay datos", () => {
     setReadyQueries({
       notes: {

@@ -1,17 +1,24 @@
 import type { Id } from "@/convex/_generated/dataModel";
+import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { formatBusinessDate } from "@/lib/shared/businessDay";
 import { formatCurrencyEUR } from "@/lib/shared/formatCurrency";
 
 type Sale = { _id: Id<"sales">; description: string; amountCents: number; date: string };
 
-// Deliberadamente de solo lectura: no hay ninguna acción de "registrar
-// venta" aquí (PRO-17/23, fuera de alcance) — por eso estará siempre vacío
-// en producción salvo por lo que siembre convex/seed.ts.
-export function HistorialComprasSection({ items, truncated }: { items: Sale[]; truncated: boolean }) {
+type Props = { clientId: string; items: Sale[]; truncated: boolean };
+
+// El enlace apunta a la pantalla "Registrar venta" (PRO-23), todavía sin
+// construir — se elimina esta nota en cuanto exista esa ruta.
+export function HistorialComprasSection({ clientId, items, truncated }: Props) {
   return (
     <div className="flex flex-col gap-3 rounded-lg border border-border bg-surface p-5">
-      <h2 className="font-section-title m-0 text-text">Historial de compras</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="font-section-title m-0 text-text">Historial de compras</h2>
+        <Button href={`/clientes/${clientId}/venta`} variant="ghost" size="sm" className="lg:hidden">
+          + Registrar venta
+        </Button>
+      </div>
 
       {items.length === 0 ? (
         <EmptyState
