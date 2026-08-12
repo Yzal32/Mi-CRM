@@ -5,8 +5,9 @@ import { fail } from "./errors";
 export type RequireAccessTokenErrorCode = "UNAUTHENTICATED";
 
 /**
- * Único punto de entrada usado por las 13 funciones públicas de negocio
- * (clients, notes, followUps, sales.listByClient — PRO-59) para exigir un
+ * Único punto de entrada usado por las 14 funciones públicas de negocio
+ * (clients, notes, followUps, sales.listByClient, sales.create — PRO-59)
+ * para exigir un
  * accessToken válido. Mensaje deliberadamente genérico — nunca distingue
  * "formato inválido" de "caducado" de "cuenta ya no activa": para un cliente
  * sin credenciales válidas, ninguna de esas distinciones debería cambiar su

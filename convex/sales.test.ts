@@ -3,21 +3,62 @@ import { ConvexError } from "convex/values";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import schema from "./schema";
-import * as sales from "./sales";
 import { issueTestAccessToken } from "./testHelpers";
 
 const modules = import.meta.glob("./**/*.ts");
 
-describe("sales (capa pública)", () => {
-  test("no existe una mutation pública de creación de ventas", () => {
-    // Comprobarlo vía api.sales.create no serviría: el `api` generado usa
-    // anyApi (convex/_generated/api.js), que genera una referencia válida
-    // para cualquier ruta se pida exista o no de verdad. Importando el
-    // módulo real sí se puede comprobar que la propiedad no existe.
-    expect("create" in sales).toBe(false);
+type CodeErrorData = { code: string; message: string };
+
+async function captureError(promise: Promise<unknown>): Promise<ConvexError<CodeErrorData>> {
+  try {
+    await promise;
+  } catch (error) {
+    if (error instanceof ConvexError) return error as ConvexError<CodeErrorData>;
+    throw error;
+  }
+  throw new Error("se esperaba que la promesa fallara");
+}
+
+describe("sales.create (capa pública)", () => {
+  test("delega en el modelo y asigna el autor de servidor, no uno del cliente", async () => {
+    const t = convexTest(schema, modules);
+    const token = await issueTestAccessToken(t);
+    const clientId = await t.run((ctx) => ctx.db.insert("clients", { name: "Cliente Test" }));
+
+    const saleId = await t.mutation(api.sales.create, { token, clientId, description: "Pack básico", amountCents: 15000 });
+    const doc = await t.run((ctx) => ctx.db.get(saleId));
+
+    expect(doc?.description).toBe("Pack básico");
+    expect(doc?.amountCents).toBe(15000);
+    expect(doc?.authorId).toBe("stub-marta");
+    expect(doc?.authorName).toBe("Marta");
   });
 
-  test("listByClient devuelve las ventas más recientes primero", async () => {
+  test("propaga un código de error del modelo tal cual (INVALID_AMOUNT)", async () => {
+    const t = convexTest(schema, modules);
+    const token = await issueTestAccessToken(t);
+    const clientId = await t.run((ctx) => ctx.db.insert("clients", { name: "Cliente Test" }));
+
+    const error = await captureError(
+      t.mutation(api.sales.create, { token, clientId, description: "Venta", amountCents: 0 }),
+    );
+    expect(error.data.code).toBe("INVALID_AMOUNT");
+  });
+
+  test("rechaza sin token válido con UNAUTHENTICATED, sin escritura parcial", async () => {
+    const t = convexTest(schema, modules);
+    const clientId = await t.run((ctx) => ctx.db.insert("clients", { name: "Cliente Test" }));
+
+    const error = await captureError(
+      t.mutation(api.sales.create, { token: "a".repeat(64), clientId, description: "Venta", amountCents: 1000 }),
+    );
+    expect(error.data.code).toBe("UNAUTHENTICATED");
+    expect(await t.run((ctx) => ctx.db.query("sales").collect())).toHaveLength(0);
+  });
+});
+
+describe("sales.listByClient", () => {
+  test("devuelve las ventas más recientes primero", async () => {
     const t = convexTest(schema, modules);
     const token = await issueTestAccessToken(t);
     const clientId = await t.run((ctx) => ctx.db.insert("clients", { name: "Cliente Test" }));

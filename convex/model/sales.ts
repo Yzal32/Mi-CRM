@@ -23,11 +23,11 @@ const AMOUNT_MAX_CENTS = 999_999_999;
 
 /**
  * Único punto de escritura de creación de `sales`. Función de MODELO, no
- * pública — no existe convex/sales.ts::create ni ninguna otra mutation
- * pública de ventas. El registro de ventas real (pantalla "Registrar
- * venta", PRO-17/23) es una tarea posterior fuera de alcance; esta función
- * queda lista para que esa pantalla la use más adelante — hoy el único
- * llamante es convex/seed.ts.
+ * pública en sí misma — convex/sales.ts::create (PRO-17) es el wrapper
+ * público real que expone esto al cliente, con auth y autoría de servidor.
+ * convex/seed.ts sigue llamando a esta función de modelo directamente (sin
+ * pasar por la mutation pública) porque necesita sembrar seedData/seedKey,
+ * que la mutation pública no acepta como argumento.
  */
 export async function createSale(ctx: MutationCtx, args: CreateSaleArgs): Promise<Id<"sales">> {
   const description = args.description.trim();
