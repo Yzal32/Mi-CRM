@@ -8,7 +8,7 @@ import { useConvexAccessToken } from "@/components/providers/ConvexAccessTokenPr
 type WithoutToken<Args> = Omit<Args, "token">;
 
 /**
- * Envoltorio de `useQuery` para las 13 funciones públicas de negocio
+ * Envoltorio de `useQuery` para las 14 funciones públicas de negocio
  * protegidas por PRO-59 (todas exigen `token` como primer argumento — ver
  * convex/model/auth.ts): inyecta el accessToken vigente automáticamente, así
  * ningún componente lo lee ni lo pasa a mano.

@@ -1,6 +1,8 @@
 import { v } from "convex/values";
-import { query } from "./_generated/server";
+import { mutation, query } from "./_generated/server";
 import type { Doc } from "./_generated/dataModel";
+import { getActor } from "./model/actor";
+import { createSale } from "./model/sales";
 import { requireAccessToken } from "./model/auth";
 
 const LIST_LIMIT = 500;
@@ -29,9 +31,6 @@ function toSaleDto(sale: Doc<"sales">) {
   };
 }
 
-// Deliberadamente de solo lectura: no hay mutation pública de creación de
-// ventas aquí (ver convex/model/sales.ts) — el registro de ventas real es
-// PRO-17/23, fuera de alcance de esta tarea.
 export const listByClient = query({
   args: { token: v.string(), clientId: v.id("clients") },
   returns: v.object({ items: v.array(saleDto), truncated: v.boolean() }),
@@ -45,5 +44,26 @@ export const listByClient = query({
     const truncated = raw.length > LIST_LIMIT;
     const items = raw.slice(0, LIST_LIMIT).map(toSaleDto);
     return { items, truncated };
+  },
+});
+
+// Nunca acepta authorId/authorName del cliente: el servidor asigna siempre
+// la identidad de demostración (ver convex/model/actor.ts), igual que
+// notes.create y followUps.upsert. La fecha tampoco es argumento del
+// cliente — createSale la fija siempre con la fecha de negocio del
+// servidor (ver convex/model/sales.ts).
+export const create = mutation({
+  args: { token: v.string(), clientId: v.id("clients"), description: v.string(), amountCents: v.number() },
+  returns: v.id("sales"),
+  handler: async (ctx, args) => {
+    await requireAccessToken(ctx, args.token);
+    const actor = await getActor(ctx);
+    return createSale(ctx, {
+      clientId: args.clientId,
+      description: args.description,
+      amountCents: args.amountCents,
+      authorId: actor.id,
+      authorName: actor.name,
+    });
   },
 });
