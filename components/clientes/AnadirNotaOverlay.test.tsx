@@ -83,6 +83,16 @@ describe("AnadirNotaOverlay — nota normal", () => {
     resolveCreate("note1");
   });
 
+  it("CLIENT_NOT_FOUND muestra un mensaje específico (más plausible desde el selector de Hoy, PRO-60)", async () => {
+    mutationMock.mockRejectedValueOnce(new ConvexError({ code: "CLIENT_NOT_FOUND", message: "El cliente no existe." }));
+    render(<AnadirNotaOverlay clientId={CLIENT_ID} featured={null} onClose={vi.fn()} />);
+
+    fillText("Nota");
+    fireEvent.click(screen.getByRole("button", { name: "Guardar" }));
+
+    expect(await screen.findByText("Este cliente ya no existe.")).toBeTruthy();
+  });
+
   it("fallo de red muestra error inline y permite reintentar", async () => {
     mutationMock.mockRejectedValueOnce(new Error("network down"));
     mutationMock.mockResolvedValueOnce("note1");

@@ -1,24 +1,29 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MobileTopBar } from "./MobileTopBar";
 
 const backMock = vi.fn();
+const pushMock = vi.fn();
 let currentPathname = "/estadisticas";
 
 vi.mock("next/navigation", () => ({
   usePathname: () => currentPathname,
-  useRouter: () => ({ back: backMock, push: vi.fn(), replace: vi.fn() }),
+  useRouter: () => ({ back: backMock, push: pushMock, replace: vi.fn() }),
 }));
 
 const useQueryMock = vi.fn();
+const mutationMock = vi.fn();
 
 vi.mock("@/lib/convex/authedHooks", () => ({
   useAuthedQuery: (...args: unknown[]) => useQueryMock(...args),
+  useAuthedMutation: () => mutationMock,
 }));
 
 afterEach(() => {
   cleanup();
+  pushMock.mockClear();
+  mutationMock.mockReset();
 });
 
 describe("MobileTopBar", () => {
@@ -92,11 +97,13 @@ describe("MobileTopBar", () => {
     expect(link.getAttribute("href")).toBe("/clientes/nuevo");
   });
 
-  it('en / (Hoy) sigue apareciendo el link "Nuevo cliente" (regresión)', () => {
+  it('en / (Hoy) el "+" ya no es un link directo — es un botón que abre un menú (PRO-60)', () => {
     currentPathname = "/";
     useQueryMock.mockReturnValue(undefined);
     render(<MobileTopBar />);
-    expect(screen.getByRole("link", { name: "Nuevo cliente" })).toBeTruthy();
+    const button = screen.getByRole("button", { name: "Nueva acción" });
+    expect(button.getAttribute("href")).toBeNull();
+    expect(screen.queryByRole("link", { name: "Nuevo cliente" })).toBeNull();
   });
 
   it('en /estadisticas y /ajustes NO aparece el link "Nuevo cliente" (regresión)', () => {
@@ -122,5 +129,103 @@ describe("MobileTopBar", () => {
     useQueryMock.mockReturnValue({ name: "Carlos Ruiz" });
     render(<MobileTopBar />);
     expect(screen.queryByRole("link", { name: "Nuevo cliente" })).toBeNull();
+  });
+});
+
+describe("MobileTopBar — menú de accesos rápidos en Hoy (PRO-60)", () => {
+  it('pulsar "+" en Hoy abre el menú con las 3 opciones', () => {
+    currentPathname = "/";
+    useQueryMock.mockReturnValue(undefined);
+    render(<MobileTopBar />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Nueva acción" }));
+
+    expect(screen.getByRole("heading", { name: "Nueva acción" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: /Nuevo cliente/ })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /Registrar venta/ })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /Anotar interacción/ })).toBeTruthy();
+  });
+
+  it('elegir "Registrar venta" en el menú lo cierra y abre el selector de cliente', () => {
+    currentPathname = "/";
+    useQueryMock.mockReturnValue(undefined);
+    render(<MobileTopBar />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Nueva acción" }));
+    fireEvent.click(screen.getByRole("button", { name: /Registrar venta/ }));
+
+    expect(screen.queryByRole("heading", { name: "Nueva acción" })).toBeNull();
+    expect(screen.getByRole("heading", { name: "Registrar venta" })).toBeTruthy();
+  });
+
+  it('elegir "Anotar interacción" en el menú lo cierra y abre el selector de cliente', () => {
+    currentPathname = "/";
+    useQueryMock.mockReturnValue(undefined);
+    render(<MobileTopBar />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Nueva acción" }));
+    fireEvent.click(screen.getByRole("button", { name: /Anotar interacción/ }));
+
+    expect(screen.queryByRole("heading", { name: "Nueva acción" })).toBeNull();
+    expect(screen.getByRole("heading", { name: "Anotar interacción" })).toBeTruthy();
+  });
+
+  it('el "+" en Clientes sigue siendo el link directo de siempre, sin menú', () => {
+    currentPathname = "/clientes";
+    useQueryMock.mockReturnValue(undefined);
+    render(<MobileTopBar />);
+
+    expect(screen.queryByRole("button", { name: "Nueva acción" })).toBeNull();
+    const link = screen.getByRole("link", { name: "Nuevo cliente" });
+    expect(link.getAttribute("href")).toBe("/clientes/nuevo");
+  });
+
+  // MobileTopBar no se desmonta al navegar (vive fuera de {children}) — sin
+  // el guard `isHoy &&` y el ajuste de estado durante el render,
+  // isSheetOpen/flow.state sobreviven un cambio de ruta y el menú o el
+  // selector reaparecen encima de una pestaña distinta a la que los abrió.
+  it('navegar de Hoy a Clientes con el menú "+" abierto lo cierra, no lo deja persistiendo', () => {
+    currentPathname = "/";
+    useQueryMock.mockReturnValue(undefined);
+    const { rerender } = render(<MobileTopBar />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Nueva acción" }));
+    expect(screen.getByRole("heading", { name: "Nueva acción" })).toBeTruthy();
+
+    currentPathname = "/clientes";
+    rerender(<MobileTopBar />);
+
+    expect(screen.queryByRole("heading", { name: "Nueva acción" })).toBeNull();
+  });
+
+  it('navegar de Hoy a Clientes con el selector de cliente abierto (flujo de venta) lo cierra, no lo deja persistiendo', () => {
+    currentPathname = "/";
+    useQueryMock.mockReturnValue(undefined);
+    const { rerender } = render(<MobileTopBar />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Nueva acción" }));
+    fireEvent.click(screen.getByRole("button", { name: /Registrar venta/ }));
+    expect(screen.getByRole("heading", { name: "Registrar venta" })).toBeTruthy();
+
+    currentPathname = "/clientes";
+    rerender(<MobileTopBar />);
+
+    expect(screen.queryByRole("heading", { name: "Registrar venta" })).toBeNull();
+  });
+
+  it("volver a Hoy tras el reseteo no reabre el menú por sí solo (el estado quedó en idle, no oculto)", () => {
+    currentPathname = "/";
+    useQueryMock.mockReturnValue(undefined);
+    const { rerender } = render(<MobileTopBar />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Nueva acción" }));
+    currentPathname = "/clientes";
+    rerender(<MobileTopBar />);
+
+    currentPathname = "/";
+    rerender(<MobileTopBar />);
+
+    expect(screen.queryByRole("heading", { name: "Nueva acción" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Nueva acción" })).toBeTruthy();
   });
 });
