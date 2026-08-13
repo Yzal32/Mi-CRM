@@ -100,7 +100,7 @@ describe("FichaClienteScreen — estados de carga", () => {
     // notes/sales/followUp sin entrada todavía => undefined (en vuelo)
     render(<FichaClienteScreen clientId={CLIENT_ID} />);
     expect(screen.getByRole("status", { name: "Cargando" })).toBeTruthy();
-    expect(screen.queryByText("Sin notas")).toBeNull();
+    expect(screen.queryByText("Sin interacciones")).toBeNull();
   });
 });
 
@@ -111,7 +111,7 @@ describe("FichaClienteScreen — camino principal completo", () => {
 
     expect(screen.getByRole("heading", { name: "Carlos Ruiz", level: 1 })).toBeTruthy();
     expect(screen.getByText("Sin seguimiento")).toBeTruthy();
-    expect(screen.getByText("Sin notas")).toBeTruthy();
+    expect(screen.getByText("Sin interacciones")).toBeTruthy();
     expect(screen.getByText("Sin ventas")).toBeTruthy();
     expect(screen.queryByRole("status", { name: "Cargando" })).toBeNull();
   });

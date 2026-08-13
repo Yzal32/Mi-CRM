@@ -1,6 +1,7 @@
 import type { Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 import { businessDayKey } from "../../lib/shared/businessDay";
+import type { ActionType } from "../../lib/shared/actionType";
 import { fail } from "./errors";
 
 export type NoteErrorCode =
@@ -18,6 +19,8 @@ export type CreateNoteArgs = {
   // "Confirmar" (o null si creía que no había ninguna) — solo relevante
   // cuando featured es true. Ver la validación de conflicto más abajo.
   expectedFeaturedNoteId?: Id<"notes"> | null;
+  // Ver comentario del campo homónimo en convex/schema.ts.
+  channel?: ActionType;
   authorId: string;
   authorName: string;
   seedData?: boolean;
@@ -65,6 +68,7 @@ export async function createNote(ctx: MutationCtx, args: CreateNoteArgs): Promis
     clientId: args.clientId,
     date: businessDayKey(new Date()),
     text,
+    channel: args.channel,
     featured,
     authorId: args.authorId,
     authorName: args.authorName,

@@ -8,7 +8,9 @@ import { Overlay } from "@/components/ui/Overlay";
 import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Textarea";
 import { Switch } from "@/components/ui/Switch";
+import { Select } from "@/components/ui/Select";
 import { convexErrorCode } from "@/lib/shared/convexError";
+import { NOTE_CHANNEL_OPTIONS, type NoteChannelFormValue } from "@/lib/clientes/noteChannel";
 
 const FORM_ID = "anadir-nota-form";
 const TEXT_MAX_LENGTH = 4000;
@@ -24,14 +26,15 @@ type Props = {
 };
 
 function validate(text: string): string | undefined {
-  if (!text.trim()) return "Escribe el contenido de la nota.";
-  if (text.trim().length > TEXT_MAX_LENGTH) return "El texto de la nota es demasiado largo.";
+  if (!text.trim()) return "Escribe el contenido de la interacción.";
+  if (text.trim().length > TEXT_MAX_LENGTH) return "El texto de la interacción es demasiado largo.";
   return undefined;
 }
 
 export function AnadirNotaOverlay({ clientId, featured, onClose }: Props) {
   const createNote = useAuthedMutation(api.notes.create);
   const [text, setText] = useState("");
+  const [channel, setChannel] = useState<NoteChannelFormValue>("");
   const [isFeatured, setIsFeatured] = useState(false);
   const [step, setStep] = useState<Step>("form");
   // Congelado en el momento de entrar en "confirm" — si `featured` cambia
@@ -53,7 +56,13 @@ export function AnadirNotaOverlay({ clientId, featured, onClose }: Props) {
     setFormError(null);
     setIsSaving(true);
     try {
-      await createNote({ clientId, text: text.trim(), featured: isFeatured, expectedFeaturedNoteId });
+      await createNote({
+        clientId,
+        text: text.trim(),
+        channel: channel === "" ? undefined : channel,
+        featured: isFeatured,
+        expectedFeaturedNoteId,
+      });
       onClose();
     } catch (err) {
       const code = convexErrorCode(err);
@@ -61,11 +70,13 @@ export function AnadirNotaOverlay({ clientId, featured, onClose }: Props) {
         // No se reintenta sola: la query reactiva de `featured` ya trae el
         // estado nuevo — se vuelve al paso 1 para que el usuario confirme
         // otra vez con la información actualizada.
-        setFormError("La nota destacada ha cambiado desde que abriste este formulario. Vuelve a intentarlo.");
+        setFormError("La interacción destacada ha cambiado desde que abriste este formulario. Vuelve a intentarlo.");
         setStep("form");
       } else if (code === "TEXT_REQUIRED" || code === "TEXT_TOO_LONG") {
         setTextError(
-          code === "TEXT_REQUIRED" ? "Escribe el contenido de la nota." : "El texto de la nota es demasiado largo.",
+          code === "TEXT_REQUIRED"
+            ? "Escribe el contenido de la interacción."
+            : "El texto de la interacción es demasiado largo.",
         );
         setStep("form");
       } else if (code === "CLIENT_NOT_FOUND") {
@@ -73,7 +84,7 @@ export function AnadirNotaOverlay({ clientId, featured, onClose }: Props) {
         // tiempo entre elegirlo y guardar) que desde la ficha ya abierta.
         setFormError("Este cliente ya no existe.");
       } else {
-        setFormError("No se pudo guardar la nota. Inténtalo de nuevo.");
+        setFormError("No se pudo guardar la interacción. Inténtalo de nuevo.");
       }
       savingRef.current = false;
       setIsSaving(false);
@@ -114,7 +125,7 @@ export function AnadirNotaOverlay({ clientId, featured, onClose }: Props) {
 
   return (
     <Overlay
-      title={step === "confirm" ? "¿Sustituir nota destacada?" : "Añadir nota"}
+      title={step === "confirm" ? "¿Sustituir interacción destacada?" : "Anotar interacción"}
       onClose={onClose}
       contentKey={step}
       footer={
@@ -142,7 +153,7 @@ export function AnadirNotaOverlay({ clientId, featured, onClose }: Props) {
       }
     >
       {step === "confirm" ? (
-        <p className="font-body m-0 text-text">Ya hay otra nota destacada. Si continúas, esta la sustituirá.</p>
+        <p className="font-body m-0 text-text">Ya hay otra interacción destacada. Si continúas, esta la sustituirá.</p>
       ) : (
         <form id={FORM_ID} onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
           {formError && (
@@ -150,8 +161,14 @@ export function AnadirNotaOverlay({ clientId, featured, onClose }: Props) {
               {formError}
             </p>
           )}
+          <Select
+            label="Canal"
+            value={channel}
+            onChange={(value) => setChannel(value as NoteChannelFormValue)}
+            options={NOTE_CHANNEL_OPTIONS}
+          />
           <Textarea
-            label="Nota"
+            label="Interacción"
             required
             value={text}
             onChange={(value) => {

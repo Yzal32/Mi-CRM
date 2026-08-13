@@ -65,7 +65,7 @@ export function SeguimientoCard({
 
   async function handleDiscard() {
     if (lockRef.current || !followUp) return;
-    if (!window.confirm("¿Descartar este seguimiento? No se guardará ninguna nota.")) return;
+    if (!window.confirm("¿Descartar este seguimiento? No se guardará ninguna interacción.")) return;
     lockRef.current = true;
     setError(null);
     setBusy(true);

@@ -25,13 +25,26 @@ describe("createNote", () => {
     const t = convexTest(schema, modules);
     const clientId = await t.run((ctx) => ctx.db.insert("clients", { name: "Cliente Test" }));
 
-    const id = await t.run((ctx) => createNote(ctx, { clientId, text: "  Primer contacto.  ", ...AUTHOR }));
+    const id = await t.run((ctx) =>
+      createNote(ctx, { clientId, text: "  Primer contacto.  ", channel: "email", ...AUTHOR }),
+    );
     const doc = await t.run((ctx) => ctx.db.get(id));
 
     expect(doc?.text).toBe("Primer contacto."); // recortado, no solo validado
     expect(doc?.featured).toBe(false);
     expect(doc?.authorId).toBe("stub-marta");
+    expect(doc?.channel).toBe("email");
     expect(doc?.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+
+  test("alta sin channel lo deja undefined", async () => {
+    const t = convexTest(schema, modules);
+    const clientId = await t.run((ctx) => ctx.db.insert("clients", { name: "Cliente Test" }));
+
+    const id = await t.run((ctx) => createNote(ctx, { clientId, text: "Sin canal", ...AUTHOR }));
+    const doc = await t.run((ctx) => ctx.db.get(id));
+
+    expect(doc?.channel).toBeUndefined();
   });
 
   test("TEXT_REQUIRED con texto vacío o solo espacios", async () => {

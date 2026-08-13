@@ -33,6 +33,17 @@ describe("notes.create / notes.unfeature (capa pública)", () => {
     expect(doc?.authorName).toBe("Usuario de prueba");
   });
 
+  test("create guarda el channel cuando se especifica", async () => {
+    const t = convexTest(schema, modules);
+    const token = await issueTestAccessToken(t);
+    const clientId = await t.run((ctx) => ctx.db.insert("clients", { name: "Cliente Test" }));
+
+    const noteId = await t.mutation(api.notes.create, { token, clientId, text: "Llamé al cliente", channel: "call" });
+    const doc = await t.run((ctx) => ctx.db.get(noteId));
+
+    expect(doc?.channel).toBe("call");
+  });
+
   test("create expone TEXT_REQUIRED en error.data.code", async () => {
     const t = convexTest(schema, modules);
     const token = await issueTestAccessToken(t);
@@ -143,5 +154,21 @@ describe("notes.listByClient", () => {
     const result = await t.query(api.notes.listByClient, { token, clientId });
     expect(result.items[0]).not.toHaveProperty("seedData");
     expect(result.items[0]).not.toHaveProperty("seedKey");
+  });
+
+  test("DTO omite la clave channel cuando la nota no tiene canal, y la expone cuando sí", async () => {
+    const t = convexTest(schema, modules);
+    const token = await issueTestAccessToken(t);
+    const clientId = await t.run((ctx) => ctx.db.insert("clients", { name: "Cliente Test" }));
+    await t.run(async (ctx) => {
+      await ctx.db.insert("notes", { clientId, date: "2026-08-08", text: "Sin canal", featured: false, authorId: "a", authorName: "A" });
+      await ctx.db.insert("notes", { clientId, date: "2026-08-09", text: "Con canal", featured: false, authorId: "a", authorName: "A", channel: "email" });
+    });
+
+    const result = await t.query(api.notes.listByClient, { token, clientId });
+    const sinCanal = result.items.find((n) => n.text === "Sin canal");
+    const conCanal = result.items.find((n) => n.text === "Con canal");
+    expect(sinCanal).not.toHaveProperty("channel");
+    expect(conCanal?.channel).toBe("email");
   });
 });

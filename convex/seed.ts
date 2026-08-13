@@ -26,7 +26,7 @@ type Fixture = {
   name: string;
   phone: string;
   followUp?: { actionType: ActionType; dueDateOffset: number };
-  notes?: Array<{ seedKey: string; text: string; featured?: boolean }>;
+  notes?: Array<{ seedKey: string; text: string; featured?: boolean; channel?: ActionType }>;
   sale?: { seedKey: string; description: string; amountCents: number };
 };
 
@@ -49,8 +49,13 @@ const FIXTURES: Fixture[] = [
         seedKey: "seed:carlos-ruiz:nota-1",
         text: "Interesado en el paquete premium, pidió que le llamáramos esta semana.",
         featured: true,
+        channel: "call",
       },
-      { seedKey: "seed:carlos-ruiz:nota-2", text: "Primer contacto por WhatsApp, preguntó por precios." },
+      {
+        seedKey: "seed:carlos-ruiz:nota-2",
+        text: "Primer contacto por WhatsApp, preguntó por precios.",
+        channel: "whatsapp",
+      },
     ],
   },
   {
@@ -132,6 +137,7 @@ export const seed = internalMutation({
         await createNote(ctx, {
           clientId,
           text: note.text,
+          channel: note.channel,
           featured: note.featured,
           authorId: SEED_AUTHOR.id,
           authorName: SEED_AUTHOR.name,
