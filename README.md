@@ -57,6 +57,8 @@ Ninguna de las cinco es alcanzable "gratis": quien las llame necesita ya sea cre
 
 Además, la autoría de notas/ventas/seguimientos (`authorId`/`authorName`, `assigneeId`/`assigneeName`) se asigna siempre en servidor a partir del usuario autenticado que resuelve `requireAccessToken` — nunca se acepta como argumento del cliente, así que nadie puede elegir firmar como otra persona ni suplantar a otro usuario ya logueado.
 
+Del lado de Next.js (no solo Convex), cada página restringida a la Dueña comprueba `user.role` en el propio server component y renderiza `<UnauthorizedScreen />` (`components/shared/UnauthorizedScreen.tsx`, PRO-46) en su lugar si no cumple — patrón usado hoy en `/empleados/nuevo`. `app/(app)/layout.tsx` solo valida que haya sesión, no rol: el guard de rol es responsabilidad de cada página.
+
 ## Desarrollo
 
 `CONVEX_DEPLOYMENT=dev:useful-rat-834` (variable local, la usa la CLI) y `NEXT_PUBLIC_CONVEX_URL=https://useful-rat-834.eu-west-1.convex.cloud` (variable de bundle del cliente, mismo valor en Railway) apuntan al **mismo** deployment — no hay un Convex de producción separado del de desarrollo. `npx convex dev` sin `--once` sincroniza en continuo contra ese deployment compartido, así que un cambio a medio terminar puede llegar sin querer a la demo pública de Railway mientras se está programando.
