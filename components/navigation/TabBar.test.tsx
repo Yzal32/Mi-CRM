@@ -32,6 +32,12 @@ describe("TabBar", () => {
     expect(screen.queryByRole("navigation")).toBeNull();
   });
 
+  it("se oculta en /clientes/[id]/venta (PRO-23)", () => {
+    currentPathname = "/clientes/abc123/venta";
+    render(<TabBar />);
+    expect(screen.queryByRole("navigation")).toBeNull();
+  });
+
   it("se muestra en la lista de clientes /clientes (sí es un destino de pestaña)", () => {
     currentPathname = "/clientes";
     render(<TabBar />);

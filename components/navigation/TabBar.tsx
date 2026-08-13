@@ -4,14 +4,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { clsx } from "clsx";
 import { Icon } from "@/components/ui/Icon";
-import { extractFichaClientId, isNavItemActive, navItems } from "./navItems";
+import { extractFichaClientId, extractVentaClientId, isNavItemActive, navItems } from "./navItems";
 
 export function TabBar() {
   const pathname = usePathname();
-  // Nuevo cliente y la Ficha de cliente son pantallas de formulario/detalle,
-  // no destinos de pestaña — PRO-24 exige que ninguna de las dos muestre la
-  // barra de pestañas.
-  if (pathname === "/clientes/nuevo" || extractFichaClientId(pathname)) return null;
+  // Nuevo cliente, la Ficha de cliente y Registrar venta son pantallas de
+  // formulario/detalle, no destinos de pestaña — PRO-24 (y PRO-23 para
+  // Registrar venta) exige que ninguna muestre la barra de pestañas.
+  if (pathname === "/clientes/nuevo" || extractFichaClientId(pathname) || extractVentaClientId(pathname)) return null;
   return (
     <nav className="fixed inset-x-0 bottom-0 z-10 flex justify-around border-t border-border bg-surface pt-2 pb-[calc(8px+env(safe-area-inset-bottom))] lg:hidden">
       {navItems.map((item) => {

@@ -35,3 +35,14 @@ export function extractFichaClientId(pathname: string): string | null {
   const [, id] = match;
   return id === "nuevo" ? null : id;
 }
+
+/**
+ * Si `pathname` es la ruta de "Registrar venta" (/clientes/<id>/venta)
+ * devuelve el id del cliente; si no, null. Pantalla de formulario/detalle
+ * (PRO-23, igual que /clientes/nuevo y la ficha) — TabBar se oculta y
+ * MobileTopBar muestra su propio título fijo en vez del de la pestaña activa.
+ */
+export function extractVentaClientId(pathname: string): string | null {
+  const match = /^\/clientes\/([^/]+)\/venta$/.exec(pathname);
+  return match ? match[1] : null;
+}

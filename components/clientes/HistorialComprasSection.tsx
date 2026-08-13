@@ -8,8 +8,6 @@ type Sale = { _id: Id<"sales">; description: string; amountCents: number; date: 
 
 type Props = { clientId: string; items: Sale[]; truncated: boolean };
 
-// El enlace apunta a la pantalla "Registrar venta" (PRO-23), todavía sin
-// construir — se elimina esta nota en cuanto exista esa ruta.
 export function HistorialComprasSection({ clientId, items, truncated }: Props) {
   return (
     <div className="flex flex-col gap-3 rounded-lg border border-border bg-surface p-5">

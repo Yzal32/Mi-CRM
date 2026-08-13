@@ -88,6 +88,14 @@ describe("MobileTopBar", () => {
     expect(screen.getByText("Cliente")).toBeTruthy();
   });
 
+  it("en /clientes/[id]/venta el título es fijo \"Registrar venta\", y la query de ficha se llama con \"skip\" (PRO-23)", () => {
+    currentPathname = "/clientes/abc123/venta";
+    useQueryMock.mockReturnValue(undefined);
+    render(<MobileTopBar />);
+    expect(screen.getByText("Registrar venta")).toBeTruthy();
+    expect(useQueryMock).toHaveBeenLastCalledWith(expect.anything(), "skip");
+  });
+
   // PRO-19: la pestaña Clientes reutiliza el mismo "+" que ya usa Hoy.
   it('en /clientes aparece el link "Nuevo cliente" hacia /clientes/nuevo', () => {
     currentPathname = "/clientes";
