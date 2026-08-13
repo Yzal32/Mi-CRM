@@ -7,6 +7,7 @@ import { useAuthedQuery } from "@/lib/convex/authedHooks";
 import { useBusinessToday } from "@/lib/hoy/useBusinessToday";
 import { useDebouncedValue } from "@/lib/hooks/useDebouncedValue";
 import { deriveHoyViewState } from "@/lib/hoy/deriveHoyViewState";
+import { useClientActionFlow } from "@/lib/hoy/useClientActionFlow";
 import { SearchBar } from "@/components/ui/SearchBar";
 import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
@@ -14,6 +15,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Toast } from "@/components/ui/Toast";
 import { FollowUpGroup } from "./FollowUpGroup";
+import { ClientActionOverlays } from "./ClientActionOverlays";
 
 export function HoyScreen({ showPasswordChangedToast = false }: { showPasswordChangedToast?: boolean }) {
   const router = useRouter();
@@ -26,6 +28,7 @@ export function HoyScreen({ showPasswordChangedToast = false }: { showPasswordCh
   const data = useAuthedQuery(api.followUps.listToday, { today, search });
   const hasSearchTerm = Boolean(search);
   const state = deriveHoyViewState({ data, hasSearchTerm });
+  const flow = useClientActionFlow();
 
   useEffect(() => {
     if (!showPasswordChangedToast) return;
@@ -41,10 +44,20 @@ export function HoyScreen({ showPasswordChangedToast = false }: { showPasswordCh
 
       <div className="hidden items-center justify-between lg:flex">
         <h1 className="font-screen-title m-0 text-text">Hoy</h1>
-        <Button href="/clientes/nuevo" variant="primary">
-          <Icon name="plus" size={16} />
-          Nuevo cliente
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button type="button" variant="secondary" size="sm" onClick={() => flow.start("nota")}>
+            <Icon name="pencil" size={16} />
+            Anotar interacción
+          </Button>
+          <Button type="button" variant="secondary" size="sm" onClick={() => flow.start("venta")}>
+            <Icon name="wallet" size={16} />
+            Registrar venta
+          </Button>
+          <Button href="/clientes/nuevo" variant="primary">
+            <Icon name="plus" size={16} />
+            Nuevo cliente
+          </Button>
+        </div>
       </div>
 
       <SearchBar value={query} onChange={setQuery} placeholder="Buscar cliente" />
@@ -85,6 +98,8 @@ export function HoyScreen({ showPasswordChangedToast = false }: { showPasswordCh
           <FollowUpGroup label={`Hoy (${data.today.length})`} tone="today" items={data.today} />
         </div>
       )}
+
+      <ClientActionOverlays flow={flow} today={today} />
     </div>
   );
 }

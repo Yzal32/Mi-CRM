@@ -28,7 +28,12 @@ type CommonProps = {
 type ButtonAsButton = CommonProps &
   Omit<ButtonHTMLAttributes<HTMLButtonElement>, "className"> & { href?: undefined };
 
-type ButtonAsLink = CommonProps & { href: string };
+// onClick es opcional aquí a propósito: next/link ya soporta un onClick que
+// se dispara ANTES de navegar (no la sustituye) — útil para efectos
+// secundarios como cerrar un menú que abrió este enlace (ver
+// HoyQuickActionsOverlay). No existía hasta ahora porque ningún caller
+// previo lo necesitaba.
+type ButtonAsLink = CommonProps & { href: string; onClick?: () => void };
 
 export function Button({ variant = "primary", size = "md", disabled = false, children, className, ...rest }: ButtonAsButton | ButtonAsLink) {
   const classes = clsx(
@@ -39,9 +44,9 @@ export function Button({ variant = "primary", size = "md", disabled = false, chi
   );
 
   if ("href" in rest && rest.href) {
-    const { href } = rest;
+    const { href, onClick } = rest;
     return (
-      <Link href={href} className={classes} aria-disabled={disabled}>
+      <Link href={href} onClick={onClick} className={classes} aria-disabled={disabled}>
         {children}
       </Link>
     );

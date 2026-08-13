@@ -68,6 +68,10 @@ export function AnadirNotaOverlay({ clientId, featured, onClose }: Props) {
           code === "TEXT_REQUIRED" ? "Escribe el contenido de la nota." : "El texto de la nota es demasiado largo.",
         );
         setStep("form");
+      } else if (code === "CLIENT_NOT_FOUND") {
+        // Más plausible desde PRO-60 (selector de cliente en Hoy, con más
+        // tiempo entre elegirlo y guardar) que desde la ficha ya abierta.
+        setFormError("Este cliente ya no existe.");
       } else {
         setFormError("No se pudo guardar la nota. Inténtalo de nuevo.");
       }
