@@ -90,9 +90,9 @@ export default defineSchema({
     // opcionales porque la tabla ya tiene documentos reales (dev y Railway
     // comparten deployment) y Convex valida todo documento existente al
     // hacer push del schema; la invariante "siempre poblado en escritura
-    // nueva" vive en convex/model/followUps.ts (upsertFollowUp vía
-    // convex/model/actor.ts), no aquí — mismo criterio que `clients` con
-    // phone/email/etc.
+    // nueva" vive en convex/model/followUps.ts (upsertFollowUp, con el
+    // usuario autenticado que resuelve requireAccessToken), no aquí — mismo
+    // criterio que `clients` con phone/email/etc.
     assigneeId: v.optional(v.string()),
     assigneeName: v.optional(v.string()),
     seedData: v.optional(v.boolean()),
@@ -112,8 +112,8 @@ export default defineSchema({
     featured: v.boolean(),
     // Tabla nueva (cero documentos existentes): a diferencia de
     // followUps.assigneeId, aquí sí pueden ser obligatorios sin problema de
-    // migración. Denormalizados hasta que exista la entidad Usuario
-    // (PRO-43) — ver convex/model/actor.ts. Nunca argumento de mutation
+    // migración. Denormalizados del usuario autenticado (requireAccessToken)
+    // en vez de una referencia a `users`. Nunca argumento de mutation
     // pública: el servidor los asigna siempre.
     authorId: v.string(),
     authorName: v.string(),
@@ -200,7 +200,8 @@ export default defineSchema({
     date: v.string(),
     // Tabla nueva: obligatorios sin problema de migración (recomendado por
     // PRO-8/PRO-27, no bloqueante para el MVP en sí — se rellenan siempre
-    // igualmente porque el servidor los asigna, ver convex/model/actor.ts).
+    // igualmente porque el servidor los asigna a partir del usuario
+    // autenticado, ver requireAccessToken en convex/model/auth.ts).
     authorId: v.string(),
     authorName: v.string(),
     seedData: v.optional(v.boolean()),

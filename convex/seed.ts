@@ -15,9 +15,10 @@ import { createSale } from "./model/sales";
  * datos ficticios.
  */
 
-// Identidad distinta de la que usan las mutations públicas (getActor,
-// "Marta") — para que los datos de fixture se distingan a simple vista de
-// lo que crearía alguien usando la app de verdad.
+// Identidad distinta de la que usan las mutations públicas (siempre la del
+// usuario autenticado real, vía requireAccessToken) — para que los datos de
+// fixture se distingan a simple vista de lo que crearía alguien usando la
+// app de verdad.
 const SEED_AUTHOR = { id: "seed-author", name: "Datos de ejemplo" };
 
 type Fixture = {

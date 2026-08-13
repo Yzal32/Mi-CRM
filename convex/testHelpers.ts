@@ -1,5 +1,6 @@
 import type { TestConvex } from "convex-test";
 import { api } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
 import { createUser } from "./model/users";
 
@@ -14,8 +15,8 @@ const PASSWORD = "contraseña-valida";
  * que crear un usuario con el mismo email en cada llamada nunca choca contra
  * DUPLICATE_EMAIL entre tests distintos.
  */
-export async function issueTestAccessToken(t: TestConvex<typeof schema>): Promise<string> {
-  await t.run((ctx) =>
+export async function issueTestActor(t: TestConvex<typeof schema>): Promise<{ accessToken: string; userId: Id<"users"> }> {
+  const userId = await t.run((ctx) =>
     createUser(ctx, {
       name: "Usuario de prueba",
       email: EMAIL,
@@ -26,5 +27,9 @@ export async function issueTestAccessToken(t: TestConvex<typeof schema>): Promis
   );
   const { token: sessionToken } = await t.mutation(api.sessions.login, { email: EMAIL, password: PASSWORD });
   const { accessToken } = await t.mutation(api.sessions.issueAccessToken, { token: sessionToken });
-  return accessToken;
+  return { accessToken, userId };
+}
+
+export async function issueTestAccessToken(t: TestConvex<typeof schema>): Promise<string> {
+  return (await issueTestActor(t)).accessToken;
 }

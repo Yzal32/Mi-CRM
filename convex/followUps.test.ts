@@ -4,7 +4,7 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 import { api } from "./_generated/api";
 import schema from "./schema";
 import { LIMIT } from "./followUps";
-import { issueTestAccessToken } from "./testHelpers";
+import { issueTestAccessToken, issueTestActor } from "./testHelpers";
 import { addDays, businessDayKey } from "../lib/shared/businessDay";
 
 const modules = import.meta.glob("./**/*.ts");
@@ -152,7 +152,7 @@ describe("listToday", () => {
 describe("followUps.upsert / complete / discard / getByClient (capa pública)", () => {
   test("upsert delega en el modelo y asigna el responsable de servidor, no uno del cliente", async () => {
     const t = convexTest(schema, modules);
-    const token = await issueTestAccessToken(t);
+    const { accessToken: token, userId } = await issueTestActor(t);
     const clientId = await t.run((ctx) => ctx.db.insert("clients", { name: "Cliente Test" }));
 
     const followUpId = await t.mutation(api.followUps.upsert, {
@@ -163,8 +163,8 @@ describe("followUps.upsert / complete / discard / getByClient (capa pública)", 
     });
     const doc = await t.run((ctx) => ctx.db.get(followUpId));
 
-    expect(doc?.assigneeId).toBe("stub-marta");
-    expect(doc?.assigneeName).toBe("Marta");
+    expect(doc?.assigneeId).toBe(userId);
+    expect(doc?.assigneeName).toBe("Usuario de prueba");
   });
 
   test("upsert rechaza sin token válido con UNAUTHENTICATED, sin escritura parcial", async () => {
@@ -249,9 +249,9 @@ describe("followUps.upsert / complete / discard / getByClient (capa pública)", 
     expect(doc?.dueDate).toBe(today);
   });
 
-  test("complete delega en el modelo (crea nota, borra el seguimiento)", async () => {
+  test("complete delega en el modelo (crea nota, borra el seguimiento) y asigna el autor de servidor a la nota", async () => {
     const t = convexTest(schema, modules);
-    const token = await issueTestAccessToken(t);
+    const { accessToken: token, userId } = await issueTestActor(t);
     const clientId = await t.run((ctx) => ctx.db.insert("clients", { name: "Cliente Test" }));
     const followUpId = await t.mutation(api.followUps.upsert, {
       token,
@@ -262,7 +262,10 @@ describe("followUps.upsert / complete / discard / getByClient (capa pública)", 
 
     const noteId = await t.mutation(api.followUps.complete, { token, followUpId });
 
-    expect(await t.run((ctx) => ctx.db.get(noteId))).not.toBeNull();
+    const note = await t.run((ctx) => ctx.db.get(noteId));
+    expect(note).not.toBeNull();
+    expect(note?.authorId).toBe(userId);
+    expect(note?.authorName).toBe("Usuario de prueba");
     expect(await t.run((ctx) => ctx.db.get(followUpId))).toBeNull();
   });
 

@@ -1,7 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import type { Doc } from "./_generated/dataModel";
-import { getActor } from "./model/actor";
 import { createNote, unfeatureNote } from "./model/notes";
 import { requireAccessToken } from "./model/auth";
 
@@ -75,8 +74,9 @@ export const listByClient = query({
 });
 
 // Nunca acepta authorId/authorName del cliente: el servidor asigna siempre
-// la identidad de demostración (ver convex/model/actor.ts) para que nadie
-// pueda firmar una nota como otra persona llamando a la mutation a mano.
+// la identidad del usuario autenticado, resuelta por requireAccessToken, para
+// que nadie pueda firmar una nota como otra persona llamando a la mutation a
+// mano.
 export const create = mutation({
   args: {
     token: v.string(),
@@ -87,9 +87,8 @@ export const create = mutation({
   },
   returns: v.id("notes"),
   handler: async (ctx, args) => {
-    await requireAccessToken(ctx, args.token);
-    const actor = await getActor(ctx);
-    return createNote(ctx, { ...args, authorId: actor.id, authorName: actor.name });
+    const actor = await requireAccessToken(ctx, args.token);
+    return createNote(ctx, { ...args, authorId: actor.userId, authorName: actor.name });
   },
 });
 

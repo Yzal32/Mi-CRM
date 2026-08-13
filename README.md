@@ -53,7 +53,7 @@ Además de esta lista, `sessions.login`, `sessions.verify`, `sessions.logout`, `
 
 Ninguna de las cinco es alcanzable "gratis": quien las llame necesita ya sea credenciales válidas, ya sea un token de sesión real — a diferencia de antes de PRO-59, `clients.*`/`notes.*`/`followUps.*`/`sales.*` tampoco lo son: exigen su propio accessToken (ver arriba).
 
-Además, la autoría de notas/ventas/seguimientos (`authorId`/`authorName`, `assigneeId`/`assigneeName`) es una **identidad de demostración fija** (`convex/model/actor.ts`, "Marta") asignada siempre en servidor — nunca se acepta como argumento del cliente, así que nadie puede elegir firmar como otra persona, pero tampoco es autenticación real: todo queda atribuido a esa misma identidad fija sea quien sea quien lo creó de verdad. No es autoría fiable con datos reales.
+Además, la autoría de notas/ventas/seguimientos (`authorId`/`authorName`, `assigneeId`/`assigneeName`) se asigna siempre en servidor a partir del usuario autenticado que resuelve `requireAccessToken` — nunca se acepta como argumento del cliente, así que nadie puede elegir firmar como otra persona ni suplantar a otro usuario ya logueado.
 
 ## Desarrollo
 

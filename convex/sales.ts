@@ -1,7 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import type { Doc } from "./_generated/dataModel";
-import { getActor } from "./model/actor";
 import { createSale } from "./model/sales";
 import { requireAccessToken } from "./model/auth";
 
@@ -48,21 +47,20 @@ export const listByClient = query({
 });
 
 // Nunca acepta authorId/authorName del cliente: el servidor asigna siempre
-// la identidad de demostración (ver convex/model/actor.ts), igual que
-// notes.create y followUps.upsert. La fecha tampoco es argumento del
-// cliente — createSale la fija siempre con la fecha de negocio del
+// la identidad del usuario autenticado, resuelta por requireAccessToken,
+// igual que notes.create y followUps.upsert. La fecha tampoco es argumento
+// del cliente — createSale la fija siempre con la fecha de negocio del
 // servidor (ver convex/model/sales.ts).
 export const create = mutation({
   args: { token: v.string(), clientId: v.id("clients"), description: v.string(), amountCents: v.number() },
   returns: v.id("sales"),
   handler: async (ctx, args) => {
-    await requireAccessToken(ctx, args.token);
-    const actor = await getActor(ctx);
+    const actor = await requireAccessToken(ctx, args.token);
     return createSale(ctx, {
       clientId: args.clientId,
       description: args.description,
       amountCents: args.amountCents,
-      authorId: actor.id,
+      authorId: actor.userId,
       authorName: actor.name,
     });
   },
