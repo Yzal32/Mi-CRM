@@ -10,7 +10,7 @@ import { TopBar } from "@/components/ui/TopBar";
 import { IconButton } from "@/components/ui/IconButton";
 import { ClientActionOverlays } from "@/components/hoy/ClientActionOverlays";
 import { HoyQuickActionsOverlay } from "@/components/hoy/HoyQuickActionsOverlay";
-import { extractFichaClientId, isNavItemActive, navItems } from "./navItems";
+import { extractFichaClientId, extractVentaClientId, isNavItemActive, navItems } from "./navItems";
 
 export function MobileTopBar() {
   const pathname = usePathname();
@@ -24,6 +24,7 @@ export function MobileTopBar() {
   // runtime, no es solo un aviso de lint. Los `return` condicionales van
   // siempre después.
   const fichaClientId = extractFichaClientId(pathname);
+  const ventaClientId = extractVentaClientId(pathname);
   const client = useAuthedQuery(api.clients.getById, fichaClientId ? { clientId: fichaClientId } : "skip");
   const today = useBusinessToday();
   const flow = useClientActionFlow();
@@ -76,6 +77,17 @@ export function MobileTopBar() {
     return (
       <div className="lg:hidden">
         <TopBar title={client?.name ?? "Cliente"} onBack={() => router.back()} />
+      </div>
+    );
+  }
+
+  // Registrar venta (PRO-23): mismo criterio que /clientes/nuevo — título
+  // fijo de la propia pantalla, no el nombre del cliente (ese ya se muestra
+  // dentro del formulario). No dispara ninguna query nueva de cliente.
+  if (ventaClientId) {
+    return (
+      <div className="lg:hidden">
+        <TopBar title="Registrar venta" onBack={() => router.back()} />
       </div>
     );
   }
