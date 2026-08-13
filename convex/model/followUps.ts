@@ -118,6 +118,9 @@ function buildCompletionNoteText(actionType: ActionType, dueDate: string): strin
  * el seguimiento. Convex ejecuta la mutation en una única transacción: si
  * createNote falla (p. ej. CLIENT_NOT_FOUND en un followUp huérfano), el
  * followUp no llega a borrarse, no hace falta compensación manual.
+ * También hereda el actionType del seguimiento como `channel` de la nota
+ * generada: es el mismo dato que ya se conoce (visible además en el propio
+ * texto canónico), no hay que pedirlo de nuevo al usuario.
  */
 export async function completeFollowUp(ctx: MutationCtx, args: CompleteFollowUpArgs): Promise<Id<"notes">> {
   const followUp = await ctx.db.get(args.followUpId);
@@ -127,6 +130,7 @@ export async function completeFollowUp(ctx: MutationCtx, args: CompleteFollowUpA
     clientId: followUp.clientId,
     text: buildCompletionNoteText(followUp.actionType, followUp.dueDate),
     featured: false,
+    channel: followUp.actionType,
     authorId: args.authorId,
     authorName: args.authorName,
   });

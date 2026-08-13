@@ -266,6 +266,7 @@ describe("followUps.upsert / complete / discard / getByClient (capa pública)", 
     expect(note).not.toBeNull();
     expect(note?.authorId).toBe(userId);
     expect(note?.authorName).toBe("Usuario de prueba");
+    expect(note?.channel).toBe("call");
     expect(await t.run((ctx) => ctx.db.get(followUpId))).toBeNull();
   });
 

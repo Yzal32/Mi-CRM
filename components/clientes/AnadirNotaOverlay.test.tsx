@@ -24,7 +24,7 @@ afterEach(() => {
 });
 
 function fillText(value: string) {
-  fireEvent.change(screen.getByLabelText(/^Nota/), { target: { value } });
+  fireEvent.change(screen.getByLabelText(/^Interacción/), { target: { value } });
 }
 
 describe("AnadirNotaOverlay — nota normal", () => {
@@ -40,6 +40,7 @@ describe("AnadirNotaOverlay — nota normal", () => {
       expect(mutationMock).toHaveBeenCalledWith({
         clientId: CLIENT_ID,
         text: "Primer contacto por WhatsApp.",
+        channel: undefined,
         featured: false,
         expectedFeaturedNoteId: null,
       }),
@@ -51,7 +52,7 @@ describe("AnadirNotaOverlay — nota normal", () => {
     render(<AnadirNotaOverlay clientId={CLIENT_ID} featured={null} onClose={vi.fn()} />);
     fireEvent.click(screen.getByRole("button", { name: "Guardar" }));
 
-    expect(screen.getByText("Escribe el contenido de la nota.")).toBeTruthy();
+    expect(screen.getByText("Escribe el contenido de la interacción.")).toBeTruthy();
     expect(mutationMock).not.toHaveBeenCalled();
   });
 
@@ -60,7 +61,7 @@ describe("AnadirNotaOverlay — nota normal", () => {
     fillText("a".repeat(4001));
     fireEvent.click(screen.getByRole("button", { name: "Guardar" }));
 
-    expect(screen.getByText("El texto de la nota es demasiado largo.")).toBeTruthy();
+    expect(screen.getByText("El texto de la interacción es demasiado largo.")).toBeTruthy();
     expect(mutationMock).not.toHaveBeenCalled();
   });
 
@@ -101,7 +102,7 @@ describe("AnadirNotaOverlay — nota normal", () => {
 
     fillText("Nota");
     fireEvent.click(screen.getByRole("button", { name: "Guardar" }));
-    expect(await screen.findByText("No se pudo guardar la nota. Inténtalo de nuevo.")).toBeTruthy();
+    expect(await screen.findByText("No se pudo guardar la interacción. Inténtalo de nuevo.")).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: "Guardar" }));
     await waitFor(() => expect(onClose).toHaveBeenCalled());
@@ -121,6 +122,7 @@ describe("AnadirNotaOverlay — destacada", () => {
       expect(mutationMock).toHaveBeenCalledWith({
         clientId: CLIENT_ID,
         text: "Nota importante",
+        channel: undefined,
         featured: true,
         expectedFeaturedNoteId: null,
       }),
@@ -134,7 +136,9 @@ describe("AnadirNotaOverlay — destacada", () => {
     fireEvent.click(screen.getByRole("switch", { name: "Marcar como destacada" }));
     fireEvent.click(screen.getByRole("button", { name: "Guardar" }));
 
-    expect(await screen.findByText("Ya hay otra nota destacada. Si continúas, esta la sustituirá.")).toBeTruthy();
+    expect(
+      await screen.findByText("Ya hay otra interacción destacada. Si continúas, esta la sustituirá."),
+    ).toBeTruthy();
     expect(mutationMock).not.toHaveBeenCalled();
   });
 
@@ -152,6 +156,7 @@ describe("AnadirNotaOverlay — destacada", () => {
       expect(mutationMock).toHaveBeenCalledWith({
         clientId: CLIENT_ID,
         text: "Nota nueva destacada",
+        channel: undefined,
         featured: true,
         expectedFeaturedNoteId: OLD_FEATURED_ID,
       }),
@@ -169,7 +174,7 @@ describe("AnadirNotaOverlay — destacada", () => {
     fillText("Nota nueva destacada");
     fireEvent.click(screen.getByRole("switch", { name: "Marcar como destacada" }));
     fireEvent.click(screen.getByRole("button", { name: "Guardar" }));
-    await screen.findByText("Ya hay otra nota destacada. Si continúas, esta la sustituirá.");
+    await screen.findByText("Ya hay otra interacción destacada. Si continúas, esta la sustituirá.");
 
     // La query reactiva de `featured` trae una nota destacada distinta
     // mientras el diálogo de confirmación sigue abierto (otra sesión la
@@ -183,6 +188,7 @@ describe("AnadirNotaOverlay — destacada", () => {
       expect(mutationMock).toHaveBeenCalledWith({
         clientId: CLIENT_ID,
         text: "Nota nueva destacada",
+        channel: undefined,
         featured: true,
         expectedFeaturedNoteId: OLD_FEATURED_ID,
       }),
@@ -196,11 +202,11 @@ describe("AnadirNotaOverlay — destacada", () => {
     fillText("No quiero perder esto");
     fireEvent.click(screen.getByRole("switch", { name: "Marcar como destacada" }));
     fireEvent.click(screen.getByRole("button", { name: "Guardar" }));
-    await screen.findByText("Ya hay otra nota destacada. Si continúas, esta la sustituirá.");
+    await screen.findByText("Ya hay otra interacción destacada. Si continúas, esta la sustituirá.");
 
     fireEvent.click(screen.getByRole("button", { name: "Cancelar" }));
 
-    expect(await screen.findByLabelText(/^Nota/)).toHaveProperty("value", "No quiero perder esto");
+    expect(await screen.findByLabelText(/^Interacción/)).toHaveProperty("value", "No quiero perder esto");
     expect(mutationMock).not.toHaveBeenCalled();
   });
 
@@ -216,10 +222,37 @@ describe("AnadirNotaOverlay — destacada", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Sustituir" }));
 
     expect(
-      await screen.findByText("La nota destacada ha cambiado desde que abriste este formulario. Vuelve a intentarlo."),
+      await screen.findByText(
+        "La interacción destacada ha cambiado desde que abriste este formulario. Vuelve a intentarlo.",
+      ),
     ).toBeTruthy();
     // Vuelve al paso de formulario, no se queda en el de confirmación ni reintenta sola.
-    expect(screen.getByLabelText(/^Nota/)).toBeTruthy();
+    expect(screen.getByLabelText(/^Interacción/)).toBeTruthy();
     expect(mutationMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("elegir un canal lo incluye en la llamada a la mutation", async () => {
+    mutationMock.mockResolvedValue("note1");
+    render(<AnadirNotaOverlay clientId={CLIENT_ID} featured={null} onClose={vi.fn()} />);
+
+    fillText("Le llamé para confirmar precio");
+    fireEvent.change(screen.getByLabelText("Canal"), { target: { value: "call" } });
+    fireEvent.click(screen.getByRole("button", { name: "Guardar" }));
+
+    await waitFor(() =>
+      expect(mutationMock).toHaveBeenCalledWith({
+        clientId: CLIENT_ID,
+        text: "Le llamé para confirmar precio",
+        channel: "call",
+        featured: false,
+        expectedFeaturedNoteId: null,
+      }),
+    );
+  });
+
+  it('el selector de canal empieza en "Otro / sin canal"', () => {
+    render(<AnadirNotaOverlay clientId={CLIENT_ID} featured={null} onClose={vi.fn()} />);
+
+    expect(screen.getByLabelText("Canal")).toHaveProperty("value", "");
   });
 });

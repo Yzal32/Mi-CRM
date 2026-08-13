@@ -85,7 +85,7 @@ describe("HoyScreen — accesos rápidos (PRO-60)", () => {
     expect(pushMock).toHaveBeenCalledWith("/clientes/c1/venta");
   });
 
-  it("elegir un cliente en el flujo de nota muestra el formulario 'Añadir nota'", () => {
+  it("elegir un cliente en el flujo de nota muestra el formulario 'Anotar interacción'", () => {
     setQuery(api.clients.list, { items: [{ clientId: "c1", name: "Carlos Ruiz" }], truncated: false });
     setQuery(api.notes.listByClient, { featured: null, items: [], truncated: false });
     render(<HoyScreen />);
@@ -93,7 +93,7 @@ describe("HoyScreen — accesos rápidos (PRO-60)", () => {
     fireEvent.click(screen.getByRole("button", { name: /Anotar interacción/ }));
     fireEvent.click(screen.getByRole("button", { name: /Carlos Ruiz/ }));
 
-    expect(screen.getByRole("heading", { name: "Añadir nota" })).toBeTruthy();
-    expect(screen.getByLabelText(/^Nota/)).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Anotar interacción" })).toBeTruthy();
+    expect(screen.getByLabelText(/^Interacción/)).toBeTruthy();
   });
 });

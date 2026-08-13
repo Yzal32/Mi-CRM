@@ -7,12 +7,15 @@ import type { Id } from "@/convex/_generated/dataModel";
 import { Icon } from "@/components/ui/Icon";
 import { formatBusinessDate } from "@/lib/shared/businessDay";
 import { convexErrorCode } from "@/lib/shared/convexError";
+import { ACTION_TYPE_LABELS_ES, type ActionType } from "@/lib/shared/actionType";
+import { actionIcon } from "@/lib/hoy/followUpPresentation";
 
 type FeaturedNote = {
   _id: Id<"notes">;
   text: string;
   date: string;
   authorName: string;
+  channel?: ActionType;
 };
 
 export function NotaDestacadaCard({ note }: { note: FeaturedNote }) {
@@ -29,7 +32,7 @@ export function NotaDestacadaCard({ note }: { note: FeaturedNote }) {
     try {
       await unfeature({ noteId: note._id });
     } catch (err) {
-      setError(convexErrorCode(err) === "NOTE_NOT_FOUND" ? "Esta nota ya no existe." : "No se pudo quitar el destacado. Inténtalo de nuevo.");
+      setError(convexErrorCode(err) === "NOTE_NOT_FOUND" ? "Esta interacción ya no existe." : "No se pudo quitar el destacado. Inténtalo de nuevo.");
     } finally {
       setIsRemoving(false);
       lockRef.current = false;
@@ -41,7 +44,7 @@ export function NotaDestacadaCard({ note }: { note: FeaturedNote }) {
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5 text-primary-soft-text">
           <Icon name="star" size={16} aria-hidden="true" />
-          <span className="font-caption uppercase tracking-wide">Nota destacada</span>
+          <span className="font-caption uppercase tracking-wide">Interacción destacada</span>
         </div>
         <button
           type="button"
@@ -53,9 +56,13 @@ export function NotaDestacadaCard({ note }: { note: FeaturedNote }) {
         </button>
       </div>
       <p className="font-body m-0 text-text">{note.text}</p>
-      <p className="font-caption m-0 text-text-tertiary">
-        {note.authorName} · {formatBusinessDate(note.date)}
-      </p>
+      <div className="flex items-center gap-1.5 font-caption text-text-tertiary">
+        {note.channel && <Icon name={actionIcon(note.channel)} size={14} className="shrink-0" aria-hidden="true" />}
+        <span>
+          {note.channel && `${ACTION_TYPE_LABELS_ES[note.channel]} · `}
+          {note.authorName} · {formatBusinessDate(note.date)}
+        </span>
+      </div>
       {error && (
         <p role="alert" className="font-caption text-error-text">
           {error}

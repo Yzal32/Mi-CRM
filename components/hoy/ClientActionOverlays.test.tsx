@@ -61,7 +61,7 @@ describe("ClientActionOverlays — enrutado por flow.state", () => {
   it("notaClient con notes.listByClient sin resolver todavía muestra un overlay de carga", () => {
     useQueryMock.mockReturnValue(undefined);
     render(<ClientActionOverlays flow={makeFlow({ step: "notaClient", client: CLIENT })} today="2026-08-13" />);
-    expect(screen.getByRole("heading", { name: "Añadir nota" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Anotar interacción" })).toBeTruthy();
     expect(screen.getByRole("status", { name: "Cargando" })).toBeTruthy();
     expect(screen.queryByTestId("anadir-nota")).toBeNull();
   });

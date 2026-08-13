@@ -36,6 +36,7 @@ describe("completeFollowUp", () => {
     const note = await t.run((ctx) => ctx.db.get(noteId));
     expect(note?.text).toBe(`Seguimiento completado: ${label} (08/08/2026).`);
     expect(note?.featured).toBe(false);
+    expect(note?.channel).toBe(actionType);
     expect(note?.date).toMatch(/^\d{4}-\d{2}-\d{2}$/); // fecha de hoy (de la mutation), no la dueDate prevista
 
     const followUp = await t.run((ctx) => ctx.db.get(followUpId));

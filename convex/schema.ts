@@ -107,14 +107,25 @@ export default defineSchema({
     // — nunca argumento de la mutation pública, igual que clients.signupDate.
     date: v.string(),
     text: v.string(),
+    // Canal por el que se produjo la interacción (mismo vocabulario que
+    // followUps.actionType, ver lib/shared/actionType.ts) — reutiliza esos 4
+    // literales tal cual, sin un quinto "other": la opción "Otro / sin canal"
+    // del formulario y una nota creada antes de este campo se representan
+    // igual, con `undefined`. Opcional en schema por el mismo motivo que
+    // followUps.assigneeId/assigneeName: la tabla ya tiene documentos reales
+    // (seed.ts + verificación manual en el deployment compartido con
+    // Railway), no hay migración de datos.
+    channel: v.optional(v.union(v.literal("call"), v.literal("whatsapp"), v.literal("email"), v.literal("visit"))),
     // Invariante "como mucho una nota destacada por cliente a la vez" vive
     // en convex/model/notes.ts (createNote), nunca aquí.
     featured: v.boolean(),
-    // Tabla nueva (cero documentos existentes): a diferencia de
-    // followUps.assigneeId, aquí sí pueden ser obligatorios sin problema de
-    // migración. Denormalizados del usuario autenticado (requireAccessToken)
-    // en vez de una referencia a `users`. Nunca argumento de mutation
-    // pública: el servidor los asigna siempre.
+    // A diferencia de followUps.assigneeId/assigneeName o del `channel` de
+    // arriba, estos SÍ son obligatorios: notes.create siempre los asigna
+    // desde el usuario autenticado (requireAccessToken), nunca desde un
+    // argumento de cliente — todo documento de `notes` que existe los tiene
+    // poblados desde el primer commit de esta tabla. No es el caso de campos
+    // añadidos DESPUÉS de que la tabla ya tuviera documentos reales (seed.ts
+    // + verificación manual en Railway).
     authorId: v.string(),
     authorName: v.string(),
     seedData: v.optional(v.boolean()),

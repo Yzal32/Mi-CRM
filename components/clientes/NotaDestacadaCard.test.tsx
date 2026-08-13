@@ -27,6 +27,11 @@ describe("NotaDestacadaCard", () => {
     expect(screen.getByText("Marta · 08/08/2026")).toBeTruthy();
   });
 
+  it("con canal, muestra su etiqueta antes del autor", () => {
+    render(<NotaDestacadaCard note={{ ...NOTE, channel: "call" }} />);
+    expect(screen.getByText("Llamar · Marta · 08/08/2026")).toBeTruthy();
+  });
+
   it("quitar destacado llama a la mutation con el noteId", async () => {
     mutationMock.mockResolvedValue(null);
     render(<NotaDestacadaCard note={NOTE} />);

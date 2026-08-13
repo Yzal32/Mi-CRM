@@ -12,12 +12,15 @@ const LIST_LIMIT = 500;
 // Ver convex/notes.test.ts para los casos límite verificados a mano.
 const RAW_FETCH_LIMIT = LIST_LIMIT + 2;
 
+const channelValidator = v.union(v.literal("call"), v.literal("whatsapp"), v.literal("email"), v.literal("visit"));
+
 const noteDto = v.object({
   _id: v.id("notes"),
   _creationTime: v.number(),
   clientId: v.id("clients"),
   date: v.string(),
   text: v.string(),
+  channel: v.optional(channelValidator),
   featured: v.boolean(),
   authorId: v.string(),
   authorName: v.string(),
@@ -25,7 +28,10 @@ const noteDto = v.object({
 
 // DTO construido listando explícitamente los campos públicos (no
 // desestructurando para omitir seedData/seedKey) — evita avisos de lint por
-// variables no usadas y documenta mejor el contrato público.
+// variables no usadas y documenta mejor el contrato público. `channel` se
+// añade con spread condicional, no como `channel: note.channel`: así la
+// clave queda AUSENTE del objeto cuando no hay canal (mismo contrato que
+// seedData/seedKey), en vez de presente con valor `undefined`.
 function toNoteDto(note: Doc<"notes">) {
   return {
     _id: note._id,
@@ -33,6 +39,7 @@ function toNoteDto(note: Doc<"notes">) {
     clientId: note.clientId,
     date: note.date,
     text: note.text,
+    ...(note.channel !== undefined ? { channel: note.channel } : {}),
     featured: note.featured,
     authorId: note.authorId,
     authorName: note.authorName,
@@ -82,6 +89,7 @@ export const create = mutation({
     token: v.string(),
     clientId: v.id("clients"),
     text: v.string(),
+    channel: v.optional(channelValidator),
     featured: v.optional(v.boolean()),
     expectedFeaturedNoteId: v.optional(v.union(v.id("notes"), v.null())),
   },

@@ -38,12 +38,12 @@ export function ClientActionOverlays({ flow, today }: { flow: ClientActionFlow; 
   }
 
   if (state.step === "notaClient") {
-    // Título ya fijo en "Añadir nota" mientras carga (el mismo que usará
-    // AnadirNotaOverlay para su paso de formulario) — evita que la cabecera
-    // del overlay parpadee al pasar del skeleton al formulario real.
+    // Título ya fijo en "Anotar interacción" mientras carga (el mismo que
+    // usará AnadirNotaOverlay para su paso de formulario) — evita que la
+    // cabecera del overlay parpadee al pasar del skeleton al formulario real.
     if (notes === undefined) {
       return (
-        <Overlay title="Añadir nota" onClose={closeNota}>
+        <Overlay title="Anotar interacción" onClose={closeNota}>
           <Skeleton rows={2} />
         </Overlay>
       );
