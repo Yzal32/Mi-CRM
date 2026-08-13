@@ -71,4 +71,16 @@ describe("useClientActionFlow", () => {
     expect(pushMock).not.toHaveBeenCalled();
     expect(result.current.state).toEqual({ step: "idle" });
   });
+
+  it("reset() vuelve a idle sin navegar, sin importar el paso en el que estuviera (MobileTopBar, al salir de Hoy)", () => {
+    const { result } = renderHook(() => useClientActionFlow());
+    act(() => result.current.start("nota"));
+    act(() => result.current.selectClient(CLIENT));
+    expect(result.current.state).toEqual({ step: "notaClient", client: CLIENT });
+
+    act(() => result.current.reset());
+
+    expect(pushMock).not.toHaveBeenCalled();
+    expect(result.current.state).toEqual({ step: "idle" });
+  });
 });

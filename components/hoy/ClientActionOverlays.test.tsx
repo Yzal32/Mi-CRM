@@ -30,6 +30,7 @@ function makeFlow(state: ClientActionFlow["state"]): ClientActionFlow {
     cancelPicking: vi.fn(),
     selectClient: vi.fn(),
     closeNota: vi.fn(),
+    reset: vi.fn(),
   };
 }
 

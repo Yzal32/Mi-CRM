@@ -29,6 +29,36 @@ export function MobileTopBar() {
   const flow = useClientActionFlow();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
 
+  // isHoy se calcula ya aquí, antes de los return tempranos: el efecto de
+  // reseteo de abajo tiene que dispararse también al navegar a
+  // /clientes/nuevo o a una ficha de cliente, no solo entre pestañas
+  // genéricas (ver su docstring).
+  const active = navItems.find((item) => isNavItemActive(pathname, item.href));
+  const isHoy = active?.value === "today";
+
+  // MobileTopBar NUNCA se desmonta al navegar (vive fuera de {children} en
+  // el layout) — sin esto, isSheetOpen y el estado de `flow` sobrevivirían
+  // un cambio de ruta: abrir "Nueva acción" en Hoy y navegar a otra pestaña
+  // (o volver atrás con el navegador) dejaría el menú o el selector de
+  // cliente persistiendo en memoria, reapareciendo encima de una pantalla
+  // distinta a la que lo abrió y pudiendo actuar sobre un cliente fuera de
+  // contexto. Patrón oficial de React para "ajustar estado cuando cambia
+  // algo" SIN useEffect (evita el anti-patrón de setState síncrono dentro
+  // de un efecto, que el lint del proyecto rechaza): comparar contra el
+  // valor del render anterior aquí mismo, durante el render — React aplica
+  // el setState antes de pintar, sin un commit visible de por medio. El
+  // guard `isHoy &&` del JSX de más abajo cubre además el instante de este
+  // mismo render (previousIsHoy todavía no se ha actualizado cuando se
+  // evalúa el JSX más abajo).
+  const [previousIsHoy, setPreviousIsHoy] = useState(isHoy);
+  if (isHoy !== previousIsHoy) {
+    setPreviousIsHoy(isHoy);
+    if (!isHoy) {
+      setIsSheetOpen(false);
+      flow.reset();
+    }
+  }
+
   // Nuevo cliente es una pantalla de formulario/detalle, no un destino de
   // pestaña: título propio y botón atrás a la pantalla que la abrió
   // (PRO-24), en vez del título genérico de la pestaña activa.
@@ -50,8 +80,6 @@ export function MobileTopBar() {
     );
   }
 
-  const active = navItems.find((item) => isNavItemActive(pathname, item.href));
-  const isHoy = active?.value === "today";
   // PRO-19: la pestaña Clientes reutiliza el mismo "+" que Hoy en vez de un
   // FAB propio (decisión de producto, evita un componente flotante nuevo
   // sin precedente en el repo). Los returns de arriba (/clientes/nuevo,
@@ -74,7 +102,12 @@ export function MobileTopBar() {
           }
         />
       </div>
-      {isSheetOpen && (
+      {/* isHoy && aquí, no solo el efecto de arriba: el efecto corre
+          DESPUÉS del render, así que sin este guard el menú/selector
+          seguiría pintándose un instante (o de forma persistente, si algo
+          impidiera que el efecto llegara a ejecutarse) sobre una pestaña
+          que no es Hoy. */}
+      {isHoy && isSheetOpen && (
         <HoyQuickActionsOverlay
           onClose={() => setIsSheetOpen(false)}
           onSelectVenta={() => {
@@ -87,7 +120,7 @@ export function MobileTopBar() {
           }}
         />
       )}
-      <ClientActionOverlays flow={flow} today={today} />
+      {isHoy && <ClientActionOverlays flow={flow} today={today} />}
     </>
   );
 }

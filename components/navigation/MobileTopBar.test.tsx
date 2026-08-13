@@ -179,4 +179,53 @@ describe("MobileTopBar — menú de accesos rápidos en Hoy (PRO-60)", () => {
     const link = screen.getByRole("link", { name: "Nuevo cliente" });
     expect(link.getAttribute("href")).toBe("/clientes/nuevo");
   });
+
+  // MobileTopBar no se desmonta al navegar (vive fuera de {children}) — sin
+  // el guard `isHoy &&` y el efecto de reseteo, isSheetOpen/flow.state
+  // sobreviven un cambio de ruta y el menú o el selector reaparecen encima
+  // de una pestaña distinta a la que los abrió.
+  it('navegar de Hoy a Clientes con el menú "+" abierto lo cierra, no lo deja persistiendo', () => {
+    currentPathname = "/";
+    useQueryMock.mockReturnValue(undefined);
+    const { rerender } = render(<MobileTopBar />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Nueva acción" }));
+    expect(screen.getByRole("heading", { name: "Nueva acción" })).toBeTruthy();
+
+    currentPathname = "/clientes";
+    rerender(<MobileTopBar />);
+
+    expect(screen.queryByRole("heading", { name: "Nueva acción" })).toBeNull();
+  });
+
+  it('navegar de Hoy a Clientes con el selector de cliente abierto (flujo de venta) lo cierra, no lo deja persistiendo', () => {
+    currentPathname = "/";
+    useQueryMock.mockReturnValue(undefined);
+    const { rerender } = render(<MobileTopBar />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Nueva acción" }));
+    fireEvent.click(screen.getByRole("button", { name: /Registrar venta/ }));
+    expect(screen.getByRole("heading", { name: "Registrar venta" })).toBeTruthy();
+
+    currentPathname = "/clientes";
+    rerender(<MobileTopBar />);
+
+    expect(screen.queryByRole("heading", { name: "Registrar venta" })).toBeNull();
+  });
+
+  it("volver a Hoy tras el reseteo no reabre el menú por sí solo (el estado quedó en idle, no oculto)", () => {
+    currentPathname = "/";
+    useQueryMock.mockReturnValue(undefined);
+    const { rerender } = render(<MobileTopBar />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Nueva acción" }));
+    currentPathname = "/clientes";
+    rerender(<MobileTopBar />);
+
+    currentPathname = "/";
+    rerender(<MobileTopBar />);
+
+    expect(screen.queryByRole("heading", { name: "Nueva acción" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Nueva acción" })).toBeTruthy();
+  });
 });

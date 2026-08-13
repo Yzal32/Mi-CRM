@@ -19,6 +19,7 @@ export type ClientActionFlow = {
   cancelPicking: () => void;
   selectClient: (client: SelectedClient) => void;
   closeNota: () => void;
+  reset: () => void;
 };
 
 const IDLE: ClientActionFlowState = { step: "idle" };
@@ -56,5 +57,13 @@ export function useClientActionFlow(): ClientActionFlow {
     setState(IDLE);
   }
 
-  return { state, start, cancelPicking, selectClient, closeNota };
+  // Fuerza la vuelta a idle sin condición — a diferencia de cancelPicking/
+  // closeNota (que solo tienen sentido en su paso concreto), reset se usa
+  // para abandonar el flujo entero desde fuera (MobileTopBar, al salir de
+  // Hoy) sin importar en qué paso estuviera.
+  function reset() {
+    setState(IDLE);
+  }
+
+  return { state, start, cancelPicking, selectClient, closeNota, reset };
 }
