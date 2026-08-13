@@ -181,9 +181,9 @@ describe("MobileTopBar — menú de accesos rápidos en Hoy (PRO-60)", () => {
   });
 
   // MobileTopBar no se desmonta al navegar (vive fuera de {children}) — sin
-  // el guard `isHoy &&` y el efecto de reseteo, isSheetOpen/flow.state
-  // sobreviven un cambio de ruta y el menú o el selector reaparecen encima
-  // de una pestaña distinta a la que los abrió.
+  // el guard `isHoy &&` y el ajuste de estado durante el render,
+  // isSheetOpen/flow.state sobreviven un cambio de ruta y el menú o el
+  // selector reaparecen encima de una pestaña distinta a la que los abrió.
   it('navegar de Hoy a Clientes con el menú "+" abierto lo cierra, no lo deja persistiendo', () => {
     currentPathname = "/";
     useQueryMock.mockReturnValue(undefined);

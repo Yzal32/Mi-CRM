@@ -29,8 +29,8 @@ export function MobileTopBar() {
   const flow = useClientActionFlow();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
 
-  // isHoy se calcula ya aquí, antes de los return tempranos: el efecto de
-  // reseteo de abajo tiene que dispararse también al navegar a
+  // isHoy se calcula ya aquí, antes de los return tempranos: el ajuste de
+  // estado de abajo tiene que dispararse también al navegar a
   // /clientes/nuevo o a una ficha de cliente, no solo entre pestañas
   // genéricas (ver su docstring).
   const active = navItems.find((item) => isNavItemActive(pathname, item.href));
@@ -102,11 +102,10 @@ export function MobileTopBar() {
           }
         />
       </div>
-      {/* isHoy && aquí, no solo el efecto de arriba: el efecto corre
-          DESPUÉS del render, así que sin este guard el menú/selector
-          seguiría pintándose un instante (o de forma persistente, si algo
-          impidiera que el efecto llegara a ejecutarse) sobre una pestaña
-          que no es Hoy. */}
+      {/* isHoy && aquí, no solo el ajuste de estado de arriba: expresa
+          directamente la intención (estos overlays son solo de Hoy) en vez
+          de depender de que isSheetOpen/flow.state ya estén corregidos —
+          defensa adicional barata, no la única barrera. */}
       {isHoy && isSheetOpen && (
         <HoyQuickActionsOverlay
           onClose={() => setIsSheetOpen(false)}
