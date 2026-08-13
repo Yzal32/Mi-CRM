@@ -228,8 +228,9 @@ export async function issueAccessToken(ctx: MutationCtx, sessionToken: string): 
   // A diferencia de findActiveSession (que deliberadamente no lo mira, ver
   // su docstring), aquí sí bloquea: una cuenta con el cambio de contraseña
   // pendiente no puede obtener credenciales para llamar a clients.*/notes.*/
-  // followUps.*/sales.* directamente — cerraría exactamente el mismo hueco
-  // que PRO-59 existe para tapar.
+  // followUps.*/sales.*/users.create/users.resetEmployeePassword
+  // directamente — cerraría exactamente el mismo hueco que PRO-59 existe
+  // para tapar.
   if (user.mustChangePassword) {
     fail<IssueAccessTokenErrorCode>("PASSWORD_CHANGE_REQUIRED", "Debes cambiar tu contraseña antes de continuar.");
   }
@@ -291,7 +292,7 @@ export async function expireAccessTokenIfDue(ctx: MutationCtx, accessTokenId: Id
 /**
  * Verifica un accessToken de corta duración. De solo lectura a propósito
  * (nunca `ctx.db.delete`): esta función también se llama desde queries
- * (`QueryCtx`, sin acceso de escritura) en las 14 funciones públicas de
+ * (`QueryCtx`, sin acceso de escritura) en las 16 funciones públicas de
  * negocio. Un token expirado simplemente deja de verificar; su limpieza
  * física ocurre en la próxima `issueAccessToken` de esa sesión, al borrarse
  * la sesión entera vía `deleteSessionAndAccessTokens`, o vía el borrado

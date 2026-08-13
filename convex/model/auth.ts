@@ -5,8 +5,9 @@ import { fail } from "./errors";
 export type RequireAccessTokenErrorCode = "UNAUTHENTICATED";
 
 /**
- * Único punto de entrada usado por las 14 funciones públicas de negocio
- * (clients, notes, followUps, sales.listByClient, sales.create — PRO-59)
+ * Único punto de entrada usado, directa o indirectamente (ver requireOwner
+ * más abajo), por las 16 funciones públicas de negocio (clients, notes,
+ * followUps, sales, users.create/resetEmployeePassword — PRO-59/PRO-45)
  * para exigir un
  * accessToken válido. Mensaje deliberadamente genérico — nunca distingue
  * "formato inválido" de "caducado" de "cuenta ya no activa": para un cliente
@@ -19,6 +20,22 @@ export async function requireAccessToken(ctx: QueryCtx | MutationCtx, accessToke
   const user = await verifyAccessToken(ctx, accessToken);
   if (!user) {
     fail<RequireAccessTokenErrorCode>("UNAUTHENTICATED", "No se pudo verificar la sesión.");
+  }
+  return user;
+}
+
+export type RequireOwnerErrorCode = RequireAccessTokenErrorCode | "FORBIDDEN";
+
+/**
+ * Igual que requireAccessToken, pero además exige role === "owner". Único
+ * punto de esta comprobación — cualquier mutation restringida a la Dueña
+ * (alta de empleado y reseteo de contraseña de PRO-45; baja/editar rol en
+ * PRO-47/PRO-56 después) debe reusar esto, nunca comparar user.role a mano.
+ */
+export async function requireOwner(ctx: QueryCtx | MutationCtx, accessToken: string): Promise<VerifiedUser> {
+  const user = await requireAccessToken(ctx, accessToken);
+  if (user.role !== "owner") {
+    fail<RequireOwnerErrorCode>("FORBIDDEN", "No tienes permiso para hacer esto.");
   }
   return user;
 }

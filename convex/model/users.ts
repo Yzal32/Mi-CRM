@@ -122,6 +122,61 @@ export async function createUser(ctx: MutationCtx, args: CreateUserArgs): Promis
   });
 }
 
+export type ResetEmployeePasswordErrorCode = "USER_NOT_FOUND" | "NOT_AN_EMPLOYEE";
+export type ResetEmployeePasswordResult = { temporaryPassword: string };
+
+const TEMP_PASSWORD_LENGTH = 8;
+// Exportado (no solo local) para que el test pueda construir un regex a
+// partir de esta constante exacta, en vez de teclear una clase de
+// caracteres a mano que podría divergir del alfabeto real — un desajuste
+// así haría fallar el test de forma NO determinista (solo cuando el sorteo
+// aleatorio tocara el carácter en desacuerdo), no en cada ejecución.
+export const TEMP_PASSWORD_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789"; // sin I, O, L/l, 0, 1
+
+function generateTemporaryPassword(): string {
+  const alphabetLength = TEMP_PASSWORD_ALPHABET.length;
+  // Descarta bytes >= este límite para no sesgar el módulo hacia los
+  // primeros 256 % alphabetLength caracteres del alfabeto.
+  const maxUnbiased = Math.floor(256 / alphabetLength) * alphabetLength;
+  let result = "";
+  while (result.length < TEMP_PASSWORD_LENGTH) {
+    const [byte] = crypto.getRandomValues(new Uint8Array(1));
+    if (byte >= maxUnbiased) continue;
+    result += TEMP_PASSWORD_ALPHABET[byte % alphabetLength];
+  }
+  return result;
+}
+
+/**
+ * Reseteo por la Dueña, no por el propio empleado (a diferencia de
+ * changePassword, que exige currentPassword) — restringido a cuentas
+ * role "employee": no tiene sentido usarlo sobre la propia Dueña. La
+ * contraseña generada ya cumple el mínimo/máximo de validateNewPassword
+ * por construcción (8 caracteres del alfabeto fijo), así que no hace falta
+ * revalidarla. Rota las sesiones del empleado igual que changePassword:
+ * credencial nueva, sesiones viejas fuera.
+ */
+export async function resetEmployeePassword(
+  ctx: MutationCtx,
+  args: { userId: Id<"users"> },
+): Promise<ResetEmployeePasswordResult> {
+  const user = await ctx.db.get(args.userId);
+  if (!user) {
+    fail<ResetEmployeePasswordErrorCode>("USER_NOT_FOUND", "Ese usuario ya no existe.");
+  }
+  if (user.role !== "employee") {
+    fail<ResetEmployeePasswordErrorCode>("NOT_AN_EMPLOYEE", "Esa cuenta no es de un empleado.");
+  }
+
+  const temporaryPassword = generateTemporaryPassword();
+  await ctx.db.patch(user._id, {
+    passwordHash: hashSync(temporaryPassword, PASSWORD_HASH_COST),
+    mustChangePassword: true,
+  });
+  await destroySessionsForUser(ctx, user._id);
+  return { temporaryPassword };
+}
+
 export type ChangePasswordErrorCode =
   | "SESSION_INVALID"
   | "CURRENT_PASSWORD_INCORRECT"
