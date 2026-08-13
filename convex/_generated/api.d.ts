@@ -11,7 +11,6 @@
 import type * as clients from "../clients.js";
 import type * as followUps from "../followUps.js";
 import type * as migrations from "../migrations.js";
-import type * as model_actor from "../model/actor.js";
 import type * as model_auth from "../model/auth.js";
 import type * as model_clients from "../model/clients.js";
 import type * as model_errors from "../model/errors.js";
@@ -38,7 +37,6 @@ declare const fullApi: ApiFromModules<{
   clients: typeof clients;
   followUps: typeof followUps;
   migrations: typeof migrations;
-  "model/actor": typeof model_actor;
   "model/auth": typeof model_auth;
   "model/clients": typeof model_clients;
   "model/errors": typeof model_errors;

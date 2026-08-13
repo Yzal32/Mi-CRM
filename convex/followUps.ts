@@ -2,7 +2,6 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import type { Doc } from "./_generated/dataModel";
 import { businessDayKey, calendarDayDiff, isValidBusinessDayKey } from "../lib/shared/businessDay";
-import { getActor } from "./model/actor";
 import { completeFollowUp, discardFollowUp, upsertFollowUp, type FollowUpErrorCode } from "./model/followUps";
 import { requireAccessToken } from "./model/auth";
 import { fail } from "./model/errors";
@@ -136,9 +135,9 @@ export const getByClient = query({
 });
 
 // Nunca acepta assigneeId/assigneeName ni seedData del cliente: el servidor
-// asigna siempre la identidad de demostración (convex/model/actor.ts).
-// seedData solo lo usa convex/seed.ts, llamando a upsertFollowUp
-// directamente (no a esta mutation pública).
+// asigna siempre la identidad del usuario autenticado, resuelta por
+// requireAccessToken. seedData solo lo usa convex/seed.ts, llamando a
+// upsertFollowUp directamente (no a esta mutation pública).
 export const upsert = mutation({
   args: {
     token: v.string(),
@@ -148,7 +147,7 @@ export const upsert = mutation({
   },
   returns: v.id("followUps"),
   handler: async (ctx, args) => {
-    await requireAccessToken(ctx, args.token);
+    const actor = await requireAccessToken(ctx, args.token);
     // Repite la comprobación de formato que upsertFollowUp también hace
     // internamente: sin esto, un dueDate malformado que comparase como
     // "menor" que hoy por orden de string devolvería DUE_DATE_IN_PAST en
@@ -163,7 +162,6 @@ export const upsert = mutation({
     if (args.dueDate < businessDayKey(new Date())) {
       fail<FollowUpErrorCode>("DUE_DATE_IN_PAST", `La fecha "${args.dueDate}" ya ha pasado.`);
     }
-    const actor = await getActor(ctx);
     // Reconstruye el objeto explícitamente, sin `token`: upsertFollowUp lo
     // pasa tal cual a ctx.db.insert/patch, que rechaza cualquier campo que
     // no esté en el schema de `followUps`.
@@ -171,7 +169,7 @@ export const upsert = mutation({
       clientId: args.clientId,
       dueDate: args.dueDate,
       actionType: args.actionType,
-      assigneeId: actor.id,
+      assigneeId: actor.userId,
       assigneeName: actor.name,
     });
   },
@@ -181,9 +179,8 @@ export const complete = mutation({
   args: { token: v.string(), followUpId: v.id("followUps") },
   returns: v.id("notes"),
   handler: async (ctx, args) => {
-    await requireAccessToken(ctx, args.token);
-    const actor = await getActor(ctx);
-    return completeFollowUp(ctx, { followUpId: args.followUpId, authorId: actor.id, authorName: actor.name });
+    const actor = await requireAccessToken(ctx, args.token);
+    return completeFollowUp(ctx, { followUpId: args.followUpId, authorId: actor.userId, authorName: actor.name });
   },
 });
 

@@ -3,7 +3,7 @@ import { ConvexError } from "convex/values";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import schema from "./schema";
-import { issueTestAccessToken } from "./testHelpers";
+import { issueTestAccessToken, issueTestActor } from "./testHelpers";
 
 const modules = import.meta.glob("./**/*.ts");
 
@@ -22,7 +22,7 @@ async function captureError(promise: Promise<unknown>): Promise<ConvexError<Code
 describe("sales.create (capa pública)", () => {
   test("delega en el modelo y asigna el autor de servidor, no uno del cliente", async () => {
     const t = convexTest(schema, modules);
-    const token = await issueTestAccessToken(t);
+    const { accessToken: token, userId } = await issueTestActor(t);
     const clientId = await t.run((ctx) => ctx.db.insert("clients", { name: "Cliente Test" }));
 
     const saleId = await t.mutation(api.sales.create, { token, clientId, description: "Pack básico", amountCents: 15000 });
@@ -30,8 +30,8 @@ describe("sales.create (capa pública)", () => {
 
     expect(doc?.description).toBe("Pack básico");
     expect(doc?.amountCents).toBe(15000);
-    expect(doc?.authorId).toBe("stub-marta");
-    expect(doc?.authorName).toBe("Marta");
+    expect(doc?.authorId).toBe(userId);
+    expect(doc?.authorName).toBe("Usuario de prueba");
   });
 
   test("propaga un código de error del modelo tal cual (INVALID_AMOUNT)", async () => {
