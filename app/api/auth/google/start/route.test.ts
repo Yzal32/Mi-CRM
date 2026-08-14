@@ -10,14 +10,18 @@ function makeRequest(): NextRequest {
 }
 
 const originalClientId = process.env.GOOGLE_CLIENT_ID;
+const originalAppUrl = process.env.APP_URL;
 
 beforeEach(() => {
   delete process.env.GOOGLE_CLIENT_ID;
+  process.env.APP_URL = ORIGIN;
 });
 
 afterEach(() => {
   if (originalClientId === undefined) delete process.env.GOOGLE_CLIENT_ID;
   else process.env.GOOGLE_CLIENT_ID = originalClientId;
+  if (originalAppUrl === undefined) delete process.env.APP_URL;
+  else process.env.APP_URL = originalAppUrl;
 });
 
 describe("GET /api/auth/google/start", () => {
@@ -61,5 +65,28 @@ describe("GET /api/auth/google/start", () => {
     const first = new URL((await GET(makeRequest())).headers.get("location")!);
     const second = new URL((await GET(makeRequest())).headers.get("location")!);
     expect(first.searchParams.get("state")).not.toBe(second.searchParams.get("state"));
+  });
+
+  test("sin APP_URL -> redirige a /login?error=GOOGLE_LOGIN_FAILED, mismo fallback que sin GOOGLE_CLIENT_ID", async () => {
+    process.env.GOOGLE_CLIENT_ID = "client-123";
+    delete process.env.APP_URL;
+    const response = await GET(makeRequest());
+    expect(response.headers.get("location")).toBe(`${ORIGIN}/login?error=GOOGLE_LOGIN_FAILED`);
+  });
+
+  // PRO-65: en Railway, el origin que ve la Route Handler dentro del
+  // contenedor no es el dominio público — este caso reproduce exactamente
+  // ese escenario y habría detectado el bug antes de llegar a producción.
+  test("usa APP_URL, no el origin de la petición entrante, para construir redirect_uri", async () => {
+    process.env.GOOGLE_CLIENT_ID = "client-123";
+    process.env.APP_URL = "https://mi-crm-production-d80f.up.railway.app";
+    const request = new NextRequest("http://localhost:8080/api/auth/google/start");
+
+    const response = await GET(request);
+
+    const location = new URL(response.headers.get("location")!);
+    expect(location.searchParams.get("redirect_uri")).toBe(
+      "https://mi-crm-production-d80f.up.railway.app/api/auth/google/callback",
+    );
   });
 });
