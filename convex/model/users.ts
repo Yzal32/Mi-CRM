@@ -122,6 +122,48 @@ export async function createUser(ctx: MutationCtx, args: CreateUserArgs): Promis
   });
 }
 
+// Mismos códigos de error que createUser salvo EMAIL_TOO_LONG: la validación
+// reutilizada (rawEmail.length > EMAIL_MAX_LENGTH || !isValidEmail(rawEmail))
+// siempre falla con INVALID_EMAIL para ambos casos, así que ese literal no
+// llegaría a usarse nunca — no declararlo aquí evita el desajuste tipo/código
+// real que sí arrastra CreateUserErrorCode.
+export type UpdateUserEmailErrorCode = "USER_NOT_FOUND" | "EMAIL_REQUIRED" | "INVALID_EMAIL" | "DUPLICATE_EMAIL";
+
+/**
+ * Vía administrativa genérica para corregir el email de un usuario ya
+ * existente (hoy sin pantalla propia — ver users.updateEmail, internalMutation
+ * solo por CLI). Reutiliza exactamente la misma validación/normalización de
+ * email que createUser para que un formato inválido o un duplicado no puedan
+ * colarse por esta vía. No toca passwordHash, mustChangePassword ni sesiones
+ * activas: corregir el email de la misma persona no es un cambio de
+ * credencial, no hay motivo de seguridad para rotarlas.
+ */
+export async function updateUserEmail(ctx: MutationCtx, args: { userId: Id<"users">; email: string }): Promise<void> {
+  const user = await ctx.db.get(args.userId);
+  if (!user) {
+    fail<UpdateUserEmailErrorCode>("USER_NOT_FOUND", "Ese usuario ya no existe.");
+  }
+
+  const rawEmail = args.email.trim();
+  if (!rawEmail) {
+    fail<UpdateUserEmailErrorCode>("EMAIL_REQUIRED", "Introduce el email del usuario.");
+  }
+  if (rawEmail.length > EMAIL_MAX_LENGTH || !isValidEmail(rawEmail)) {
+    fail<UpdateUserEmailErrorCode>("INVALID_EMAIL", "Ese email no es válido.");
+  }
+  const email = rawEmail.toLowerCase();
+
+  const existing = await ctx.db
+    .query("users")
+    .withIndex("by_email", (q) => q.eq("email", email))
+    .unique();
+  if (existing && existing._id !== user._id) {
+    fail<UpdateUserEmailErrorCode>("DUPLICATE_EMAIL", "Ya hay una cuenta con ese email.");
+  }
+
+  await ctx.db.patch(user._id, { email });
+}
+
 export type ResetEmployeePasswordErrorCode = "USER_NOT_FOUND" | "NOT_AN_EMPLOYEE";
 export type ResetEmployeePasswordResult = { temporaryPassword: string };
 

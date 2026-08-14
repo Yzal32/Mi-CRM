@@ -102,3 +102,9 @@ npx convex run users:provisionUser '{"name":"Marta Gómez","email":"marta@ejempl
 `role` es `"owner"` (Dueña) o `"employee"` (Empleado). La cuenta se crea con `mustChangePassword: true` siempre, así que la contraseña indicada aquí es solo temporal: en el primer login (`/login`), la app lleva directo a `/cambiar-contrasena` y no deja usar el resto del CRM hasta completarlo.
 
 **Cuidado con el historial de shell:** ese comando deja la contraseña en texto plano en el historial local de PowerShell/bash (`argv`, no hay entrada por stdin en `npx convex run`). Esto es un riesgo distinto del ya aceptado arriba para las mutations públicas sobre datos ficticios — aquí es una contraseña real, aunque temporal. Úsalo solo en tu propia máquina y considera borrar esa línea del historial si te preocupa.
+
+Para corregir el email de una cuenta ya existente (no hay pantalla de edición, solo alta) existe, mismo patrón, la `internalMutation` `users.updateEmail` (PRO-64) — reutiliza la misma validación de email que `provisionUser`/`users.create` (formato, unicidad vía `by_email`):
+
+```
+npx convex run users:updateEmail '{"userId":"...","email":"nuevo@ejemplo.com"}'
+```

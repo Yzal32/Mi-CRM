@@ -4,6 +4,7 @@ import {
   changePassword as changePasswordModel,
   createUser,
   resetEmployeePassword as resetEmployeePasswordModel,
+  updateUserEmail as updateUserEmailModel,
 } from "./model/users";
 import { requireOwner } from "./model/auth";
 
@@ -101,5 +102,23 @@ export const resetEmployeePassword = mutation({
   handler: async (ctx, args) => {
     await requireOwner(ctx, args.token);
     return resetEmployeePasswordModel(ctx, { userId: args.userId });
+  },
+});
+
+/**
+ * internalMutation: vía administrativa genérica para corregir el email de
+ * un usuario ya existente — igual que provisionUser, solo por CLI (`npx
+ * convex run users:updateEmail '{"userId":...,"email":...}'`) o desde otra
+ * función de servidor. No existe ninguna pantalla que la exponga.
+ */
+export const updateEmail = internalMutation({
+  args: {
+    userId: v.id("users"),
+    email: v.string(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await updateUserEmailModel(ctx, args);
+    return null;
   },
 });
