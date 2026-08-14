@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { GOOGLE_OAUTH_STATE_COOKIE_NAME, googleCallbackUrl } from "@/lib/auth/googleRedirectUri";
+import { GOOGLE_OAUTH_STATE_COOKIE_NAME, appBaseUrl, googleCallbackUrl } from "@/lib/auth/googleRedirectUri";
 
 const STATE_COOKIE_MAX_AGE_SECONDS = 10 * 60;
 const GOOGLE_AUTHORIZE_ENDPOINT = "https://accounts.google.com/o/oauth2/v2/auth";
@@ -20,12 +20,13 @@ function toHex(bytes: Uint8Array): string {
  */
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const clientId = process.env.GOOGLE_CLIENT_ID;
-  if (!clientId) {
+  const base = appBaseUrl();
+  if (!clientId || !base) {
     return NextResponse.redirect(new URL("/login?error=GOOGLE_LOGIN_FAILED", request.url));
   }
 
   const state = toHex(crypto.getRandomValues(new Uint8Array(24)));
-  const redirectUri = googleCallbackUrl(request);
+  const redirectUri = googleCallbackUrl(base);
 
   const authorizeUrl = new URL(GOOGLE_AUTHORIZE_ENDPOINT);
   authorizeUrl.searchParams.set("client_id", clientId);
