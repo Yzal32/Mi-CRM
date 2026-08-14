@@ -15,6 +15,7 @@ import type * as model_auth from "../model/auth.js";
 import type * as model_clients from "../model/clients.js";
 import type * as model_errors from "../model/errors.js";
 import type * as model_followUps from "../model/followUps.js";
+import type * as model_googleOAuth from "../model/googleOAuth.js";
 import type * as model_inputLimits from "../model/inputLimits.js";
 import type * as model_notes from "../model/notes.js";
 import type * as model_sales from "../model/sales.js";
@@ -41,6 +42,7 @@ declare const fullApi: ApiFromModules<{
   "model/clients": typeof model_clients;
   "model/errors": typeof model_errors;
   "model/followUps": typeof model_followUps;
+  "model/googleOAuth": typeof model_googleOAuth;
   "model/inputLimits": typeof model_inputLimits;
   "model/notes": typeof model_notes;
   "model/sales": typeof model_sales;

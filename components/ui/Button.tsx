@@ -33,7 +33,12 @@ type ButtonAsButton = CommonProps &
 // secundarios como cerrar un menú que abrió este enlace (ver
 // HoyQuickActionsOverlay). No existía hasta ahora porque ningún caller
 // previo lo necesitaba.
-type ButtonAsLink = CommonProps & { href: string; onClick?: () => void };
+// prefetch es opcional, sin cambiar el comportamiento por defecto de
+// next/link para ningún caller existente — necesario para enlaces a rutas
+// con efecto lateral real (PRO-63, /api/auth/google/start): sin
+// prefetch={false}, Next dispararía esa petición en segundo plano solo por
+// tener el enlace en viewport/hover, antes de que el usuario pulse nada.
+type ButtonAsLink = CommonProps & { href: string; onClick?: () => void; prefetch?: boolean };
 
 export function Button({ variant = "primary", size = "md", disabled = false, children, className, ...rest }: ButtonAsButton | ButtonAsLink) {
   const classes = clsx(
@@ -44,9 +49,9 @@ export function Button({ variant = "primary", size = "md", disabled = false, chi
   );
 
   if ("href" in rest && rest.href) {
-    const { href, onClick } = rest;
+    const { href, onClick, prefetch } = rest;
     return (
-      <Link href={href} onClick={onClick} className={classes} aria-disabled={disabled}>
+      <Link href={href} onClick={onClick} prefetch={prefetch} className={classes} aria-disabled={disabled}>
         {children}
       </Link>
     );
