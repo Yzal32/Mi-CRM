@@ -15,16 +15,24 @@ function messageFromErrorCode(code: string | undefined): string {
       return "Email o contraseña incorrectos.";
     case "ACCOUNT_INACTIVE":
       return "Esta cuenta ya no tiene acceso.";
+    case "ACCOUNT_NOT_PROVISIONED":
+      return "Esta cuenta de Google no está autorizada en este CRM.";
     default:
       return GENERIC_ERROR;
   }
 }
 
-export function LoginScreen() {
+export function LoginScreen({ initialErrorCode }: { initialErrorCode?: string } = {}) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
-  const [formError, setFormError] = useState<string | undefined>(undefined);
+  // initialErrorCode llega por query param (?error=...) tras el redirect de
+  // vuelta de /api/auth/google/callback (PRO-63) — a diferencia del login
+  // por contraseña, ahí no hay una llamada a función que devuelva el error
+  // directamente, es una navegación de página completa.
+  const [formError, setFormError] = useState<string | undefined>(
+    initialErrorCode ? messageFromErrorCode(initialErrorCode) : undefined,
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Cerrojo síncrono contra doble envío, mismo criterio que NuevoClienteScreen.
@@ -138,6 +146,19 @@ export function LoginScreen() {
             {isSubmitting ? "Entrando…" : "Entrar"}
           </Button>
         </form>
+
+        <div className="my-5 flex items-center gap-3 text-text-tertiary">
+          <div className="h-px flex-1 bg-border" />
+          <span className="font-caption">o</span>
+          <div className="h-px flex-1 bg-border" />
+        </div>
+
+        {/* prefetch={false}: /api/auth/google/start tiene efecto lateral
+            real (fija una cookie de estado y redirige a Google) — sin esto,
+            Next lo dispararía en segundo plano solo por estar en viewport. */}
+        <Button href="/api/auth/google/start" variant="secondary" className="w-full" prefetch={false}>
+          Continuar con Google
+        </Button>
       </div>
     </div>
   );

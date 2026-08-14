@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { LoginScreen } from "./LoginScreen";
@@ -9,8 +10,25 @@ vi.mock("@/app/login/actions", () => ({
   loginAction: (...args: unknown[]) => loginActionMock(...args),
 }));
 
+// Captura las props exactas que recibe next/link — necesario para el CTA de
+// Google (PRO-63): un <a> renderizado no expone `prefetch` como atributo
+// del DOM (no es un concepto de HTML), así que comprobar solo el `href`
+// no bastaría para verificar que el prefetch está desactivado.
+const linkPropsMock = vi.fn();
+vi.mock("next/link", () => ({
+  default: ({ children, href, prefetch, onClick, className }: Record<string, unknown>) => {
+    linkPropsMock({ href, prefetch });
+    return (
+      <a href={href as string} onClick={onClick as () => void} className={className as string}>
+        {children as ReactNode}
+      </a>
+    );
+  },
+}));
+
 beforeEach(() => {
   loginActionMock.mockReset();
+  linkPropsMock.mockReset();
 });
 
 afterEach(() => {
@@ -126,5 +144,23 @@ describe("LoginScreen", () => {
 
     expect(loginActionMock).toHaveBeenCalledTimes(1);
     resolveLogin(undefined);
+  });
+
+  it("initialErrorCode=ACCOUNT_NOT_PROVISIONED muestra el mensaje correspondiente al montar", () => {
+    render(<LoginScreen initialErrorCode="ACCOUNT_NOT_PROVISIONED" />);
+    const banner = screen.getByText("Esta cuenta de Google no está autorizada en este CRM.");
+    expect(banner.closest("[role='alert']")).not.toBeNull();
+  });
+
+  it("sin initialErrorCode no muestra ningún banner de error", () => {
+    render(<LoginScreen />);
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+
+  it('el CTA "Continuar con Google" apunta a /api/auth/google/start con prefetch desactivado', () => {
+    render(<LoginScreen />);
+    const link = screen.getByRole("link", { name: "Continuar con Google" });
+    expect(link.getAttribute("href")).toBe("/api/auth/google/start");
+    expect(linkPropsMock).toHaveBeenCalledWith({ href: "/api/auth/google/start", prefetch: false });
   });
 });

@@ -133,6 +133,32 @@ export async function login(ctx: MutationCtx, args: { email: string; password: s
   return { token, userId: user._id, name: user.name, role: user.role, mustChangePassword: user.mustChangePassword };
 }
 
+export type GoogleLoginErrorCode = "ACCOUNT_NOT_PROVISIONED" | "ACCOUNT_INACTIVE";
+
+/**
+ * Único punto de login vía Google (PRO-63) — mismo `LoginResult` y misma
+ * reutilización de `createSessionForUser` que `login()`, pero sin comparar
+ * contraseña: el email ya viene verificado por el caller (la action
+ * `sessions.loginWithGoogle`, que solo lo pasa aquí después de canjear un
+ * `code` real de Google). Registro cerrado por diseño: un email sin cuenta
+ * ya aprovisionada se rechaza, nunca crea una cuenta nueva.
+ */
+export async function loginWithGoogleEmail(ctx: MutationCtx, email: string): Promise<LoginResult> {
+  const normalizedEmail = email.trim().toLowerCase();
+  const user = await ctx.db
+    .query("users")
+    .withIndex("by_email", (q) => q.eq("email", normalizedEmail))
+    .unique();
+  if (!user) {
+    fail<GoogleLoginErrorCode>("ACCOUNT_NOT_PROVISIONED", "Esta cuenta de Google no está autorizada en este CRM.");
+  }
+  if (user.status === "inactive") {
+    fail<GoogleLoginErrorCode>("ACCOUNT_INACTIVE", "Esta cuenta ya no tiene acceso.");
+  }
+  const token = await createSessionForUser(ctx, user._id);
+  return { token, userId: user._id, name: user.name, role: user.role, mustChangePassword: user.mustChangePassword };
+}
+
 type ActiveSession = { session: Doc<"sessions">; user: Doc<"users"> };
 
 /**

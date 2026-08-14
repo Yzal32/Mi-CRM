@@ -1,12 +1,16 @@
 import { v } from "convex/values";
-import { internalMutation, mutation, query } from "./_generated/server";
+import { action, internalMutation, mutation, query } from "./_generated/server";
+import { internal } from "./_generated/api";
 import {
   login as loginModel,
   verifySession as verifySessionModel,
   destroySession as destroySessionModel,
   issueAccessToken as issueAccessTokenModel,
   expireAccessTokenIfDue,
+  loginWithGoogleEmail as loginWithGoogleEmailModel,
 } from "./model/sessions";
+import { exchangeGoogleCodeForEmail } from "./model/googleOAuth";
+import { fail } from "./model/errors";
 
 const roleValidator = v.union(v.literal("owner"), v.literal("employee"));
 
@@ -64,6 +68,46 @@ export const issueAccessToken = mutation({
     serverNow: v.number(),
   }),
   handler: async (ctx, args) => issueAccessTokenModel(ctx, args.token),
+});
+
+/**
+ * internalMutation a propósito (PRO-63): solo alcanzable vía
+ * `ctx.runMutation` desde dentro de Convex (la action `loginWithGoogle` de
+ * abajo), nunca desde un cliente HTTP externo — si fuera pública, cualquiera
+ * podría llamarla con un email inventado y saltarse por completo el
+ * consentimiento real de Google.
+ */
+export const loginWithGoogleEmail = internalMutation({
+  args: { email: v.string() },
+  returns: v.object({ token: v.string(), mustChangePassword: v.boolean() }),
+  handler: async (ctx, args) => {
+    const result = await loginWithGoogleEmailModel(ctx, args.email);
+    return { token: result.token, mustChangePassword: result.mustChangePassword };
+  },
+});
+
+/**
+ * Login con Google (PRO-63) — primera `action` del proyecto: solo una
+ * `action` puede hacer `fetch` saliente (aquí, hacia Google). Pública a
+ * propósito: la "prueba de identidad" no es el email en sí (cualquiera
+ * podría inventarlo como argumento), sino el `code` de un solo uso que
+ * Google emite tras el consentimiento real, y que solo esta action puede
+ * canjear (posee GOOGLE_CLIENT_SECRET, variable de entorno de Convex, nunca
+ * de Next.js/Railway) — un `code` inventado simplemente falla el
+ * intercambio con Google, sin crear sesión.
+ */
+export const loginWithGoogle = action({
+  args: { code: v.string(), redirectUri: v.string() },
+  returns: v.object({ token: v.string(), mustChangePassword: v.boolean() }),
+  handler: async (ctx, args): Promise<{ token: string; mustChangePassword: boolean }> => {
+    const clientId = process.env.GOOGLE_CLIENT_ID;
+    const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+    if (!clientId || !clientSecret) {
+      fail<"GOOGLE_LOGIN_FAILED">("GOOGLE_LOGIN_FAILED", "Inicio de sesión con Google no configurado.");
+    }
+    const email = await exchangeGoogleCodeForEmail({ code: args.code, redirectUri: args.redirectUri, clientId, clientSecret });
+    return ctx.runMutation(internal.sessions.loginWithGoogleEmail, { email });
+  },
 });
 
 // PRO-59 (ronda 6 de auditoría): borra físicamente un accessToken al cumplirse

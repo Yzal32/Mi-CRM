@@ -38,4 +38,17 @@ describe("proxy", () => {
     const response = proxy(makeRequest("/api/auth/convex-token"));
     expect(response.headers.get("location")).toBeNull();
   });
+
+  // PRO-63: sin sesión es precisamente el caso de uso de "entrar con
+  // Google" — si el proxy interceptara estas rutas, el flujo OAuth nunca
+  // podría arrancar ni completarse.
+  test("sin cookie y /api/auth/google/start -> deja pasar (no redirige)", () => {
+    const response = proxy(makeRequest("/api/auth/google/start"));
+    expect(response.headers.get("location")).toBeNull();
+  });
+
+  test("sin cookie y /api/auth/google/callback -> deja pasar (no redirige)", () => {
+    const response = proxy(makeRequest("/api/auth/google/callback"));
+    expect(response.headers.get("location")).toBeNull();
+  });
 });

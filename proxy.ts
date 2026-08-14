@@ -26,6 +26,13 @@ export function proxy(request: NextRequest) {
   if (request.nextUrl.pathname === "/api/auth/convex-token") {
     return NextResponse.next();
   }
+  // PRO-63: sin sesión es precisamente el caso de uso de "entrar con
+  // Google" — si el check optimista de aquí las interceptara, ni /start ni
+  // /callback llegarían nunca a ejecutarse. Rutas exactas, mismo criterio
+  // que /api/auth/convex-token arriba.
+  if (request.nextUrl.pathname === "/api/auth/google/start" || request.nextUrl.pathname === "/api/auth/google/callback") {
+    return NextResponse.next();
+  }
   if (!request.cookies.has(SESSION_COOKIE_NAME)) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
