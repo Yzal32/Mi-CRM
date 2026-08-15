@@ -1,18 +1,15 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { useRouter, unstable_rethrow } from "next/navigation";
+import { unstable_rethrow } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import { Input } from "@/components/ui/Input";
-import { Toast } from "@/components/ui/Toast";
 import { requestPasswordResetAction } from "@/app/recuperar-contrasena/actions";
 
 const GENERIC_ERROR = "No se pudo procesar la solicitud. Inténtalo de nuevo.";
 
-export function RecuperarContrasenaScreen({ showSentToast = false }: { showSentToast?: boolean } = {}) {
-  const router = useRouter();
-  const [toastVisible, setToastVisible] = useState(showSentToast);
+export function RecuperarContrasenaScreen() {
   const [email, setEmail] = useState("");
   const [fieldError, setFieldError] = useState<string | undefined>();
   const [formError, setFormError] = useState<string | undefined>();
@@ -22,13 +19,6 @@ export function RecuperarContrasenaScreen({ showSentToast = false }: { showSentT
   const savingRef = useRef(false);
   const emailRef = useRef<HTMLInputElement>(null);
   const formErrorRef = useRef<HTMLParagraphElement>(null);
-
-  useEffect(() => {
-    if (!showSentToast) return;
-    // Limpia el query param para que un refresco no repita el toast — solo al montar.
-    router.replace("/recuperar-contrasena", { scroll: false });
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- una sola vez al montar
-  }, []);
 
   useEffect(() => {
     if (fieldError) {
@@ -70,18 +60,11 @@ export function RecuperarContrasenaScreen({ showSentToast = false }: { showSentT
   return (
     <div className="flex min-h-full flex-1 items-center justify-center px-4 py-10">
       <div className="w-full max-w-sm">
-        {toastVisible && (
-          <Toast
-            message="Si existe una cuenta con ese email, te hemos enviado un enlace para restablecer tu contraseña."
-            onDismiss={() => setToastVisible(false)}
-          />
-        )}
-
         <p className="mb-8 text-center font-caption uppercase tracking-wide text-text-tertiary">Loop CRM</p>
 
         <div className="mb-5">
           <h1 className="font-screen-title m-0 text-text">Recuperar contraseña</h1>
-          <p className="font-body m-0 text-text-secondary">Te enviaremos un enlace para restablecerla.</p>
+          <p className="font-body m-0 text-text-secondary">Te enviaremos un código de 6 dígitos para restablecerla.</p>
         </div>
 
         <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-5">
@@ -113,7 +96,7 @@ export function RecuperarContrasenaScreen({ showSentToast = false }: { showSentT
           />
 
           <Button type="submit" variant="primary" disabled={isSubmitting} className="w-full">
-            {isSubmitting ? "Enviando…" : "Enviar enlace"}
+            {isSubmitting ? "Enviando…" : "Enviar código"}
           </Button>
         </form>
 

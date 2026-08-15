@@ -34,13 +34,14 @@ export const sendTestEmail = internalAction({
 });
 
 /**
- * Envía el email de "olvidé mi contraseña" (PRO-67) — invocada solo desde
+ * Envía el email de "olvidé mi contraseña" (PRO-68, código en vez de
+ * enlace desde PRO-67) — invocada solo desde
  * passwordReset.requestPasswordReset (internalAction, no alcanzable desde
  * ninguna UI ni cliente directamente). Mismo remitente sandbox que
  * sendTestEmail mientras no exista un dominio propio verificado.
  */
 export const sendPasswordResetEmail = internalAction({
-  args: { to: v.string(), resetUrl: v.string() },
+  args: { to: v.string(), code: v.string() },
   returns: v.null(),
   handler: async (_ctx, args) => {
     const apiKey = process.env.RESEND_API_KEY;
@@ -51,11 +52,11 @@ export const sendPasswordResetEmail = internalAction({
       apiKey,
       from: SANDBOX_FROM_ADDRESS,
       to: args.to,
-      subject: "Restablece tu contraseña — Mi CRM",
+      subject: "Tu código para restablecer la contraseña — Mi CRM",
       html:
-        "<p>Hemos recibido una solicitud para restablecer tu contraseña.</p>" +
-        `<p><a href="${args.resetUrl}">Restablecer contraseña</a></p>` +
-        "<p>Este enlace caduca en 1 hora. Si no has sido tú, puedes ignorar este correo.</p>",
+        "<p>Usa este código para restablecer tu contraseña:</p>" +
+        `<p style="font-size:28px;font-weight:bold;letter-spacing:4px;">${args.code}</p>` +
+        "<p>Caduca en 15 minutos. Si no has sido tú, puedes ignorar este correo.</p>",
     });
     return null;
   },

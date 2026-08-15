@@ -201,16 +201,19 @@ export default defineSchema({
     .index("by_tokenHash", ["tokenHash"])
     .index("by_sessionId", ["sessionId"]),
 
-  // PRO-67: token opaco de un solo uso para restablecer la contraseña desde
-  // un enlace de email, sin sesión activa — ver convex/model/passwordReset.ts.
-  // Mismo patrón que sessions/accessTokens: solo se persiste el hash.
+  // PRO-68: código de 6 dígitos de un solo uso para restablecer la
+  // contraseña sin sesión activa, enviado por email — ver
+  // convex/model/passwordReset.ts. codeHash es HMAC-SHA256(código,
+  // PASSWORD_RESET_CODE_PEPPER), no un hash simple: con solo 1.000.000 de
+  // códigos posibles, un hash sin secreto se invertiría offline en
+  // milisegundos con solo leer esta tabla.
   passwordResets: defineTable({
     userId: v.id("users"),
-    tokenHash: v.string(),
+    codeHash: v.string(),
+    createdAt: v.number(), // epoch ms — para el margen mínimo entre solicitudes
     expiresAt: v.number(),
-  })
-    .index("by_tokenHash", ["tokenHash"])
-    .index("by_userId", ["userId"]),
+    attempts: v.number(), // intentos fallidos contra este código concreto
+  }).index("by_userId", ["userId"]),
 
   sales: defineTable({
     clientId: v.id("clients"),

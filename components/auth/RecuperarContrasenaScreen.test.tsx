@@ -8,17 +8,8 @@ vi.mock("@/app/recuperar-contrasena/actions", () => ({
   requestPasswordResetAction: (...args: unknown[]) => requestPasswordResetActionMock(...args),
 }));
 
-// Mock parcial: conserva unstable_rethrow real, solo sustituye useRouter —
-// mismo criterio que LoginScreen.test.tsx.
-const routerReplaceMock = vi.fn();
-vi.mock("next/navigation", async (importActual) => {
-  const actual = await importActual<typeof import("next/navigation")>();
-  return { ...actual, useRouter: () => ({ replace: routerReplaceMock, push: vi.fn(), back: vi.fn() }) };
-});
-
 beforeEach(() => {
   requestPasswordResetActionMock.mockReset();
-  routerReplaceMock.mockReset();
 });
 
 afterEach(() => {
@@ -26,7 +17,7 @@ afterEach(() => {
 });
 
 function clickEnviar() {
-  fireEvent.click(screen.getByRole("button", { name: "Enviar enlace" }));
+  fireEvent.click(screen.getByRole("button", { name: "Enviar código" }));
 }
 
 describe("RecuperarContrasenaScreen", () => {
@@ -73,25 +64,11 @@ describe("RecuperarContrasenaScreen", () => {
     render(<RecuperarContrasenaScreen />);
 
     fireEvent.change(screen.getByLabelText(/^Email/), { target: { value: "marta@ejemplo.com" } });
-    const button = screen.getByRole("button", { name: "Enviar enlace" });
+    const button = screen.getByRole("button", { name: "Enviar código" });
     fireEvent.click(button);
     fireEvent.click(button);
 
     expect(requestPasswordResetActionMock).toHaveBeenCalledTimes(1);
     resolveAction(undefined);
-  });
-
-  it("showSentToast muestra el toast de confirmación y limpia el query param al montar", () => {
-    render(<RecuperarContrasenaScreen showSentToast />);
-    expect(
-      screen.getByText("Si existe una cuenta con ese email, te hemos enviado un enlace para restablecer tu contraseña."),
-    ).toBeTruthy();
-    expect(routerReplaceMock).toHaveBeenCalledWith("/recuperar-contrasena", { scroll: false });
-  });
-
-  it("sin showSentToast no se muestra el toast", () => {
-    render(<RecuperarContrasenaScreen />);
-    expect(screen.queryByRole("status")).toBeNull();
-    expect(routerReplaceMock).not.toHaveBeenCalled();
   });
 });
