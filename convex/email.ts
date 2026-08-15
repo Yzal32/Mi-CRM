@@ -1,0 +1,34 @@
+import { v } from "convex/values";
+import { internalAction } from "./_generated/server";
+import { fail } from "./model/errors";
+import { sendEmail, type SendEmailErrorCode } from "./model/email";
+
+// Modo sandbox (PRO-66): sin dominio propio verificado, Resend solo entrega
+// a la dirección con la que está registrada la cuenta. Cambiar este
+// remitente cuando exista un dominio propio verificado en Resend.
+const SANDBOX_FROM_ADDRESS = "Mi CRM <onboarding@resend.dev>";
+
+/**
+ * Solo para verificar manualmente que el envío con Resend funciona.
+ * No se llama desde ninguna UI. Invocar por CLI:
+ *   npx convex run email:sendTestEmail '{"to":"tu-email@ejemplo.com"}'
+ * (debe ser la dirección con la que está registrada la cuenta de Resend).
+ */
+export const sendTestEmail = internalAction({
+  args: { to: v.string() },
+  returns: v.null(),
+  handler: async (_ctx, args) => {
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!apiKey) {
+      fail<SendEmailErrorCode>("SEND_EMAIL_FAILED", "Resend no está configurado (falta RESEND_API_KEY).");
+    }
+    await sendEmail({
+      apiKey,
+      from: SANDBOX_FROM_ADDRESS,
+      to: args.to,
+      subject: "Prueba de Resend — Mi CRM",
+      html: "<p>Si ves este email, el envío de prueba con Resend funciona.</p>",
+    });
+    return null;
+  },
+});
