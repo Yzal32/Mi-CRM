@@ -48,48 +48,41 @@ export const createResetForEmail = internalMutation({
 });
 
 /**
- * Resuelve el email a un usuario y verifica el código, en una única
- * mutation que se comita de forma independiente aunque la action que la
- * llama (resetPassword) termine fallando después — necesario para que el
- * incremento de `attempts` en un intento fallido sobreviva (ver
- * convex/model/passwordReset.ts, verifyPasswordResetCode). Devuelve el
- * userId solo si el código es correcto; null en cualquier otro caso
- * (email inexistente, código incorrecto, caducado o agotado) — mismo
- * código de error genérico para todos desde la action, no revela cuál fue.
+ * Verifica el código Y aplica la contraseña nueva en una única mutation —
+ * corrección de una ronda de auditoría (B3): tenerlas en dos mutations
+ * separadas (una que verifica y devuelve un userId "autorizado", otra que
+ * lo consume) rompía el "un solo uso" bajo concurrencia — dos peticiones
+ * con el mismo código correcto podían pasar ambas la verificación antes de
+ * que ninguna llegara a consumirlo, y las dos acababan cambiando la
+ * contraseña. Nunca lanza en el camino de "código incorrecto" (devuelve
+ * "invalid" con normalidad) para que el incremento de `attempts` hecho por
+ * verifyPasswordResetCode se comite igualmente — Convex revierte todos los
+ * writes de una mutation que lanza, así que lanzar aquí perdería ese
+ * incremento (el mismo problema que forzó separar esto en dos mutations en
+ * un intento anterior, ver historial). Sí puede lanzar por una contraseña
+ * nueva inválida (PASSWORD_TOO_SHORT, etc.): en ese caso no hay nada que
+ * conservar — la verificación del código no escribió nada, así que el
+ * código sigue disponible para reintentar con una contraseña válida.
  */
-export const verifyResetCode = internalMutation({
-  args: { email: v.string(), code: v.string(), pepper: v.string() },
-  returns: v.union(v.id("users"), v.null()),
+export const verifyAndApplyReset = internalMutation({
+  args: { email: v.string(), code: v.string(), newPassword: v.string(), pepper: v.string() },
+  returns: v.union(v.literal("ok"), v.literal("invalid")),
   handler: async (ctx, args) => {
     const email = args.email.trim().toLowerCase();
     const user = await ctx.db
       .query("users")
       .withIndex("by_email", (q) => q.eq("email", email))
       .unique();
-    if (!user) return null;
+    if (!user) return "invalid";
     const ok = await verifyPasswordResetCode(ctx, { userId: user._id, code: args.code, pepper: args.pepper });
-    return ok ? user._id : null;
+    if (!ok) return "invalid";
+    await resetPasswordAfterVerification(ctx, { userId: user._id, newPassword: args.newPassword });
+    await deletePasswordResetsForUser(ctx, user._id);
+    return "ok";
   },
 });
 
-/** Aplica la contraseña nueva y limpia los códigos de recuperación del usuario, tras un código ya verificado. */
-export const applyNewPassword = internalMutation({
-  args: { userId: v.id("users"), newPassword: v.string() },
-  returns: v.null(),
-  handler: async (ctx, args) => {
-    await resetPasswordAfterVerification(ctx, { userId: args.userId, newPassword: args.newPassword });
-    await deletePasswordResetsForUser(ctx, args.userId);
-    return null;
-  },
-});
-
-/**
- * Público (PRO-68). Es una `action`, no una `mutation`, precisamente para
- * poder orquestar verifyResetCode + applyNewPassword como dos mutations
- * independientes: si applyNewPassword nunca llega a ejecutarse (código
- * incorrecto), el incremento de `attempts` de verifyResetCode ya se comitó
- * de todas formas.
- */
+/** Público (PRO-68). Envuelve verifyAndApplyReset (una sola mutation) y traduce "invalid" a un error tipado. */
 export const resetPassword = action({
   args: { email: v.string(), code: v.string(), newPassword: v.string() },
   returns: v.null(),
@@ -98,11 +91,15 @@ export const resetPassword = action({
     if (!pepper) {
       fail<PasswordResetConfigErrorCode>("PASSWORD_RESET_NOT_CONFIGURED", "La recuperación de contraseña no está configurada.");
     }
-    const userId = await ctx.runMutation(internal.passwordReset.verifyResetCode, { email: args.email, code: args.code, pepper });
-    if (!userId) {
+    const result = await ctx.runMutation(internal.passwordReset.verifyAndApplyReset, {
+      email: args.email,
+      code: args.code,
+      newPassword: args.newPassword,
+      pepper,
+    });
+    if (result === "invalid") {
       fail<ResetPasswordErrorCode>("RESET_CODE_INVALID", "Código incorrecto o caducado.");
     }
-    await ctx.runMutation(internal.passwordReset.applyNewPassword, { userId, newPassword: args.newPassword });
     return null;
   },
 });

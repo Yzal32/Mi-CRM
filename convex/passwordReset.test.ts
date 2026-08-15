@@ -186,6 +186,32 @@ describe("passwordReset.resetPassword", () => {
     const login = await t.mutation(api.sessions.login, { email, password: "nuevaPass123" });
     expect(login.mustChangePassword).toBe(false);
   });
+
+  test("resuelve B3: dos solicitudes concurrentes con el mismo código correcto -> solo una completa el restablecimiento", async () => {
+    vi.stubEnv("PASSWORD_RESET_CODE_PEPPER", PEPPER);
+    const t = convexTest(schema, modules);
+    const { userId, email } = await provisionUser(t);
+    const code = await createCode(t, userId);
+
+    const results = await Promise.allSettled([
+      t.action(api.passwordReset.resetPassword, { email, code, newPassword: "primeraPass123" }),
+      t.action(api.passwordReset.resetPassword, { email, code, newPassword: "segundaPass456" }),
+    ]);
+
+    expect(results.filter((r) => r.status === "fulfilled")).toHaveLength(1);
+    expect(results.filter((r) => r.status === "rejected")).toHaveLength(1);
+
+    // Solo una de las dos contraseñas quedó activa — el código no sirvió dos veces.
+    const firstWorks = await t
+      .mutation(api.sessions.login, { email, password: "primeraPass123" })
+      .then(() => true)
+      .catch(() => false);
+    const secondWorks = await t
+      .mutation(api.sessions.login, { email, password: "segundaPass456" })
+      .then(() => true)
+      .catch(() => false);
+    expect([firstWorks, secondWorks].filter(Boolean)).toHaveLength(1);
+  });
 });
 
 describe("passwordReset.createResetForEmail", () => {
