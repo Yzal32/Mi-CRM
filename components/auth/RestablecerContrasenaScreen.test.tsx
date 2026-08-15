@@ -1,0 +1,99 @@
+// @vitest-environment jsdom
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { RestablecerContrasenaScreen } from "./RestablecerContrasenaScreen";
+
+const resetPasswordActionMock = vi.fn();
+vi.mock("@/app/restablecer-contrasena/[token]/actions", () => ({
+  resetPasswordAction: (...args: unknown[]) => resetPasswordActionMock(...args),
+}));
+
+const TOKEN = "a".repeat(64);
+
+beforeEach(() => {
+  resetPasswordActionMock.mockReset();
+});
+
+afterEach(() => {
+  cleanup();
+});
+
+function fillFields(next = "definitiva456", confirm = "definitiva456") {
+  fireEvent.change(screen.getByLabelText(/^Contraseña nueva/), { target: { value: next } });
+  fireEvent.change(screen.getByLabelText(/^Confirmar contraseña nueva/), { target: { value: confirm } });
+}
+
+function clickRestablecer() {
+  fireEvent.click(screen.getByRole("button", { name: "Restablecer contraseña" }));
+}
+
+describe("RestablecerContrasenaScreen", () => {
+  it("envío correcto llama a resetPasswordAction con el token y la contraseña nueva", async () => {
+    resetPasswordActionMock.mockResolvedValue(undefined);
+    render(<RestablecerContrasenaScreen token={TOKEN} />);
+
+    fillFields("definitiva456", "definitiva456");
+    clickRestablecer();
+
+    await waitFor(() =>
+      expect(resetPasswordActionMock).toHaveBeenCalledWith({ token: TOKEN, newPassword: "definitiva456" }),
+    );
+  });
+
+  it("confirmación distinta muestra error local, no llama a resetPasswordAction", async () => {
+    render(<RestablecerContrasenaScreen token={TOKEN} />);
+
+    fillFields("definitiva456", "otra-cosa");
+    clickRestablecer();
+
+    expect(await screen.findByText("Las contraseñas no coinciden.")).toBeTruthy();
+    expect(resetPasswordActionMock).not.toHaveBeenCalled();
+  });
+
+  it("campos vacíos muestran error y no llaman a resetPasswordAction", async () => {
+    render(<RestablecerContrasenaScreen token={TOKEN} />);
+
+    clickRestablecer();
+
+    expect(await screen.findByText("Introduce una contraseña nueva.")).toBeTruthy();
+    expect(resetPasswordActionMock).not.toHaveBeenCalled();
+  });
+
+  it("RESET_TOKEN_INVALID muestra el banner de formulario y un enlace para pedir un enlace nuevo", async () => {
+    resetPasswordActionMock.mockResolvedValue({ error: "RESET_TOKEN_INVALID" });
+    render(<RestablecerContrasenaScreen token={TOKEN} />);
+
+    fillFields();
+    clickRestablecer();
+
+    const banner = await screen.findByText("Este enlace no es válido o ha caducado. Solicita uno nuevo.");
+    expect(banner.closest("[role='alert']")).not.toBeNull();
+    expect(screen.getByRole("link", { name: "Pedir un enlace nuevo" }).getAttribute("href")).toBe(
+      "/recuperar-contrasena",
+    );
+  });
+
+  it("PASSWORD_TOO_SHORT se muestra junto al campo de la contraseña nueva", async () => {
+    resetPasswordActionMock.mockResolvedValue({ error: "PASSWORD_TOO_SHORT" });
+    render(<RestablecerContrasenaScreen token={TOKEN} />);
+
+    fillFields();
+    clickRestablecer();
+
+    expect(await screen.findByText("La contraseña debe tener al menos 8 caracteres.")).toBeTruthy();
+  });
+
+  it("un rechazo no controlado (p. ej. red caída) libera el cerrojo, muestra el error genérico y permite reintentar", async () => {
+    resetPasswordActionMock.mockRejectedValueOnce(new Error("fallo de red")).mockResolvedValueOnce(undefined);
+    render(<RestablecerContrasenaScreen token={TOKEN} />);
+
+    fillFields();
+    clickRestablecer();
+
+    const banner = await screen.findByText("No se pudo restablecer la contraseña. Inténtalo de nuevo.");
+    expect(banner.closest("[role='alert']")).not.toBeNull();
+
+    clickRestablecer();
+    await waitFor(() => expect(resetPasswordActionMock).toHaveBeenCalledTimes(2));
+  });
+});

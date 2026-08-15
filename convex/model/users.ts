@@ -274,3 +274,32 @@ export async function changePassword(
   const token = await createSessionForUser(ctx, user._id);
   return { token };
 }
+
+export type ResetPasswordWithTokenErrorCode = "RESET_TOKEN_INVALID" | "PASSWORD_REQUIRED" | "PASSWORD_TOO_SHORT" | "PASSWORD_TOO_LONG";
+
+/**
+ * Restablecimiento por enlace de email (PRO-67) — a diferencia de
+ * changePassword (exige sesión + contraseña actual) y resetEmployeePassword
+ * (lo hace la Dueña sobre otra cuenta), aquí "conocía el enlace del email"
+ * hace de credencial: el caller ya resolvió y validó el token de
+ * restablecimiento (ver convex/model/passwordReset.ts) antes de llamar
+ * aquí. No auto-inicia sesión (a diferencia de changePassword): tras
+ * restablecer por email, el usuario entra por /login con la contraseña
+ * nueva — no se crea una sesión a partir de una prueba más débil (posesión
+ * del email) que un login real.
+ */
+export async function resetPasswordWithToken(ctx: MutationCtx, args: { userId: Id<"users">; newPassword: string }): Promise<void> {
+  const user = await ctx.db.get(args.userId);
+  // Defensivo: hoy no existe borrado físico de usuarios (solo status
+  // "inactive"), así que esto no debería poder pasar; se mantiene el mismo
+  // código genérico por si acaso, en vez de asumir que ctx.db.get siempre acierta.
+  if (!user) {
+    fail<ResetPasswordWithTokenErrorCode>("RESET_TOKEN_INVALID", "Este enlace no es válido o ha caducado.");
+  }
+  validateNewPassword(args.newPassword);
+  await ctx.db.patch(user._id, {
+    passwordHash: hashSync(args.newPassword, PASSWORD_HASH_COST),
+    mustChangePassword: false,
+  });
+  await destroySessionsForUser(ctx, user._id);
+}
