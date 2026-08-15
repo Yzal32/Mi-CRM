@@ -1,7 +1,7 @@
 const TOKEN_BYTE_LENGTH = 32;
 export const TOKEN_PATTERN = /^[0-9a-f]{64}$/;
 
-function toHex(bytes: Uint8Array): string {
+export function toHex(bytes: Uint8Array): string {
   return Array.from(bytes)
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");

@@ -20,20 +20,20 @@ beforeEach(() => {
 });
 
 describe("requestPasswordResetAction", () => {
-  it("Convex resuelve sin error -> redirige a ?enviado=1", async () => {
+  it("Convex resuelve sin error -> redirige a /restablecer-contrasena con el email en la URL", async () => {
     actionMock.mockResolvedValue(null);
 
     await expect(requestPasswordResetAction({ email: "existe@ejemplo.com" })).rejects.toThrow(
-      "NEXT_REDIRECT:/recuperar-contrasena?enviado=1",
+      "NEXT_REDIRECT:/restablecer-contrasena?email=existe%40ejemplo.com",
     );
     expect(actionMock).toHaveBeenCalledWith(expect.anything(), { email: "existe@ejemplo.com" });
   });
 
-  it("Convex lanza (email inexistente, APP_URL no configurada, red caída, etc.) -> mismo redirect, nunca se filtra el motivo", async () => {
-    actionMock.mockRejectedValue(new ConvexError({ code: "APP_URL_NOT_CONFIGURED", message: "..." }));
+  it("Convex lanza (email inexistente, pepper sin configurar, red caída, etc.) -> mismo redirect, nunca se filtra el motivo", async () => {
+    actionMock.mockRejectedValue(new ConvexError({ code: "PASSWORD_RESET_NOT_CONFIGURED", message: "..." }));
 
     await expect(requestPasswordResetAction({ email: "no-existe@ejemplo.com" })).rejects.toThrow(
-      "NEXT_REDIRECT:/recuperar-contrasena?enviado=1",
+      "NEXT_REDIRECT:/restablecer-contrasena?email=no-existe%40ejemplo.com",
     );
   });
 });

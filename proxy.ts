@@ -16,15 +16,15 @@ export function proxy(request: NextRequest) {
   if (request.nextUrl.pathname === "/login") {
     return NextResponse.next();
   }
-  // PRO-67: recuperación de contraseña — igual que /login, un usuario sin
-  // sesión es precisamente el caso de uso de este flujo, así que ambas
-  // rutas deben quedar alcanzables sin cookie. La segunda es un prefijo
-  // (no ruta exacta, a diferencia del resto de carve-outs de este archivo)
-  // porque lleva el token variable en el path.
+  // PRO-67/PRO-68: recuperación de contraseña por código — igual que
+  // /login, un usuario sin sesión es precisamente el caso de uso de este
+  // flujo, así que ambas rutas deben quedar alcanzables sin cookie. Desde
+  // PRO-68 las dos son rutas estáticas (sin segmento dinámico: el código no
+  // viaja en la URL), así que ambas usan coincidencia exacta.
   if (request.nextUrl.pathname === "/recuperar-contrasena") {
     return NextResponse.next();
   }
-  if (request.nextUrl.pathname.startsWith("/restablecer-contrasena/")) {
+  if (request.nextUrl.pathname === "/restablecer-contrasena") {
     return NextResponse.next();
   }
   // PRO-59: este endpoint es el único que puede emitir/renovar el
