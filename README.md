@@ -71,6 +71,16 @@ Convive con el login por email+contraseña, sin sustituirlo. El registro sigue c
 - **Variables de entorno:** `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` en Convex (`npx convex env set ...`, contra el deployment compartido) y `GOOGLE_CLIENT_ID`/`APP_URL` (sin `NEXT_PUBLIC_`, variables de servidor normal) en Railway/`.env.local` — el secreto nunca sale de Convex. Redirect URI registrada en Google Cloud Console: `https://mi-crm-production-d80f.up.railway.app/api/auth/google/callback` (producción) y `http://localhost:3000/api/auth/google/callback` (desarrollo local).
 - **`APP_URL` (PRO-65), no `request.url`:** `lib/auth/googleRedirectUri.ts` construye la `redirect_uri` y las redirecciones de éxito/error de estas dos rutas a partir de `APP_URL`, nunca de `request.url` — en el despliegue de Railway, el `Host` que ve la Route Handler dentro del contenedor no es el dominio público (comprobado: resolvía a `http://localhost:8080/...`), lo que causaba `redirect_uri_mismatch` en Google. `APP_URL` en Railway es `https://mi-crm-production-d80f.up.railway.app`.
 
+### Cómo funciona el envío de emails (PRO-66)
+
+Todavía en **modo prueba (sandbox)**: el CRM vive en el subdominio gratuito de Railway (`mi-crm-production-d80f.up.railway.app`), que no admite verificación DNS porque no lo controla el usuario, así que no hay dominio propio verificado en Resend.
+
+- `convex/model/email.ts` (`sendEmail`): capa reutilizable, agnóstica del remitente — llama a la API REST de Resend (`https://api.resend.com/emails`) vía `fetch`, sin añadir el SDK `resend` como dependencia (mismo criterio que Google OAuth). Pensada para que features futuras del CRM la reutilicen (p. ej. notificar a un empleado, PRO-51) sin tocarla cuando exista un dominio propio.
+- `convex/email.ts` (`sendTestEmail`, `internalAction`, la primera `internalAction` del proyecto): vía manual de verificación, sin UI. Usa como remitente `onboarding@resend.dev` — en sandbox, Resend solo entrega a la dirección con la que está registrada la cuenta. Se invoca por CLI: `npx convex run email:sendTestEmail '{"to":"tu-email@ejemplo.com"}'`.
+- **`RESEND_API_KEY`** es variable de entorno de **Convex** (nunca de `.env.local`/Railway): se configura desde el dashboard de Convex o con `npx convex env set RESEND_API_KEY ...` en tu propia terminal.
+- **Importante antes de probar:** `npx convex run` ejecuta la función tal como está **desplegada** en el deployment compartido (`dev:useful-rat-834`), no el código local — asegúrate de que `npx convex dev` (o `npx convex dev --once`) ya sincronizó tus cambios antes de invocar `sendTestEmail`, o estarás probando una revisión anterior.
+- Cuando exista un dominio propio verificado, hay que cambiar `SANDBOX_FROM_ADDRESS` en `convex/email.ts` (y, para uso real, mover el remitente a donde lo necesite cada feature) — fuera de alcance de PRO-66.
+
 ## Desarrollo
 
 `CONVEX_DEPLOYMENT=dev:useful-rat-834` (variable local, la usa la CLI) y `NEXT_PUBLIC_CONVEX_URL=https://useful-rat-834.eu-west-1.convex.cloud` (variable de bundle del cliente, mismo valor en Railway) apuntan al **mismo** deployment — no hay un Convex de producción separado del de desarrollo. `npx convex dev` sin `--once` sincroniza en continuo contra ese deployment compartido, así que un cambio a medio terminar puede llegar sin querer a la demo pública de Railway mientras se está programando.
