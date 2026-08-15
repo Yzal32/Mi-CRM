@@ -32,3 +32,31 @@ export const sendTestEmail = internalAction({
     return null;
   },
 });
+
+/**
+ * Envía el email de "olvidé mi contraseña" (PRO-67) — invocada solo desde
+ * passwordReset.requestPasswordReset (internalAction, no alcanzable desde
+ * ninguna UI ni cliente directamente). Mismo remitente sandbox que
+ * sendTestEmail mientras no exista un dominio propio verificado.
+ */
+export const sendPasswordResetEmail = internalAction({
+  args: { to: v.string(), resetUrl: v.string() },
+  returns: v.null(),
+  handler: async (_ctx, args) => {
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!apiKey) {
+      fail<SendEmailErrorCode>("SEND_EMAIL_FAILED", "Resend no está configurado (falta RESEND_API_KEY).");
+    }
+    await sendEmail({
+      apiKey,
+      from: SANDBOX_FROM_ADDRESS,
+      to: args.to,
+      subject: "Restablece tu contraseña — Mi CRM",
+      html:
+        "<p>Hemos recibido una solicitud para restablecer tu contraseña.</p>" +
+        `<p><a href="${args.resetUrl}">Restablecer contraseña</a></p>` +
+        "<p>Este enlace caduca en 1 hora. Si no has sido tú, puedes ignorar este correo.</p>",
+    });
+    return null;
+  },
+});

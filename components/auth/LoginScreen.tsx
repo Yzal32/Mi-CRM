@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { unstable_rethrow } from "next/navigation";
+import { useRouter, unstable_rethrow } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import { Input } from "@/components/ui/Input";
+import { Toast } from "@/components/ui/Toast";
 import { loginAction } from "@/app/login/actions";
 
 const GENERIC_ERROR = "No se pudo iniciar sesión. Inténtalo de nuevo.";
@@ -22,7 +23,12 @@ function messageFromErrorCode(code: string | undefined): string {
   }
 }
 
-export function LoginScreen({ initialErrorCode }: { initialErrorCode?: string } = {}) {
+export function LoginScreen({
+  initialErrorCode,
+  showPasswordResetToast = false,
+}: { initialErrorCode?: string; showPasswordResetToast?: boolean } = {}) {
+  const router = useRouter();
+  const [toastVisible, setToastVisible] = useState(showPasswordResetToast);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
@@ -51,6 +57,13 @@ export function LoginScreen({ initialErrorCode }: { initialErrorCode?: string } 
       formErrorRef.current?.focus();
     }
   }, [fieldErrors, formError]);
+
+  useEffect(() => {
+    if (!showPasswordResetToast) return;
+    // Limpia el query param para que un refresco no repita el toast — solo al montar.
+    router.replace("/login", { scroll: false });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- una sola vez al montar
+  }, []);
 
   function updateField(field: "email" | "password", value: string) {
     if (field === "email") setEmail(value);
@@ -103,6 +116,10 @@ export function LoginScreen({ initialErrorCode }: { initialErrorCode?: string } 
   return (
     <div className="flex min-h-full flex-1 items-center justify-center px-4 py-10">
       <div className="w-full max-w-sm">
+        {toastVisible && (
+          <Toast message="Contraseña actualizada. Inicia sesión con tu contraseña nueva." onDismiss={() => setToastVisible(false)} />
+        )}
+
         <p className="mb-8 text-center font-caption uppercase tracking-wide text-text-tertiary">Loop CRM</p>
 
         <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-5">
@@ -141,6 +158,10 @@ export function LoginScreen({ initialErrorCode }: { initialErrorCode?: string } 
             placeholder="••••••••"
             autoComplete="current-password"
           />
+
+          <Button href="/recuperar-contrasena" variant="ghost" size="sm" className="-mt-3 self-end">
+            ¿Olvidaste tu contraseña?
+          </Button>
 
           <Button type="submit" variant="primary" disabled={isSubmitting} className="w-full">
             {isSubmitting ? "Entrando…" : "Entrar"}

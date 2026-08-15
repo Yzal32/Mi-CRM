@@ -6,6 +6,7 @@ import { businessDayKey } from "../../lib/shared/businessDay";
 import type { UserRole } from "./users";
 import { EMAIL_MAX_LENGTH, MAX_PASSWORD_INPUT_LENGTH } from "./inputLimits";
 import { fail } from "./errors";
+import { generateToken, sha256Hex, TOKEN_PATTERN } from "./tokens";
 
 export type LoginErrorCode = "INVALID_CREDENTIALS" | "ACCOUNT_INACTIVE";
 
@@ -25,9 +26,6 @@ export type VerifiedUser = {
   mustChangePassword: boolean;
 };
 
-const TOKEN_BYTE_LENGTH = 32;
-const TOKEN_PATTERN = /^[0-9a-f]{64}$/;
-
 // Hash bcrypt fijo, no calculado en runtime (cost 10, formato válido) — no
 // corresponde a ninguna contraseña real. Sirve solo para que compareSync se
 // ejecute igual (mismo coste) cuando el email no existe, así el tiempo de
@@ -38,21 +36,6 @@ const DUMMY_HASH = "$2b$10$CwTycUXWue0Thq9StjUM0uJ8k3fvzTQfJyLU6Zpz3AJfa9KOZ.rGm
 // para los dos usuarios reales de este CRM (móvil, portátil, algún
 // repuesto). Se aplica dentro de createSessionForUser, no en cada caller.
 export const MAX_SESSIONS_PER_USER = 5;
-
-function toHex(bytes: Uint8Array): string {
-  return Array.from(bytes)
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-}
-
-function generateToken(): string {
-  return toHex(crypto.getRandomValues(new Uint8Array(TOKEN_BYTE_LENGTH)));
-}
-
-async function sha256Hex(value: string): Promise<string> {
-  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
-  return toHex(new Uint8Array(digest));
-}
 
 /**
  * Único punto que borra una fila de `sessions` (PRO-59): borra primero

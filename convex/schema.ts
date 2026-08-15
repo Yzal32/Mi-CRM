@@ -201,6 +201,17 @@ export default defineSchema({
     .index("by_tokenHash", ["tokenHash"])
     .index("by_sessionId", ["sessionId"]),
 
+  // PRO-67: token opaco de un solo uso para restablecer la contraseña desde
+  // un enlace de email, sin sesión activa — ver convex/model/passwordReset.ts.
+  // Mismo patrón que sessions/accessTokens: solo se persiste el hash.
+  passwordResets: defineTable({
+    userId: v.id("users"),
+    tokenHash: v.string(),
+    expiresAt: v.number(),
+  })
+    .index("by_tokenHash", ["tokenHash"])
+    .index("by_userId", ["userId"]),
+
   sales: defineTable({
     clientId: v.id("clients"),
     description: v.string(),

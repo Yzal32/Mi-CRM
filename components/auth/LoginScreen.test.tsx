@@ -10,6 +10,16 @@ vi.mock("@/app/login/actions", () => ({
   loginAction: (...args: unknown[]) => loginActionMock(...args),
 }));
 
+// Mock parcial: conserva el unstable_rethrow real (necesario para que el
+// manejo de redirect() siga funcionando) y solo sustituye useRouter, que
+// fuera de un árbol de Next.js real lanzaría al llamarse (mismo criterio
+// que HoyScreen.test.tsx).
+const routerReplaceMock = vi.fn();
+vi.mock("next/navigation", async (importActual) => {
+  const actual = await importActual<typeof import("next/navigation")>();
+  return { ...actual, useRouter: () => ({ replace: routerReplaceMock, push: vi.fn(), back: vi.fn() }) };
+});
+
 // Captura las props exactas que recibe next/link — necesario para el CTA de
 // Google (PRO-63): un <a> renderizado no expone `prefetch` como atributo
 // del DOM (no es un concepto de HTML), así que comprobar solo el `href`
@@ -29,6 +39,7 @@ vi.mock("next/link", () => ({
 beforeEach(() => {
   loginActionMock.mockReset();
   linkPropsMock.mockReset();
+  routerReplaceMock.mockReset();
 });
 
 afterEach(() => {
@@ -162,5 +173,23 @@ describe("LoginScreen", () => {
     const link = screen.getByRole("link", { name: "Continuar con Google" });
     expect(link.getAttribute("href")).toBe("/api/auth/google/start");
     expect(linkPropsMock).toHaveBeenCalledWith({ href: "/api/auth/google/start", prefetch: false });
+  });
+
+  it('el enlace "¿Olvidaste tu contraseña?" apunta a /recuperar-contrasena', () => {
+    render(<LoginScreen />);
+    const link = screen.getByRole("link", { name: "¿Olvidaste tu contraseña?" });
+    expect(link.getAttribute("href")).toBe("/recuperar-contrasena");
+  });
+
+  it("showPasswordResetToast muestra el toast de confirmación y limpia el query param al montar", () => {
+    render(<LoginScreen showPasswordResetToast />);
+    expect(screen.getByText("Contraseña actualizada. Inicia sesión con tu contraseña nueva.")).toBeTruthy();
+    expect(routerReplaceMock).toHaveBeenCalledWith("/login", { scroll: false });
+  });
+
+  it("sin showPasswordResetToast no se muestra el toast", () => {
+    render(<LoginScreen />);
+    expect(screen.queryByText("Contraseña actualizada. Inicia sesión con tu contraseña nueva.")).toBeNull();
+    expect(routerReplaceMock).not.toHaveBeenCalled();
   });
 });
