@@ -4,7 +4,7 @@ import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import schema from "./schema";
 import { createUser } from "./model/users";
-import { issueTestAccessToken } from "./testHelpers";
+import { issueTestAccessToken, issueTestActor } from "./testHelpers";
 
 const modules = import.meta.glob("./**/*.ts");
 
@@ -347,5 +347,80 @@ describe("users.listEmployees", () => {
     const attackerToken = await issueTestAccessToken(t, "employee");
     const error = await captureError(t.query(api.users.listEmployees, { token: attackerToken }));
     expect(error.data.code).toBe("FORBIDDEN");
+  });
+});
+
+describe("users.changeEmployeeRole", () => {
+  test("la Dueña asciende a un empleado -> role 'owner'", async () => {
+    const t = convexTest(schema, modules);
+    const token = await issueTestAccessToken(t, "owner");
+    const employeeId = await t.mutation(api.users.create, {
+      token,
+      name: "Carlos Ruiz",
+      email: "carlos@ejemplo.com",
+      password: "contraseña-segura",
+    });
+
+    await t.mutation(api.users.changeEmployeeRole, { token, userId: employeeId, role: "owner" });
+
+    const doc = await t.run((ctx) => ctx.db.get(employeeId));
+    expect(doc?.role).toBe("owner");
+  });
+
+  test("token inválido -> UNAUTHENTICATED", async () => {
+    const t = convexTest(schema, modules);
+    const employeeId = await t.run((ctx) =>
+      createUser(ctx, {
+        name: "Carlos Ruiz",
+        email: "carlos@ejemplo.com",
+        password: "contraseña-segura",
+        role: "employee",
+        mustChangePassword: false,
+      }),
+    );
+    const error = await captureError(
+      t.mutation(api.users.changeEmployeeRole, { token: "a".repeat(64), userId: employeeId, role: "owner" }),
+    );
+    expect(error.data.code).toBe("UNAUTHENTICATED");
+  });
+
+  test("un Empleado no puede cambiar el rol de otro -> FORBIDDEN, sin tocar la cuenta objetivo", async () => {
+    const t = convexTest(schema, modules);
+    const employeeId = await t.run((ctx) =>
+      createUser(ctx, {
+        name: "Carlos Ruiz",
+        email: "carlos@ejemplo.com",
+        password: "contraseña-segura",
+        role: "employee",
+        mustChangePassword: false,
+      }),
+    );
+    const { token: employeeSessionToken } = await t.mutation(api.sessions.login, {
+      email: "carlos@ejemplo.com",
+      password: "contraseña-segura",
+    });
+
+    const attackerToken = await issueTestAccessToken(t, "employee");
+    const error = await captureError(
+      t.mutation(api.users.changeEmployeeRole, { token: attackerToken, userId: employeeId, role: "owner" }),
+    );
+    expect(error.data.code).toBe("FORBIDDEN");
+
+    const docAfter = await t.run((ctx) => ctx.db.get(employeeId));
+    expect(docAfter?.role).toBe("employee");
+    expect(await t.query(api.sessions.verify, { token: employeeSessionToken })).not.toBeNull();
+  });
+
+  test("la Dueña no puede cambiar su propio rol -> CANNOT_CHANGE_OWN_ROLE", async () => {
+    const t = convexTest(schema, modules);
+    const { accessToken: token, userId: ownerId } = await issueTestActor(t, "owner");
+
+    const error = await captureError(
+      t.mutation(api.users.changeEmployeeRole, { token, userId: ownerId, role: "employee" }),
+    );
+    expect(error.data.code).toBe("CANNOT_CHANGE_OWN_ROLE");
+
+    const docAfter = await t.run((ctx) => ctx.db.get(ownerId));
+    expect(docAfter?.role).toBe("owner");
   });
 });

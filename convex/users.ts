@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { internalMutation, mutation, query } from "./_generated/server";
 import {
+  changeEmployeeRole as changeEmployeeRoleModel,
   changePassword as changePasswordModel,
   createUser,
   deactivateEmployee as deactivateEmployeeModel,
@@ -160,6 +161,28 @@ export const reactivateEmployee = mutation({
   handler: async (ctx, args) => {
     await requireOwner(ctx, args.token);
     await reactivateEmployeeModel(ctx, { userId: args.userId });
+    return null;
+  },
+});
+
+/**
+ * Cambio de rol de una cuenta (PRO-56), solo la Dueña — ver
+ * changeEmployeeRole en convex/model/users.ts para las dos invariantes
+ * ("nadie puede cambiar su propio rol", "no dejar el negocio sin ninguna
+ * cuenta Dueña"). callerId sale de requireOwner (el usuario ya autenticado
+ * por el token), nunca de un argumento del cliente — así ningún caller
+ * puede hacerse pasar por otra persona para saltarse CANNOT_CHANGE_OWN_ROLE.
+ */
+export const changeEmployeeRole = mutation({
+  args: {
+    token: v.string(),
+    userId: v.id("users"),
+    role: v.union(v.literal("owner"), v.literal("employee")),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const caller = await requireOwner(ctx, args.token);
+    await changeEmployeeRoleModel(ctx, { userId: args.userId, role: args.role, callerId: caller.userId });
     return null;
   },
 });
