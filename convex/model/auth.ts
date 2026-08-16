@@ -29,8 +29,9 @@ export type RequireOwnerErrorCode = RequireAccessTokenErrorCode | "FORBIDDEN";
 /**
  * Igual que requireAccessToken, pero además exige role === "owner". Único
  * punto de esta comprobación — cualquier mutation restringida a la Dueña
- * (alta de empleado y reseteo de contraseña de PRO-45; baja/editar rol en
- * PRO-47/PRO-56 después) debe reusar esto, nunca comparar user.role a mano.
+ * (alta de empleado y reseteo de contraseña de PRO-45, baja/reactivación de
+ * PRO-47; editar rol en PRO-56 después) debe reusar esto, nunca comparar
+ * user.role a mano.
  */
 export async function requireOwner(ctx: QueryCtx | MutationCtx, accessToken: string): Promise<VerifiedUser> {
   const user = await requireAccessToken(ctx, accessToken);

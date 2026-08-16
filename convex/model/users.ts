@@ -219,6 +219,52 @@ export async function resetEmployeePassword(
   return { temporaryPassword };
 }
 
+export type SetEmployeeStatusErrorCode = "USER_NOT_FOUND" | "NOT_AN_EMPLOYEE";
+
+/**
+ * Compartido por deactivateEmployee/reactivateEmployee (PRO-47): misma
+ * comprobación exacta que resetEmployeePassword — restringido a cuentas
+ * role "employee", nunca a la propia Dueña ni a otra cuenta "owner".
+ */
+async function findEmployeeOrFail(ctx: MutationCtx, userId: Id<"users">) {
+  const user = await ctx.db.get(userId);
+  if (!user) {
+    fail<SetEmployeeStatusErrorCode>("USER_NOT_FOUND", "Ese usuario ya no existe.");
+  }
+  if (user.role !== "employee") {
+    fail<SetEmployeeStatusErrorCode>("NOT_AN_EMPLOYEE", "Esa cuenta no es de un empleado.");
+  }
+  return user;
+}
+
+/**
+ * Baja de empleado (PRO-47): no borra la cuenta, solo status -> "inactive".
+ * La revocación funcional ya es inmediata en cuanto cambia el status (ver
+ * findActiveSession/verifyAccessToken en convex/model/sessions.ts); además
+ * se destruyen físicamente las sesiones/accessTokens ya existentes con
+ * destroySessionsForUser, dejada preparada para esto — mismo criterio que
+ * resetEmployeePassword/changePassword tras rotar una credencial: no dejar
+ * filas vivas que ya no deberían servir para nada. Idempotente: desactivar
+ * una cuenta ya inactiva no falla, solo repite la operación.
+ */
+export async function deactivateEmployee(ctx: MutationCtx, args: { userId: Id<"users"> }): Promise<void> {
+  const user = await findEmployeeOrFail(ctx, args.userId);
+  await ctx.db.patch(user._id, { status: "inactive" });
+  await destroySessionsForUser(ctx, user._id);
+}
+
+/**
+ * Reactivación de empleado (PRO-47): reutiliza la misma cuenta, solo status
+ * -> "active". No toca sesiones: una cuenta inactiva no puede tener
+ * sesiones vivas (login/loginWithGoogleEmail las rechazan), así que no hay
+ * nada que limpiar ni crear aquí — el empleado inicia sesión de nuevo por
+ * su cuenta tras reactivarse.
+ */
+export async function reactivateEmployee(ctx: MutationCtx, args: { userId: Id<"users"> }): Promise<void> {
+  const user = await findEmployeeOrFail(ctx, args.userId);
+  await ctx.db.patch(user._id, { status: "active" });
+}
+
 export type ChangePasswordErrorCode =
   | "SESSION_INVALID"
   | "CURRENT_PASSWORD_INCORRECT"

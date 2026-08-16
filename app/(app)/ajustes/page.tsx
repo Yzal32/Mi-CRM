@@ -9,9 +9,14 @@ export default async function AjustesPage() {
     <div className="flex flex-col gap-5">
       <PlaceholderScreen
         title="Ajustes"
-        message={`Sesión iniciada como ${user.name} (${user.email}). Próximamente: Gestión de empleados si eres la Dueña.`}
+        message={`Sesión iniciada como ${user.name} (${user.email}).`}
       />
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-3 px-5 lg:px-12">
+        {user.role === "owner" && (
+          <Button href="/empleados" variant="secondary" className="w-full lg:w-auto">
+            Gestión de empleados
+          </Button>
+        )}
         {/* Cambio voluntario de contraseña (PRO-57) — el obligatorio, con
             mustChangePassword: true, pasa por aquí igual, ver
             app/cambiar-contrasena/page.tsx. */}

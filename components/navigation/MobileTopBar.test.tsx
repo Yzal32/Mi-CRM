@@ -138,6 +138,32 @@ describe("MobileTopBar", () => {
     render(<MobileTopBar />);
     expect(screen.queryByRole("link", { name: "Nuevo cliente" })).toBeNull();
   });
+
+  // PRO-47: /empleados no tiene nav item propio (solo se llega desde
+  // Ajustes), mismo patrón que /clientes para título + "+" de acción.
+  it('en /empleados el título es "Empleados" y aparece el link "Nuevo empleado" hacia /empleados/nuevo', () => {
+    currentPathname = "/empleados";
+    useQueryMock.mockReturnValue(undefined);
+    render(<MobileTopBar />);
+    expect(screen.getByText("Empleados")).toBeTruthy();
+    const link = screen.getByRole("link", { name: "Nuevo empleado" });
+    expect(link.getAttribute("href")).toBe("/empleados/nuevo");
+  });
+
+  it('en /empleados/nuevo el título es fijo "Nuevo empleado" y NO aparece el botón "+"', () => {
+    currentPathname = "/empleados/nuevo";
+    useQueryMock.mockReturnValue(undefined);
+    render(<MobileTopBar />);
+    expect(screen.getByText("Nuevo empleado")).toBeTruthy();
+    expect(screen.queryByRole("link", { name: "Nuevo empleado" })).toBeNull();
+  });
+
+  it('en /clientes/nuevo NO aparece el "+" de empleados (regresión de ruta)', () => {
+    currentPathname = "/clientes/nuevo";
+    useQueryMock.mockReturnValue(undefined);
+    render(<MobileTopBar />);
+    expect(screen.queryByRole("link", { name: "Nuevo empleado" })).toBeNull();
+  });
 });
 
 describe("MobileTopBar — menú de accesos rápidos en Hoy (PRO-60)", () => {

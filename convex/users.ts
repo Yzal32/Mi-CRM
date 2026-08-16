@@ -1,8 +1,10 @@
 import { v } from "convex/values";
-import { internalMutation, mutation } from "./_generated/server";
+import { internalMutation, mutation, query } from "./_generated/server";
 import {
   changePassword as changePasswordModel,
   createUser,
+  deactivateEmployee as deactivateEmployeeModel,
+  reactivateEmployee as reactivateEmployeeModel,
   resetEmployeePassword as resetEmployeePasswordModel,
   updateUserEmail as updateUserEmailModel,
 } from "./model/users";
@@ -102,6 +104,63 @@ export const resetEmployeePassword = mutation({
   handler: async (ctx, args) => {
     await requireOwner(ctx, args.token);
     return resetEmployeePasswordModel(ctx, { userId: args.userId });
+  },
+});
+
+/**
+ * Listado de empleados (PRO-47), solo la Dueña. Sin índice dedicado ni
+ * paginación: la tabla `users` de este CRM es de tamaño pequeño por diseño
+ * (una Dueña + un puñado de empleados) — a diferencia de `clients`, aquí no
+ * hay volumen que justifique un índice `by_role`. Nunca expone
+ * `passwordHash` ni `mustChangePassword`. Orden alfabético por nombre para
+ * que la lista sea estable y predecible entre refrescos.
+ */
+export const listEmployees = query({
+  args: { token: v.string() },
+  returns: v.array(
+    v.object({
+      _id: v.id("users"),
+      name: v.string(),
+      email: v.string(),
+      status: v.union(v.literal("active"), v.literal("inactive")),
+      createdDate: v.string(),
+    }),
+  ),
+  handler: async (ctx, args) => {
+    await requireOwner(ctx, args.token);
+    const users = await ctx.db.query("users").collect();
+    return users
+      .filter((user) => user.role === "employee")
+      .map((user) => ({ _id: user._id, name: user.name, email: user.email, status: user.status, createdDate: user.createdDate }))
+      .sort((a, b) => a.name.localeCompare(b.name, "es"));
+  },
+});
+
+/**
+ * Baja de empleado (PRO-47), solo la Dueña — ver deactivateEmployee en
+ * convex/model/users.ts para la lógica (status + limpieza de sesiones).
+ */
+export const deactivateEmployee = mutation({
+  args: { token: v.string(), userId: v.id("users") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await requireOwner(ctx, args.token);
+    await deactivateEmployeeModel(ctx, { userId: args.userId });
+    return null;
+  },
+});
+
+/**
+ * Reactivación de empleado (PRO-47), solo la Dueña — reutiliza la misma
+ * cuenta, ver reactivateEmployee en convex/model/users.ts.
+ */
+export const reactivateEmployee = mutation({
+  args: { token: v.string(), userId: v.id("users") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await requireOwner(ctx, args.token);
+    await reactivateEmployeeModel(ctx, { userId: args.userId });
+    return null;
   },
 });
 
