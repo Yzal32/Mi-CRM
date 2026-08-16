@@ -178,3 +178,174 @@ describe("users.resetEmployeePassword", () => {
     expect(await t.query(api.sessions.verify, { token: employeeSessionToken })).not.toBeNull();
   });
 });
+
+describe("users.deactivateEmployee", () => {
+  test("la Dueña desactiva a un empleado -> status 'inactive'", async () => {
+    const t = convexTest(schema, modules);
+    const token = await issueTestAccessToken(t, "owner");
+    const employeeId = await t.mutation(api.users.create, {
+      token,
+      name: "Carlos Ruiz",
+      email: "carlos@ejemplo.com",
+      password: "contraseña-segura",
+    });
+
+    await t.mutation(api.users.deactivateEmployee, { token, userId: employeeId });
+
+    const doc = await t.run((ctx) => ctx.db.get(employeeId));
+    expect(doc?.status).toBe("inactive");
+  });
+
+  test("token inválido -> UNAUTHENTICATED", async () => {
+    const t = convexTest(schema, modules);
+    const employeeId = await t.run((ctx) =>
+      createUser(ctx, {
+        name: "Carlos Ruiz",
+        email: "carlos@ejemplo.com",
+        password: "contraseña-segura",
+        role: "employee",
+        mustChangePassword: false,
+      }),
+    );
+    const error = await captureError(
+      t.mutation(api.users.deactivateEmployee, { token: "a".repeat(64), userId: employeeId }),
+    );
+    expect(error.data.code).toBe("UNAUTHENTICATED");
+  });
+
+  test("un Empleado no puede desactivar a otro -> FORBIDDEN, sin tocar la cuenta objetivo", async () => {
+    const t = convexTest(schema, modules);
+    const employeeId = await t.run((ctx) =>
+      createUser(ctx, {
+        name: "Carlos Ruiz",
+        email: "carlos@ejemplo.com",
+        password: "contraseña-segura",
+        role: "employee",
+        mustChangePassword: false,
+      }),
+    );
+    const { token: employeeSessionToken } = await t.mutation(api.sessions.login, {
+      email: "carlos@ejemplo.com",
+      password: "contraseña-segura",
+    });
+    const docBefore = await t.run((ctx) => ctx.db.get(employeeId));
+
+    const attackerToken = await issueTestAccessToken(t, "employee");
+    const error = await captureError(
+      t.mutation(api.users.deactivateEmployee, { token: attackerToken, userId: employeeId }),
+    );
+    expect(error.data.code).toBe("FORBIDDEN");
+
+    const docAfter = await t.run((ctx) => ctx.db.get(employeeId));
+    expect(docAfter?.status).toBe(docBefore?.status);
+    expect(await t.query(api.sessions.verify, { token: employeeSessionToken })).not.toBeNull();
+  });
+});
+
+describe("users.reactivateEmployee", () => {
+  test("la Dueña reactiva a un empleado -> status 'active'", async () => {
+    const t = convexTest(schema, modules);
+    const token = await issueTestAccessToken(t, "owner");
+    const employeeId = await t.mutation(api.users.create, {
+      token,
+      name: "Carlos Ruiz",
+      email: "carlos@ejemplo.com",
+      password: "contraseña-segura",
+    });
+    await t.mutation(api.users.deactivateEmployee, { token, userId: employeeId });
+
+    await t.mutation(api.users.reactivateEmployee, { token, userId: employeeId });
+
+    const doc = await t.run((ctx) => ctx.db.get(employeeId));
+    expect(doc?.status).toBe("active");
+  });
+
+  test("token inválido -> UNAUTHENTICATED", async () => {
+    const t = convexTest(schema, modules);
+    const employeeId = await t.run((ctx) =>
+      createUser(ctx, {
+        name: "Carlos Ruiz",
+        email: "carlos@ejemplo.com",
+        password: "contraseña-segura",
+        role: "employee",
+        mustChangePassword: false,
+      }),
+    );
+    const error = await captureError(
+      t.mutation(api.users.reactivateEmployee, { token: "a".repeat(64), userId: employeeId }),
+    );
+    expect(error.data.code).toBe("UNAUTHENTICATED");
+  });
+
+  test("un Empleado no puede reactivar a otro -> FORBIDDEN, sin tocar la cuenta objetivo", async () => {
+    const t = convexTest(schema, modules);
+    const employeeId = await t.run((ctx) =>
+      createUser(ctx, {
+        name: "Carlos Ruiz",
+        email: "carlos@ejemplo.com",
+        password: "contraseña-segura",
+        role: "employee",
+        mustChangePassword: false,
+      }),
+    );
+    await t.run((ctx) => ctx.db.patch(employeeId, { status: "inactive" }));
+
+    const attackerToken = await issueTestAccessToken(t, "employee");
+    const error = await captureError(
+      t.mutation(api.users.reactivateEmployee, { token: attackerToken, userId: employeeId }),
+    );
+    expect(error.data.code).toBe("FORBIDDEN");
+
+    const docAfter = await t.run((ctx) => ctx.db.get(employeeId));
+    expect(docAfter?.status).toBe("inactive");
+  });
+});
+
+describe("users.listEmployees", () => {
+  test("la Dueña ve solo las cuentas 'employee', no su propia cuenta 'owner'", async () => {
+    const t = convexTest(schema, modules);
+    const token = await issueTestAccessToken(t, "owner");
+    await t.mutation(api.users.create, {
+      token,
+      name: "Carlos Ruiz",
+      email: "carlos@ejemplo.com",
+      password: "contraseña-segura",
+    });
+
+    const employees = await t.query(api.users.listEmployees, { token });
+
+    expect(employees).toHaveLength(1);
+    expect(employees[0].email).toBe("carlos@ejemplo.com");
+    expect(employees.some((employee) => employee.email === "auth-helper@ejemplo.com")).toBe(false);
+  });
+
+  test("incluye status 'active' e 'inactive', sin passwordHash en el resultado", async () => {
+    const t = convexTest(schema, modules);
+    const token = await issueTestAccessToken(t, "owner");
+    const employeeId = await t.mutation(api.users.create, {
+      token,
+      name: "Carlos Ruiz",
+      email: "carlos@ejemplo.com",
+      password: "contraseña-segura",
+    });
+    await t.mutation(api.users.deactivateEmployee, { token, userId: employeeId });
+
+    const employees = await t.query(api.users.listEmployees, { token });
+
+    expect(employees[0].status).toBe("inactive");
+    expect(Object.keys(employees[0])).not.toContain("passwordHash");
+  });
+
+  test("token inválido -> UNAUTHENTICATED", async () => {
+    const t = convexTest(schema, modules);
+    const error = await captureError(t.query(api.users.listEmployees, { token: "a".repeat(64) }));
+    expect(error.data.code).toBe("UNAUTHENTICATED");
+  });
+
+  test("un Empleado no puede listar -> FORBIDDEN", async () => {
+    const t = convexTest(schema, modules);
+    const attackerToken = await issueTestAccessToken(t, "employee");
+    const error = await captureError(t.query(api.users.listEmployees, { token: attackerToken }));
+    expect(error.data.code).toBe("FORBIDDEN");
+  });
+});

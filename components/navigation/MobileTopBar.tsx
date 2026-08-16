@@ -92,6 +92,17 @@ export function MobileTopBar() {
     );
   }
 
+  // /empleados/nuevo (PRO-45/47) no es un destino de pestaña (no está en
+  // navItems, solo se llega desde Ajustes o desde /empleados) — mismo
+  // criterio que /clientes/nuevo: título fijo, botón atrás.
+  if (pathname === "/empleados/nuevo") {
+    return (
+      <div className="lg:hidden">
+        <TopBar title="Nuevo empleado" onBack={() => router.back()} />
+      </div>
+    );
+  }
+
   // PRO-19: la pestaña Clientes reutiliza el mismo "+" que Hoy en vez de un
   // FAB propio (decisión de producto, evita un componente flotante nuevo
   // sin precedente en el repo). Los returns de arriba (/clientes/nuevo,
@@ -100,16 +111,22 @@ export function MobileTopBar() {
   // Registrar venta / Anotar interacción) en vez de navegar directo —
   // Clientes sigue siendo el link directo de siempre, sin cambios.
   const isClients = active?.value === "clients";
+  // /empleados (PRO-47): mismo patrón que isClients, pero sin nav item
+  // propio (solo se llega desde Ajustes) — por eso se compara el pathname
+  // directamente en vez de active?.value.
+  const isEmpleados = pathname === "/empleados";
   return (
     <>
       <div className="lg:hidden">
         <TopBar
-          title={active?.label ?? "Loop"}
+          title={isEmpleados ? "Empleados" : (active?.label ?? "Loop")}
           action={
             isHoy ? (
               <IconButton icon="plus" label="Nueva acción" variant="primary" size={36} onClick={() => setIsSheetOpen(true)} />
             ) : isClients ? (
               <IconButton icon="plus" label="Nuevo cliente" variant="primary" href="/clientes/nuevo" size={36} />
+            ) : isEmpleados ? (
+              <IconButton icon="plus" label="Nuevo empleado" variant="primary" href="/empleados/nuevo" size={36} />
             ) : undefined
           }
         />
