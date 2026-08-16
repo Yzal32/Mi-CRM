@@ -17,6 +17,7 @@ export function EmpleadosScreen() {
   const employees = useAuthedQuery(api.users.listEmployees, {});
   const deactivateEmployee = useAuthedMutation(api.users.deactivateEmployee);
   const reactivateEmployee = useAuthedMutation(api.users.reactivateEmployee);
+  const changeEmployeeRole = useAuthedMutation(api.users.changeEmployeeRole);
 
   const [busyId, setBusyId] = useState<Id<"users"> | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -43,6 +44,21 @@ export function EmpleadosScreen() {
       await reactivateEmployee({ userId: employee._id });
     } catch (err) {
       setError(convexErrorCode(err) === "NOT_AN_EMPLOYEE" ? "Esa cuenta ya no es de un empleado." : GENERIC_ERROR);
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function handlePromote(employee: Employee) {
+    if (busyId) return;
+    if (!window.confirm(`¿Convertir a ${employee.name} en Administradora? Tendrá acceso completo, incluida la gestión de empleados.`))
+      return;
+    setError(null);
+    setBusyId(employee._id);
+    try {
+      await changeEmployeeRole({ userId: employee._id, role: "owner" });
+    } catch {
+      setError(GENERIC_ERROR);
     } finally {
       setBusyId(null);
     }
@@ -89,6 +105,7 @@ export function EmpleadosScreen() {
               busy={busyId === employee._id}
               onDeactivate={() => handleDeactivate(employee)}
               onReactivate={() => handleReactivate(employee)}
+              onPromote={() => handlePromote(employee)}
             />
           ))}
         </div>

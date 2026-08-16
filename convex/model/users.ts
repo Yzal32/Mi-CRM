@@ -265,6 +265,57 @@ export async function reactivateEmployee(ctx: MutationCtx, args: { userId: Id<"u
   await ctx.db.patch(user._id, { status: "active" });
 }
 
+export type ChangeEmployeeRoleErrorCode = "USER_NOT_FOUND" | "CANNOT_CHANGE_OWN_ROLE" | "CANNOT_REMOVE_LAST_OWNER";
+
+/**
+ * Cambia el rol de una cuenta (PRO-56). A diferencia de
+ * deactivateEmployee/reactivateEmployee (restringidas a cuentas ya
+ * "employee" vía findEmployeeOrFail), esta función no exige un rol de
+ * partida concreto: la regla real no es "solo se puede tocar a un
+ * empleado", es "nunca puede quedar el negocio sin ninguna cuenta Dueña".
+ * Hoy la única pantalla que la llama (Gestión de empleados) solo lista
+ * empleados, así que en la práctica solo asciende — pero la comprobación
+ * cubre también la degradación por si un futuro caller (p. ej. PRO-51) la
+ * dispara.
+ *
+ * Dos invariantes, independientes entre sí:
+ * 1. Nadie puede cambiar su propio rol (CANNOT_CHANGE_OWN_ROLE),
+ *    incondicionalmente — ni siquiera si hay otra cuenta Dueña de sobra.
+ *    Evita que la Dueña se quite a sí misma el acceso de administración por
+ *    error, incluso en un negocio con varias Dueñas; ver args.callerId, que
+ *    el caller (mutation pública) rellena con el usuario ya autenticado por
+ *    requireOwner, nunca con un valor que el cliente pueda manipular.
+ * 2. Nunca puede quedar el negocio sin ninguna cuenta Dueña
+ *    (CANNOT_REMOVE_LAST_OWNER) — cubre también el caso de que otra persona
+ *    degrade a la última Dueña restante.
+ *
+ * Idempotente si el rol destino coincide con el actual: no dispara el
+ * conteo de Dueñas porque esa comprobación solo mira transiciones
+ * owner -> employee. No hace falta rotar sesiones: a diferencia de un
+ * cambio de contraseña, el rol se relee en caliente de la base en cada
+ * verifyAccessToken (ver convex/model/sessions.ts), así que el cambio se
+ * aplica solo con la siguiente petición del usuario afectado.
+ */
+export async function changeEmployeeRole(
+  ctx: MutationCtx,
+  args: { userId: Id<"users">; role: UserRole; callerId: Id<"users"> },
+): Promise<void> {
+  const user = await ctx.db.get(args.userId);
+  if (!user) {
+    fail<ChangeEmployeeRoleErrorCode>("USER_NOT_FOUND", "Ese usuario ya no existe.");
+  }
+  if (user._id === args.callerId) {
+    fail<ChangeEmployeeRoleErrorCode>("CANNOT_CHANGE_OWN_ROLE", "No puedes cambiar tu propio rol.");
+  }
+  if (user.role === "owner" && args.role === "employee") {
+    const owners = (await ctx.db.query("users").collect()).filter((u) => u.role === "owner");
+    if (owners.length <= 1) {
+      fail<ChangeEmployeeRoleErrorCode>("CANNOT_REMOVE_LAST_OWNER", "No puedes quitar el rol de Dueña a la última cuenta que lo tiene.");
+    }
+  }
+  await ctx.db.patch(user._id, { role: args.role });
+}
+
 export type ChangePasswordErrorCode =
   | "SESSION_INVALID"
   | "CURRENT_PASSWORD_INCORRECT"

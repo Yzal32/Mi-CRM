@@ -15,11 +15,13 @@ export function EmpleadoRow({
   busy,
   onDeactivate,
   onReactivate,
+  onPromote,
 }: {
   employee: Employee;
   busy: boolean;
   onDeactivate: () => void;
   onReactivate: () => void;
+  onPromote: () => void;
 }) {
   const isActive = employee.status === "active";
   return (
@@ -31,9 +33,14 @@ export function EmpleadoRow({
           {isActive ? "Activo" : "Inactivo"}
         </span>
       </div>
-      <Button type="button" variant="secondary" disabled={busy} onClick={isActive ? onDeactivate : onReactivate}>
-        {busy ? "…" : isActive ? "Quitar acceso" : "Reactivar"}
-      </Button>
+      <div className="flex items-center gap-2">
+        <Button type="button" variant="secondary" disabled={busy} onClick={onPromote}>
+          {busy ? "…" : "Hacer administradora"}
+        </Button>
+        <Button type="button" variant="secondary" disabled={busy} onClick={isActive ? onDeactivate : onReactivate}>
+          {busy ? "…" : isActive ? "Quitar acceso" : "Reactivar"}
+        </Button>
+      </div>
     </div>
   );
 }
